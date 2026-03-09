@@ -24,6 +24,4 @@ jobs:
         ssh -p 2222 empire@88.8.43.131 "
           cd ~/Documentos/github/Criptomoneda-BENDICION &&
           git pull &&
-          npm install &&
-          pm2 restart bendicion || pm2 start npm --name bendicion -- start
         "

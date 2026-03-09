@@ -1,0 +1,29 @@
+name: Deploy automático al servidor
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar el repositorio
+      uses: actions/checkout@v3
+
+    - name: Configurar SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -p 2222 -H 88.8.43.131 >> ~/.ssh/known_hosts
+
+    - name: Actualizar código en el servidor
+      run: |
+        ssh -p 2222 empire@88.8.43.131 "
+          cd ~/Documentos/github/Criptomoneda-BENDICION &&
+          git pull &&
+          npm install &&
+          pm2 restart bendicion || pm2 start npm --name bendicion -- start
+        "

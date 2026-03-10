@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  bendicion:
+    build: .
+    container_name: bendicion
+    volumes:
+      - .:/app
+    working_dir: /app
+    ports:
+      - "7777:7777"
+    restart: unless-stopped

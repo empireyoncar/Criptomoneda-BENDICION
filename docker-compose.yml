@@ -8,8 +8,7 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      - ./database.json:/app/database.json
-      - ./kyc_docs:/app/kyc_docs
+      - ./:/app
     restart: always
 
   admin:
@@ -19,7 +18,15 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./database.json:/app/database.json
-      - ./kyc_docs:/app/kyc_docs
-      - ./templates:/app/templates
+      - ./:/app
+    restart: always
+
+  web:
+    build: .
+    container_name: bendicion_web
+    command: python web_server.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
     restart: always

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Estado de Verificación KYC – BENDICIÓN</title>
+
+  <style>
+    body {
+      background: #0b0e11;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #181a20;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      color: #f0b90b;
+      margin-bottom: 20px;
+    }
+
+    .step {
+      background: #2b3139;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      color: #f0b90b;
+      margin: 0 0 10px 0;
+    }
+
+    .status {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .pending { background: #555; }
+    .submitted { background: #007bff; }
+    .approved { background: #1e7e34; }
+    .rejected { background: #c82333; }
+
+    .preview {
+      margin-top: 10px;
+      width: 120px;
+      height: 120px;
+      overflow: hidden;
+      border-radius: 6px;
+      background: black;
+      display: none;
+    }
+
+    .preview img {
+      width: 100%;
+      height: auto;
+    }
+
+    .message {
+      text-align: center;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 16px;
+    }
+
+    .approved-box {
+      background: #1e7e34;
+    }
+
+    .pending-box {
+      background: #555;
+    }
+
+    .rejected-box {
+      background: #c82333;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Estado de tu Verificación KYC</h1>
+
+  <div id="stepsContainer">
+    <!-- Se llena con JS -->
+  </div>
+
+  <div id="finalMessage" class="message pending-box">
+    Cargando estado...
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:7777";
+const user_id = localStorage.getItem("user_id");
+
+if (!user_id) {
+  alert("No se encontró tu sesión. Inicia sesión nuevamente.");
+}
+
+// Utilidad para badge
+function badge(status) {
+  return `<span class="badge ${status}">${status}</span>`;
+}
+
+// Crear bloque de paso
+function createStep(title, stepKey, stepData) {
+  let html = `
+    <div class="step">
+      <h2>${title}</h2>
+      <p class="status">Estado: ${badge(stepData.status)}</p>
+  `;
+
+  if (stepData.file) {
+    html += `
+      <div class="preview" style="display:block;">
+        <img src="kyc_docs/${stepData.file}">
+      </div>
+    `;
+  } else {
+    html += `<p class="status">Sin archivo</p>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// Cargar estado KYC
+async function loadKYC() {
+  const res = await fetch(`${API}/get_kyc_status/${user_id}`);
+  const kyc = await res.json();
+
+  if (kyc.error) {
+    alert(kyc.error);
+    return;
+  }
+
+  const container = document.getElementById("stepsContainer");
+  container.innerHTML = "";
+
+  container.innerHTML += createStep("Documento de identidad", "id_document", kyc.id_document);
+  container.innerHTML += createStep("Comprobante de domicilio", "address_document", kyc.address_document);
+  container.innerHTML += createStep("Selfie actual", "selfie", kyc.selfie);
+
+  // Paso 4 (sin archivo)
+  container.innerHTML += `
+    <div class="step">
+      <h2>Verificación de teléfono</h2>
+      <p class="status">Estado: ${badge(kyc.phone_verification.status)}</p>
+      <p class="status">Este paso se completa enviando tus datos por WhatsApp.</p>
+    </div>
+  `;
+
+  // Mensaje final
+  const finalBox = document.getElementById("finalMessage");
+
+  if (kyc.overall_status === "approved") {
+    finalBox.className = "message approved-box";
+    finalBox.textContent = "🎉 Tu KYC ha sido aprobado. Ya puedes usar todas las funciones.";
+  }
+  else if (["rejected"].includes(kyc.id_document.status) ||
+           ["rejected"].includes(kyc.address_document.status) ||
+           ["rejected"].includes(kyc.selfie.status) ||
+           ["rejected"].includes(kyc.phone_verification.status)) {
+
+    finalBox.className = "message rejected-box";
+    finalBox.textContent = "❌ Uno o más pasos fueron rechazados. Vuelve a subir los documentos.";
+  }
+  else {
+    finalBox.className = "message pending-box";
+    finalBox.textContent = "⏳ Tu verificación está en revisión. Por favor espera.";
+  }
+}
+
+loadKYC();
+</script>
+
+</body>
+</html>

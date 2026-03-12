@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>KYC Aprobado – BENDICIÓN</title>
+
+  <style>
+    body {
+      background: #0b0e11;
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #181a20;
+      padding: 40px;
+      border-radius: 15px;
+      text-align: center;
+      width: 420px;
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .checkmark {
+      font-size: 80px;
+      color: #1e7e34;
+      margin-bottom: 20px;
+      animation: pop 0.5s ease-out;
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.5); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    h1 {
+      color: #f0b90b;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #ccc;
+      font-size: 16px;
+      line-height: 1.5;
+      margin-bottom: 25px;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: #f0b90b;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      width: 100%;
+    }
+
+    button:hover {
+      background: #ffd44d;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="box">
+    <div class="checkmark">✔</div>
+
+    <h1>KYC Aprobado</h1>
+
+    <p>
+      ¡Felicidades! Tu verificación de identidad ha sido aprobada exitosamente.<br><br>
+      Ahora tienes acceso completo a todas las funciones de la plataforma.
+    </p>
+
+    <button onclick="window.location.href='panel.html'">
+      Ir al Panel Principal
+    </button>
+  </div>
+
+</body>
+</html>

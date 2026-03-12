@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login – BENDICIÓN</title>
+
+  <style>
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0e11;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: #181a20;
+      padding: 30px;
+      border-radius: 12px;
+      width: 360px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      color: #f0b90b;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: none;
+      background: #2b3139;
+      color: white;
+    }
+
+    input:focus {
+      outline: 2px solid #f0b90b;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #f0b90b;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #ffd44d;
+    }
+
+    a {
+      color: #f0b90b;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #result {
+      font-size: 12px;
+      margin-top: 10px;
+      color: #aaa;
+    }
+
+    .center {
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .forgot {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+  </style>
+
+</head>
+<body>
+
+  <div class="box">
+
+    <h1>Iniciar sesión</h1>
+
+    <label>Email:</label>
+    <input type="email" id="email">
+
+    <label>Contraseña:</label>
+    <input type="password" id="password">
+
+    <button id="btnLogin">Entrar</button>
+
+    <p id="result"></p>
+
+    <p class="forgot">
+      <a href="https://discord.gg/ze4YDqJYBy" target="_blank">
+        ¿Olvidaste tu contraseña?
+      </a>
+    </p>
+
+    <p class="center">
+      ¿No tienes cuenta?
+      <a href="register.html">Regístrate</a>
+    </p>
+
+  </div>
+
+
+  <script>
+    const API = "http://localhost:7777";
+
+    document.getElementById("btnLogin").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const res = await fetch(`${API}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await res.json();
+      document.getElementById("result").textContent = JSON.stringify(data);
+
+      if (data.user_id) {
+        localStorage.setItem("user_id", data.user_id);
+        alert("Login correcto");
+        window.location.href = "index.html";
+      }
+    };
+  </script>
+
+</body>
+</html>

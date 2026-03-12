@@ -1,17 +1,25 @@
-# Imagen base con Python 3.11
-FROM python:3.11-slim
+FROM python:3.10-slim
 
-# Establecer directorio de trabajo
+# Crear carpeta de trabajo
 WORKDIR /app
 
-# Copiar todos los archivos del proyecto al contenedor
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar archivos del proyecto
 COPY . /app
 
-# Instalar dependencias necesarias
-RUN pip install --no-cache-dir flask flask-cors ecdsa rsa
+# Instalar dependencias Python
+RUN pip install --no-cache-dir flask flask-cors ecdsa werkzeug
 
-# Exponer el puerto que usará Flask
+# Crear carpetas necesarias
+RUN mkdir -p kyc_docs
+
+# Exponer puertos (node.py = 7777, admin_server.py = 8888)
 EXPOSE 7777
+EXPOSE 8888
 
-# Comando para iniciar el nodo
-CMD ["python", "global_node.py"]
+# El comando final se define en docker-compose
+CMD ["python", "node.py"]

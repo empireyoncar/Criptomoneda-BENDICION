@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Admin – BENDICIÓN</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    pre { background: #eee; padding: 10px; }
+    button { margin: 5px; padding: 8px 15px; }
+    input { padding: 6px; width: 300px; }
+    h2 { margin-top: 40px; }
+  </style>
+</head>
+<body>
+
+  <h1>Panel de Administrador – BENDICIÓN</h1>
+
+  <p><strong>Admin ID:</strong> <span id="adminId">{{ session['user_id'] }}</span></p>
+
+  <hr>
+
+  <!-- 1. ESTADÍSTICAS -->
+  <section>
+    <h2>1. Estadísticas del sistema</h2>
+    <button id="btnStats">Ver estadísticas</button>
+    <pre id="stats"></pre>
+  </section>
+
+  <hr>
+
+  <!-- 2. USUARIOS -->
+  <section>
+    <h2>2. Gestión de usuarios</h2>
+    <button id="btnUsers">Ver todos los usuarios</button>
+    <pre id="users"></pre>
+  </section>
+
+  <hr>
+
+  <!-- 3. TRANSACCIONES -->
+  <section>
+    <h2>3. Gestión de transacciones</h2>
+    <button id="btnTx">Ver todas las transacciones</button><br><br>
+
+    <input type="text" id="txAddress" placeholder="Filtrar por address">
+    <button id="btnTxAddress">Buscar</button>
+
+    <pre id="tx"></pre>
+  </section>
+
+  <hr>
+
+  <!-- 4. BLOQUES -->
+  <section>
+    <h2>4. Bloques</h2>
+    <button id="btnBlocks">Ver blockchain</button>
+    <pre id="blocks"></pre>
+  </section>
+
+  <hr>
+
+  <!-- 5. KYC -->
+  <section>
+    <h2>5. Gestión KYC</h2>
+
+    <input type="text" id="kycUserId" placeholder="ID del usuario"><br><br>
+
+    <button id="btnKycDocs">Ver documentos</button>
+    <button id="btnApproveKYC">Aprobar KYC</button>
+    <button id="btnRejectKYC">Rechazar KYC</button>
+
+    <pre id="kycResult"></pre>
+  </section>
+
+  <script>
+    const API = "http://localhost:7777";
+    const adminId = "{{ session['user_id'] }}";
+
+    // 1. Estadísticas
+    document.getElementById("btnStats").onclick = async () => {
+      const res = await fetch(`${API}/admin/stats?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("stats").textContent = JSON.stringify(data, null, 2);
+    };
+
+    // 2. Usuarios
+    document.getElementById("btnUsers").onclick = async () => {
+      const res = await fetch(`${API}/admin/users?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("users").textContent = JSON.stringify(data, null, 2);
+    };
+
+    // 3. Transacciones
+    document.getElementById("btnTx").onclick = async () => {
+      const res = await fetch(`${API}/admin/transactions?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
+    };
+
+    document.getElementById("btnTxAddress").onclick = async () => {
+      const address = document.getElementById("txAddress").value;
+      const res = await fetch(`${API}/admin/transactions/${address}?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
+    };
+
+    // 4. Bloques
+    document.getElementById("btnBlocks").onclick = async () => {
+      const res = await fetch(`${API}/admin/blocks?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("blocks").textContent = JSON.stringify(data, null, 2);
+    };
+
+    // 5. KYC
+    document.getElementById("btnKycDocs").onclick = async () => {
+      const user_id = document.getElementById("kycUserId").value;
+      const res = await fetch(`${API}/admin/kyc/docs/${user_id}?user_id=${adminId}`);
+      const data = await res.json();
+      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+    };
+
+    document.getElementById("btnApproveKYC").onclick = async () => {
+      const user_id = document.getElementById("kycUserId").value;
+
+      const res = await fetch(`${API}/admin/kyc/approve?user_id=${adminId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id })
+      });
+
+      const data = await res.json();
+      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+    };
+
+    document.getElementById("btnRejectKYC").onclick = async () => {
+      const user_id = document.getElementById("kycUserId").value;
+
+      const res = await fetch(`${API}/admin/kyc/reject?user_id=${adminId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id })
+      });
+
+      const data = await res.json();
+      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+    };
+  </script>
+
+</body>
+</html>

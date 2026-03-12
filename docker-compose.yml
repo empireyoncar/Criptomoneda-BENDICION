@@ -1,12 +1,25 @@
 version: "3.9"
 
 services:
-  bendicion:
+  backend:
     build: .
-    container_name: bendicion
-    volumes:
-      - .:/app
-    working_dir: /app
+    container_name: bendicion_backend
+    command: python node.py
     ports:
       - "7777:7777"
-    restart: unless-stopped
+    volumes:
+      - ./database.json:/app/database.json
+      - ./kyc_docs:/app/kyc_docs
+    restart: always
+
+  admin:
+    build: .
+    container_name: bendicion_admin
+    command: python admin_server.py
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./database.json:/app/database.json
+      - ./kyc_docs:/app/kyc_docs
+      - ./templates:/app/templates
+    restart: always

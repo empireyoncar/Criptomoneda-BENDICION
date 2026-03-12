@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Verificación KYC – BENDICIÓN</title>
+
+  <style>
+    body {
+      background: #0b0e11;
+      color: white;
+      font-family: Arial;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #181a20;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      color: #f0b90b;
+    }
+
+    h2 {
+      margin-top: 30px;
+      color: #f0b90b;
+    }
+
+    .step {
+      margin-bottom: 25px;
+      padding: 15px;
+      background: #2b3139;
+      border-radius: 8px;
+    }
+
+    .status {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .pending { background: #555; }
+    .submitted { background: #007bff; }
+    .approved { background: #1e7e34; }
+    .rejected { background: #c82333; }
+
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border-radius: 6px;
+      border: none;
+      background: #0b0e11;
+      color: white;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #f0b90b;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #ffd44d;
+    }
+
+    .preview {
+      margin-top: 10px;
+      background: #000;
+      padding: 10px;
+      border-radius: 6px;
+      display: none;
+      width: 120px;
+      height: 120px;
+      overflow: hidden;
+    }
+
+    .preview img {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+    }
+
+    .progress {
+      width: 100%;
+      background: #2b3139;
+      height: 10px;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: #f0b90b;
+      width: 0%;
+      border-radius: 5px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <h1>Verificación KYC</h1>
+
+  <div class="progress">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <!-- PASO 1 -->
+  <div class="step">
+    <h2>Paso 1: Documento de identidad</h2>
+    <p class="status">Estado: <span id="status1" class="badge pending">Pendiente</span></p>
+
+    <input type="file" id="docID" accept="image/jpeg">
+    <small>Solo se aceptan archivos JPG</small><br>
+
+    <button onclick="uploadDoc('docID', 'id_document', 1)">Subir documento</button>
+
+    <div class="preview" id="preview1"></div>
+  </div>
+
+  <!-- PASO 2 -->
+  <div class="step">
+    <h2>Paso 2: Comprobante de domicilio</h2>
+    <p class="status">Estado: <span id="status2" class="badge pending">Pendiente</span></p>
+
+    <input type="file" id="docAddress" accept="image/jpeg">
+    <small>Solo se aceptan archivos JPG</small><br>
+
+    <button onclick="uploadDoc('docAddress', 'address_document', 2)">Subir comprobante</button>
+
+    <div class="preview" id="preview2"></div>
+  </div>
+
+  <!-- PASO 3 -->
+  <div class="step">
+    <h2>Paso 3: Selfie actual</h2>
+    <p class="status">Estado: <span id="status3" class="badge pending">Pendiente</span></p>
+
+    <input type="file" id="selfie" accept="image/jpeg">
+    <small>Solo se aceptan archivos JPG</small><br>
+
+    <button onclick="uploadDoc('selfie', 'selfie', 3)">Subir selfie</button>
+
+    <div class="preview" id="preview3"></div>
+  </div>
+
+  <!-- PASO 4 -->
+  <div class="step">
+    <h2>Paso 4: Verificación de teléfono</h2>
+    <p class="status">Estado: <span id="status4" class="badge pending">Pendiente</span></p>
+
+    <p>
+      Envía por WhatsApp:<br><br>
+      • Email<br>
+      • Nombre completo<br>
+      • Fecha de nacimiento<br><br>
+      Luego espera que nuestro equipo verifique tu información.
+    </p>
+
+    <button onclick="completePhoneVerification()">
+      Continuar verificación por WhatsApp
+    </button>
+  </div>
+
+</div>
+
+<script>
+const API = "http://localhost:7777";
+const user_id = localStorage.getItem("user_id");
+
+// Utilidad para badge
+function setBadge(el, status) {
+  el.className = "badge " + status;
+  el.textContent = status;
+}
+
+// Cargar estados reales al abrir la página
+async function loadKYC() {
+  const res = await fetch(`${API}/get_kyc_status/${user_id}`);
+  const kyc = await res.json();
+
+  if (kyc.error) return;
+
+  // Paso 1
+  setBadge(document.getElementById("status1"), kyc.id_document.status);
+  if (kyc.id_document.file) showPreview(1, kyc.id_document.file);
+
+  // Paso 2
+  setBadge(document.getElementById("status2"), kyc.address_document.status);
+  if (kyc.address_document.file) showPreview(2, kyc.address_document.file);
+
+  // Paso 3
+  setBadge(document.getElementById("status3"), kyc.selfie.status);
+  if (kyc.selfie.file) showPreview(3, kyc.selfie.file);
+
+  // Paso 4
+  setBadge(document.getElementById("status4"), kyc.phone_verification.status);
+
+  updateProgress();
+}
+
+// Mostrar miniatura real
+function showPreview(step, file) {
+  const preview = document.getElementById("preview" + step);
+  preview.style.display = "block";
+  preview.innerHTML = `<img src="kyc_docs/${file}">`;
+}
+
+// Subir documento
+async function uploadDoc(inputId, stepName, stepNumber) {
+  const fileInput = document.getElementById(inputId);
+  const file = fileInput.files[0];
+
+  if (!file) return alert("Selecciona un archivo JPG");
+  if (file.type !== "image/jpeg") return alert("Solo JPG");
+
+  const formData = new FormData();
+  formData.append("user_id", user_id);
+  formData.append("step", stepName);
+  formData.append("file", file);
+
+  const res = await fetch(`${API}/upload_kyc_step`, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  if (data.error) return alert(data.error);
+
+  showPreview(stepNumber, file.name);
+  setBadge(document.getElementById("status" + stepNumber), "submitted");
+
+  updateProgress();
+}
+
+// Paso 4
+async function completePhoneVerification() {
+  await fetch(`${API}/update_kyc_status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id,
+      step: "phone_verification",
+      status: "submitted"
+    })
+  });
+
+  setBadge(document.getElementById("status4"), "submitted");
+  updateProgress();
+
+  window.location.href = "KYCtelefono.html";
+}
+
+// Barra de progreso real
+function updateProgress() {
+  let completed = 0;
+
+  for (let i = 1; i <= 4; i++) {
+    const status = document.getElementById("status" + i).textContent;
+    if (status !== "pending") completed++;
+  }
+
+  const percent = (completed / 4) * 100;
+  document.getElementById("progressBar").style.width = percent + "%";
+}
+
+loadKYC();
+</script>
+
+</body>
+</html>

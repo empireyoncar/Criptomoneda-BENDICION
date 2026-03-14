@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template
 from flask_cors import CORS
 
 # Usamos un directorio de plantillas separado del admin
@@ -6,17 +6,11 @@ app = Flask(__name__, template_folder="templates_web")
 CORS(app)
 
 # -----------------------------
-# REDIRECCIÓN AUTOMÁTICA A LOGIN
-# -----------------------------
-@app.route("/")
-def root_redirect():
-    return redirect(url_for("login_page"))
-
-# -----------------------------
 # PÁGINAS PÚBLICAS DEL USUARIO
 # -----------------------------
 
-# INDEX (si quieres mantenerlo accesible manualmente)
+# INDEX
+@app.route("/")
 @app.route("/index")
 @app.route("/index.html")
 def home_page():
@@ -46,7 +40,7 @@ def kyc_page():
 def estado_kyc_page():
     return render_template("estado_kyc.html")
 
-# ADMIN KYC (vista del usuario)
+# ADMIN KYC (vista del usuario, no del admin real)
 @app.route("/admin_kyc")
 @app.route("/admin_kyc.html")
 def admin_kyc_page():

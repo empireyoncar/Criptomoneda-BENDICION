@@ -10,6 +10,8 @@ services:
     volumes:
       - ./:/app
     restart: always
+    networks:
+      - bendicion_net
 
   admin:
     build: .
@@ -20,6 +22,8 @@ services:
     volumes:
       - ./:/app
     restart: always
+    networks:
+      - bendicion_net
 
   web:
     build: .
@@ -30,3 +34,21 @@ services:
     volumes:
       - ./:/app
     restart: always
+    networks:
+      - bendicion_net
+
+  nginx:
+    image: nginx:latest
+    container_name: bendicion_nginx
+    ports:
+      - "5555:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web_static:/usr/share/nginx/html
+    restart: always
+    networks:
+      - bendicion_net
+
+networks:
+  bendicion_net:
+    driver: bridge

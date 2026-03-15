@@ -8,7 +8,8 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      - dbdata:/app/db
+      - ./database.json:/app/database.json
+      - ./wallet.json:/app/wallet.json
     restart: always
     networks:
       - bendicion_net
@@ -20,7 +21,8 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - dbdata:/app/db
+      - ./database.json:/app/database.json
+      - ./wallet.json:/app/wallet.json
     restart: always
     networks:
       - bendicion_net
@@ -32,13 +34,10 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - dbdata:/app/db
+      - ./templates_web:/app/templates_web
     restart: always
     networks:
       - bendicion_net
-
-volumes:
-  dbdata:
 
 networks:
   bendicion_net:

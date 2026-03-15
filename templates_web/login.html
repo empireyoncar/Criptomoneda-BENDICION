@@ -1,104 +1,194 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Login – BENDICIÓN</title>
+    <meta charset="UTF-8">
+    <title>Login – BENDICIÓN</title>
 
-  <style>
+    <style>
+        :root {
+            --bg: #0b0e11;
+            --bg-box: #181a20;
+            --text: #eaecef;
+            --text-muted: #8b8d90;
+            --primary: #f0b90b;
+            --primary-hover: #c99700;
+            --border: #2b3139;
+            --error: #ff4d4f;
+            --success: #52c41a;
+        }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b0e11;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+        body.light {
+            --bg: #f4f4f4;
+            --bg-box: white;
+            --text: #222;
+            --text-muted: #555;
+            --primary: #d4a20a;
+            --primary-hover: #b58900;
+            --border: #ccc;
+        }
 
-    .box {
-      background: #181a20;
-      padding: 30px;
-      border-radius: 12px;
-      width: 360px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    h1 {
-      text-align: center;
-      color: #f0b90b;
-      margin-bottom: 20px;
-    }
+        #particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
+        }
 
-    label {
-      font-size: 14px;
-      color: #ccc;
-    }
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 8s infinite linear;
+        }
 
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      border: none;
-      background: #2b3139;
-      color: white;
-    }
+        @keyframes float {
+            from { transform: translateY(0); opacity: 0.7; }
+            to { transform: translateY(-800px); opacity: 0; }
+        }
 
-    input:focus {
-      outline: 2px solid #f0b90b;
-    }
+        .box {
+            background: var(--bg-box);
+            padding: 30px;
+            border-radius: 12px;
+            width: 360px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+            animation: fadeIn 0.6s ease;
+            position: relative;
+            z-index: 10;
+        }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      background: #f0b90b;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-    button:hover {
-      background: #ffd44d;
-    }
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 20px;
+            animation: glow 2s infinite alternate;
+        }
 
-    a {
-      color: #f0b90b;
-      text-decoration: none;
-    }
+        @keyframes glow {
+            from { text-shadow: 0 0 5px var(--primary); }
+            to { text-shadow: 0 0 15px var(--primary); }
+        }
 
-    a:hover {
-      text-decoration: underline;
-    }
+        label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
 
-    #result {
-      font-size: 12px;
-      margin-top: 10px;
-      color: #aaa;
-    }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            transition: 0.2s;
+        }
 
-    .center {
-      text-align: center;
-      margin-top: 10px;
-    }
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 5px rgba(240,185,11,0.4);
+        }
 
-    .forgot {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
-    }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-  </style>
+        button:hover {
+            background: var(--primary-hover);
+        }
 
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.error {
+            background: rgba(255,77,79,0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .alert.success {
+            background: rgba(82,196,26,0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .center {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: var(--bg-box);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 30;
+        }
+    </style>
 </head>
+
 <body>
 
-  <div class="box">
+<div id="particles"></div>
+
+<button id="themeToggle">Modo Claro</button>
+
+<div class="box">
 
     <h1>Iniciar sesión</h1>
+
+    <div id="alertBox" class="alert"></div>
 
     <label>Email:</label>
     <input type="email" id="email">
@@ -108,12 +198,9 @@
 
     <button id="btnLogin">Entrar</button>
 
-    <p id="result"></p>
-
-    <p class="forgot">
-      <a href="https://discord.gg/ze4YDqJYBy" target="_blank">
-        ¿Olvidaste tu contraseña?
-      </a>
+    <p class="center">
+      ¿Olvidaste tu contraseña?
+      <a href="https://discord.gg/ze4YDqJYBy" target="_blank">Recuperar</a>
     </p>
 
     <p class="center">
@@ -121,32 +208,88 @@
       <a href="register.html">Regístrate</a>
     </p>
 
-  </div>
+</div>
 
+<script>
+    /* ------------------------------
+       PARTICULAS
+    ------------------------------ */
+    const particles = document.getElementById("particles");
 
-  <script>
-    const API = "http://localhost:7777";
+    function createParticle() {
+        const p = document.createElement("div");
+        p.classList.add("particle");
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = "100%";
+        p.style.animationDuration = 4 + Math.random() * 6 + "s";
+        p.style.opacity = Math.random();
+        particles.appendChild(p);
+
+        setTimeout(() => p.remove(), 10000);
+    }
+
+    setInterval(createParticle, 150);
+
+    /* ------------------------------
+       MODO CLARO/OSCURO
+    ------------------------------ */
+    const toggle = document.getElementById("themeToggle");
+
+    toggle.onclick = () => {
+        document.body.classList.toggle("light");
+        toggle.textContent = document.body.classList.contains("light")
+            ? "Modo Oscuro"
+            : "Modo Claro";
+    };
+
+    /* ------------------------------
+       LOGIN
+    ------------------------------ */
+    const API = "http://localhost:5000"; // backend público
+
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const alertBox = document.getElementById("alertBox");
+
+    function showAlert(msg, type="error") {
+        alertBox.textContent = msg;
+        alertBox.className = "alert " + type;
+        alertBox.style.display = "block";
+    }
 
     document.getElementById("btnLogin").onclick = async () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+        const emailVal = email.value.trim();
+        const passVal = password.value.trim();
 
-      const res = await fetch(`${API}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+        if (!emailVal || !passVal) {
+            showAlert("Completa todos los campos.");
+            return;
+        }
 
-      const data = await res.json();
-      document.getElementById("result").textContent = JSON.stringify(data);
+        const res = await fetch(`${API}/login_user`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailVal, password: passVal })
+        });
 
-      if (data.user_id) {
-        localStorage.setItem("user_id", data.user_id);
-        alert("Login correcto");
-        window.location.href = "index.html";
-      }
+        const data = await res.json();
+
+        if (data.error) {
+            showAlert(data.error);
+            return;
+        }
+
+        if (data.user_id) {
+            localStorage.setItem("user_id", data.user_id);
+            showAlert("Login correcto", "success");
+            setTimeout(() => {
+                window.location.href = "wallet.html";  /* ← ACTUALIZADO */
+            }, 800);
+        } else {
+            showAlert("Credenciales incorrectas.");
+        }
     };
-  </script>
+</script>
 
 </body>
 </html>

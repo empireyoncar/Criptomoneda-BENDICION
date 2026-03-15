@@ -5,34 +5,94 @@
   <title>Registro – BENDICIÓN</title>
 
   <style>
+    :root {
+      --bg: #0b0e11;
+      --bg-box: #181a20;
+      --text: #eaecef;
+      --text-muted: #8b8d90;
+      --primary: #f0b90b;
+      --primary-hover: #c99700;
+      --border: #2b3139;
+      --error: #ff4d4f;
+      --success: #52c41a;
+    }
+
+    body.light {
+      --bg: #f4f4f4;
+      --bg-box: white;
+      --text: #222;
+      --text-muted: #555;
+      --primary: #d4a20a;
+      --primary-hover: #b58900;
+      --border: #ccc;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #0b0e11;
-      color: white;
+      background: var(--bg);
+      color: var(--text);
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      overflow: hidden;
+    }
+
+    #particles {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--primary);
+      border-radius: 50%;
+      opacity: 0.7;
+      animation: float 8s infinite linear;
+    }
+
+    @keyframes float {
+      from { transform: translateY(0); opacity: 0.7; }
+      to { transform: translateY(-800px); opacity: 0; }
     }
 
     .box {
-      background: #181a20;
+      background: var(--bg-box);
       padding: 30px;
       border-radius: 12px;
       width: 380px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      box-shadow: 0 0 20px rgba(240,185,11,0.15);
+      animation: fadeIn 0.6s ease;
+      position: relative;
+      z-index: 10;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     h1 {
       text-align: center;
       margin-bottom: 20px;
-      color: #f0b90b;
+      color: var(--primary);
+      animation: glow 2s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 5px var(--primary); }
+      to { text-shadow: 0 0 15px var(--primary); }
     }
 
     label {
       font-size: 14px;
-      color: #ccc;
+      color: var(--text-muted);
     }
 
     input {
@@ -41,43 +101,52 @@
       margin-top: 5px;
       margin-bottom: 12px;
       border-radius: 6px;
-      border: none;
-      background: #2b3139;
-      color: white;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      transition: 0.2s;
     }
 
     input:focus {
-      outline: 2px solid #f0b90b;
+      border-color: var(--primary);
+      box-shadow: 0 0 5px rgba(240,185,11,0.4);
     }
 
     button {
       width: 100%;
       padding: 12px;
-      background: #f0b90b;
+      background: var(--primary);
       border: none;
       border-radius: 6px;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
       margin-top: 10px;
     }
 
     button:hover {
-      background: #ffd44d;
+      background: var(--primary-hover);
     }
 
-    a {
-      color: #f0b90b;
-      text-decoration: none;
+    .alert {
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 14px;
+      display: none;
     }
 
-    a:hover {
-      text-decoration: underline;
+    .alert.error {
+      background: rgba(255,77,79,0.2);
+      color: var(--error);
+      border: 1px solid var(--error);
     }
 
-    #result {
-      font-size: 12px;
-      margin-top: 10px;
-      color: #aaa;
+    .alert.success {
+      background: rgba(82,196,26,0.2);
+      color: var(--success);
+      border: 1px solid var(--success);
     }
 
     .center {
@@ -85,92 +154,163 @@
       margin-top: 10px;
     }
 
-  </style>
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
 
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #themeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--primary);
+      color: var(--bg-box);
+      border: none;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 30;
+    }
+  </style>
 </head>
+
 <body>
 
-  <div class="box">
+<div id="particles"></div>
 
-    <h1>Registro – BENDICIÓN</h1>
+<button id="themeToggle">Modo Claro</button>
 
-    <label>Nombre completo:</label>
-    <input type="text" id="fullname" required>
+<div class="box">
 
-    <label>Fecha de nacimiento:</label>
-    <input type="date" id="birthdate" required>
+  <h1>Registro – BENDICIÓN</h1>
 
-    <label>País:</label>
-    <input type="text" id="country" required>
+  <div id="alertBox" class="alert"></div>
 
-    <label>Dirección completa:</label>
-    <input type="text" id="address" required>
+  <label>Nombre completo:</label>
+  <input type="text" id="fullname">
 
-    <label>Teléfono (opcional):</label>
-    <input type="text" id="phone" placeholder="Opcional">
+  <label>Fecha de nacimiento:</label>
+  <input type="date" id="birthdate">
 
-    <label>Email:</label>
-    <input type="email" id="email" required>
+  <label>País:</label>
+  <input type="text" id="country">
 
-    <label>Contraseña:</label>
-    <input type="password" id="password" required>
+  <label>Dirección completa:</label>
+  <input type="text" id="address">
 
-    <label>Confirmar contraseña:</label>
-    <input type="password" id="password2" required>
+  <label>Teléfono (opcional):</label>
+  <input type="text" id="phone" placeholder="Opcional">
 
-    <button id="btnRegister">Registrarme</button>
+  <label>Email:</label>
+  <input type="email" id="email">
 
-    <p id="result"></p>
+  <label>Contraseña:</label>
+  <input type="password" id="password">
 
-    <p class="center">
-      ¿Ya tienes cuenta?
-      <a href="login.html">Inicia sesión</a>
-    </p>
+  <label>Confirmar contraseña:</label>
+  <input type="password" id="password2">
 
-  </div>
+  <button id="btnRegister">Registrarme</button>
 
+  <p class="center">
+    ¿Ya tienes cuenta?
+    <a href="login.html">Inicia sesión</a>
+  </p>
 
-  <script>
-    const API = "http://localhost:7777";
+</div>
 
-    document.getElementById("btnRegister").onclick = async () => {
-      const fullname = document.getElementById("fullname").value;
-      const birthdate = document.getElementById("birthdate").value;
-      const country = document.getElementById("country").value;
-      const address = document.getElementById("address").value;
-      const phone = document.getElementById("phone").value || null;
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const password2 = document.getElementById("password2").value;
+<script>
+  /* Partículas */
+  const particles = document.getElementById("particles");
 
-      if (password !== password2) {
-        alert("Las contraseñas no coinciden");
-        return;
-      }
+  function createParticle() {
+    const p = document.createElement("div");
+    p.classList.add("particle");
+    p.style.left = Math.random() * 100 + "%";
+    p.style.top = "100%";
+    p.style.animationDuration = 4 + Math.random() * 6 + "s";
+    p.style.opacity = Math.random();
+    particles.appendChild(p);
+    setTimeout(() => p.remove(), 10000);
+  }
 
-      const res = await fetch(`${API}/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fullname,
-          birthdate,
-          country,
-          address,
-          phone,
-          email,
-          password
-        })
-      });
+  setInterval(createParticle, 150);
 
-      const data = await res.json();
-      document.getElementById("result").textContent = JSON.stringify(data);
+  /* Modo claro/oscuro */
+  const toggle = document.getElementById("themeToggle");
 
-      if (data.user_id) {
-        alert("Registro exitoso. Ahora inicia sesión.");
+  toggle.onclick = () => {
+    document.body.classList.toggle("light");
+    toggle.textContent = document.body.classList.contains("light")
+      ? "Modo Oscuro"
+      : "Modo Claro";
+  };
+
+  /* Registro */
+  const API = "http://localhost:5000"; // backend correcto
+
+  const alertBox = document.getElementById("alertBox");
+
+  function showAlert(msg, type="error") {
+    alertBox.textContent = msg;
+    alertBox.className = "alert " + type;
+    alertBox.style.display = "block";
+  }
+
+  document.getElementById("btnRegister").onclick = async () => {
+    const fullname = document.getElementById("fullname").value.trim();
+    const birthdate = document.getElementById("birthdate").value.trim();
+    const country = document.getElementById("country").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const phone = document.getElementById("phone").value.trim() || null;
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const password2 = document.getElementById("password2").value.trim();
+
+    if (!fullname || !birthdate || !country || !address || !email || !password) {
+      showAlert("Completa todos los campos obligatorios.");
+      return;
+    }
+
+    if (password !== password2) {
+      showAlert("Las contraseñas no coinciden.");
+      return;
+    }
+
+    const res = await fetch(`${API}/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullname,
+        birthdate,
+        country,
+        address,
+        phone,
+        email,
+        password
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+      showAlert(data.error);
+      return;
+    }
+
+    if (data.user_id) {
+      showAlert("Registro exitoso. Redirigiendo...", "success");
+      setTimeout(() => {
         window.location.href = "login.html";
-      }
-    };
-  </script>
+      }, 800);
+    }
+  };
+</script>
 
 </body>
 </html>

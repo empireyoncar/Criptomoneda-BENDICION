@@ -1,20 +1,41 @@
 from flask import Flask, render_template
 from flask_cors import CORS
+from jinja2 import ChoiceLoader, FileSystemLoader
 
-# Usamos un directorio de plantillas separado del admin
-app = Flask(__name__, template_folder="templates_web")
+app = Flask(__name__)
 CORS(app)
+
+# -----------------------------------------
+# PERMITIR VARIAS CARPETAS DE PLANTILLAS
+# -----------------------------------------
+app.jinja_loader = ChoiceLoader([
+    FileSystemLoader("templates"),        # Panel admin
+    FileSystemLoader("templates_web"),    # Web pública
+    FileSystemLoader("templates_KYC")     # Páginas KYC
+])
 
 # -----------------------------
 # PÁGINAS PÚBLICAS DEL USUARIO
 # -----------------------------
 
-# INDEX
+# WALLET (PÁGINA PRINCIPAL)
 @app.route("/")
-@app.route("/index")
-@app.route("/index.html")
-def home_page():
-    return render_template("index.html")
+@app.route("/wallet")
+@app.route("/wallet.html")
+def wallet_page():
+    return render_template("wallet.html")
+
+# OPERACIONES (ENVÍO, BALANCE, BLOQUES)
+@app.route("/envio")
+@app.route("/envio.html")
+def envio_page():
+    return render_template("envio.html")
+
+# EXPLORADOR DE BLOCKCHAIN
+@app.route("/blockchainbendicion")
+@app.route("/blockchainbendicion.html")
+def blockchain_page():
+    return render_template("blockchainbendicion.html")
 
 # REGISTER
 @app.route("/register")
@@ -40,7 +61,7 @@ def kyc_page():
 def estado_kyc_page():
     return render_template("estado_kyc.html")
 
-# ADMIN KYC (vista del usuario, no del admin real)
+# ADMIN KYC (vista del usuario)
 @app.route("/admin_kyc")
 @app.route("/admin_kyc.html")
 def admin_kyc_page():

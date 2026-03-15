@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Operaciones – BENDICIÓN</title>
+
+    <style>
+        :root {
+            --bg: #0b0e11;
+            --bg-box: #181a20;
+            --text: #eaecef;
+            --text-muted: #8b8d90;
+            --primary: #f0b90b;
+            --primary-hover: #c99700;
+            --border: #2b3139;
+            --error: #ff4d4f;
+            --success: #52c41a;
+        }
+
+        body.light {
+            --bg: #f4f4f4;
+            --bg-box: white;
+            --text: #222;
+            --text-muted: #555;
+            --primary: #d4a20a;
+            --primary-hover: #b58900;
+            --border: #ccc;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 8s infinite linear;
+        }
+
+        @keyframes float {
+            from { transform: translateY(0); opacity: 0.7; }
+            to { transform: translateY(-800px); opacity: 0; }
+        }
+
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: var(--bg-box);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 30;
+        }
+
+        .wrapper {
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+        }
+
+        .header-box {
+            background: var(--bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        .header-box h1 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .header-box p {
+            margin: 4px 0;
+            color: var(--text-muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-box);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #2b3139;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #3a414c;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: #000;
+        }
+
+        .btn-warning:hover {
+            background: #d68910;
+        }
+
+        label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 5px rgba(240,185,11,0.4);
+        }
+
+        pre {
+            background: #111318;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 220px;
+            overflow: auto;
+            font-size: 12px;
+        }
+
+        .mono {
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.error {
+            background: rgba(255,77,79,0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .alert.success {
+            background: rgba(82,196,26,0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="particles"></div>
+<button id="themeToggle">Modo Claro</button>
+
+<div class="wrapper">
+
+    <div class="header-box">
+        <h1>Operaciones BENDICIÓN</h1>
+        <p>Address actual: <span id="address" class="mono"></span></p>
+        <p class="mono">Usuario ID: <span id="userId"></span></p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <div class="grid">
+
+        <!-- Balance -->
+        <section class="card">
+            <h2>Balance</h2>
+            <p>Consulta cuántas monedas BENDICIÓN tienes actualmente en tu wallet.</p>
+            <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
+            <p><strong>Balance:</strong> <span id="balance"></span></p>
+        </section>
+
+        <!-- Enviar -->
+        <section class="card">
+            <h2>Enviar BENDICIÓN</h2>
+
+            <label>Address destino:</label>
+            <input type="text" id="toAddress" placeholder="Address del destinatario">
+
+            <label>Monto:</label>
+            <input type="number" id="amount" step="0.0001" placeholder="Ej: 10">
+
+            <button id="btnSend" class="btn btn-primary">Enviar</button>
+            <pre id="sendResult"></pre>
+        </section>
+
+        <!-- Mis transacciones -->
+        <section class="card">
+            <h2>Mis transacciones</h2>
+            <p>Consulta todas las transacciones asociadas a tu dirección.</p>
+            <button id="btnMyTx" class="btn btn-secondary">Ver transacciones</button>
+            <pre id="myTx"></pre>
+        </section>
+
+        <!-- Crear bloque -->
+        <section class="card">
+            <h2>Crear bloque</h2>
+            <p>Toma las transacciones pendientes y crea un nuevo bloque en la blockchain.</p>
+            <button id="btnCommit" class="btn btn-warning">Crear bloque</button>
+            <pre id="commitResult"></pre>
+        </section>
+
+        <!-- Navegación -->
+        <section class="card">
+            <h2>Navegación</h2>
+            <button id="btnGoWallet" class="btn btn-secondary">Volver a Wallet</button>
+            <button id="btnGoChain" class="btn btn-secondary">Ver Blockchain</button>
+        </section>
+
+    </div>
+</div>
+
+<script>
+    // Partículas
+    const particles = document.getElementById("particles");
+    function createParticle() {
+        const p = document.createElement("div");
+        p.classList.add("particle");
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = "100%";
+        p.style.animationDuration = 4 + Math.random() * 6 + "s";
+        p.style.opacity = Math.random();
+        particles.appendChild(p);
+        setTimeout(() => p.remove(), 10000);
+    }
+    setInterval(createParticle, 150);
+
+    // Modo claro/oscuro
+    const toggle = document.getElementById("themeToggle");
+    toggle.onclick = () => {
+        document.body.classList.toggle("light");
+        toggle.textContent = document.body.classList.contains("light")
+            ? "Modo Oscuro"
+            : "Modo Claro";
+    };
+
+    const API = "http://localhost:7777";
+
+    const alertBox = document.getElementById("alertBox");
+    function showAlert(msg, type="error") {
+        alertBox.textContent = msg;
+        alertBox.className = "alert " + type;
+        alertBox.style.display = "block";
+    }
+
+    // Seguridad: exigir login y wallet
+    let userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("Debes iniciar sesión primero.");
+        window.location.href = "login.html";
+    } else {
+        document.getElementById("userId").textContent = userId;
+    }
+
+    const address = localStorage.getItem("address");
+    const privateKey = localStorage.getItem("private_key");
+    const publicKey = localStorage.getItem("public_key");
+
+    if (!address || !privateKey || !publicKey) {
+        alert("Primero configura tu wallet en la página principal.");
+        window.location.href = "wallet.html";
+    } else {
+        document.getElementById("address").textContent = address;
+    }
+
+    // Ver balance
+    document.getElementById("btnGetBalance").onclick = async () => {
+        try {
+            const res = await fetch(`${API}/balance/${address}`);
+            const data = await res.json();
+            document.getElementById("balance").textContent =
+                data && typeof data.balance !== "undefined" ? data.balance : "Error";
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al obtener el balance.", "error");
+        }
+    };
+
+    // Enviar transacción
+    document.getElementById("btnSend").onclick = async () => {
+        const toAddress = document.getElementById("toAddress").value.trim();
+        const amount = parseFloat(document.getElementById("amount").value);
+
+        if (!toAddress || !amount || amount <= 0) {
+            showAlert("Completa los campos con un monto válido.", "error");
+            return;
+        }
+
+        const tx = { from: address, to: toAddress, amount };
+
+        try {
+            const res = await fetch(`${API}/send_tx`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    private_key: privateKey,
+                    public_key: publicKey,
+                    tx
+                })
+            });
+
+            const data = await res.json();
+            document.getElementById("sendResult").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al enviar la transacción.", "error");
+        }
+    };
+
+    // Mis transacciones
+    document.getElementById("btnMyTx").onclick = async () => {
+        try {
+            const res = await fetch(`${API}/my_transactions/${address}`);
+            const data = await res.json();
+            document.getElementById("myTx").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al obtener tus transacciones.", "error");
+        }
+    };
+
+    // Crear bloque
+    document.getElementById("btnCommit").onclick = async () => {
+        try {
+            const res = await fetch(`${API}/commit`, { method: "POST" });
+            const data = await res.json();
+            document.getElementById("commitResult").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al crear el bloque.", "error");
+        }
+    };
+
+    // Navegación
+    document.getElementById("btnGoWallet").onclick = () => {
+        window.location.href = "wallet.html";
+    };
+
+    document.getElementById("btnGoChain").onclick = () => {
+        window.location.href = "blockchainbendicion.html";
+    };
+</script>
+
+</body>
+</html>

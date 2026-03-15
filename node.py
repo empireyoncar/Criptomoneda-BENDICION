@@ -48,7 +48,7 @@ def require_admin(func):
 # ============================================================
 #   REGISTRO NIVEL 3
 # ============================================================
-@app.route("/register", methods=["POST"])
+@app.route("/crypto/register", methods=["POST"])
 def register():
     data = request.json
 
@@ -74,7 +74,7 @@ def register():
 # ============================================================
 #   LOGIN
 # ============================================================
-@app.route("/login", methods=["POST"])
+@app.route("/crypto/login", methods=["POST"])
 def login():
     data = request.json
     email = data.get("email")
@@ -90,29 +90,27 @@ def login():
 # ============================================================
 #   WALLET DEL USUARIO
 # ============================================================
-@app.route("/user_wallet/<user_id>", methods=["GET"])
+@app.route("/crypto/user_wallet/<user_id>", methods=["GET"])
 def user_wallet(user_id):
     wallet = get_user_wallet(user_id)
     return jsonify({"wallet": wallet})
 
+
 # ============================================================
 #   OBTENER INFORMACIÓN COMPLETA DE UNA WALLET
 # ============================================================
-@app.route("/wallet_info/<address>", methods=["GET"])
+@app.route("/crypto/wallet_info/<address>", methods=["GET"])
 def wallet_info(address):
     try:
-        # Cargar wallets.json
         with open("wallets.json", "r") as f:
             data = json.load(f)
 
         wallets = data.get("wallets", [])
 
-        # Buscar la wallet por address
         for w in wallets:
             if w.get("address") == address:
                 return jsonify(w), 200
 
-        # Si no se encuentra
         return jsonify({"error": "Wallet not found"}), 404
 
     except Exception as e:
@@ -122,7 +120,7 @@ def wallet_info(address):
 # ============================================================
 #   ASOCIAR WALLET
 # ============================================================
-@app.route("/link_wallet", methods=["POST"])
+@app.route("/crypto/link_wallet", methods=["POST"])
 def link_wallet():
     data = request.json
     user_id = data.get("user_id")
@@ -138,7 +136,7 @@ def link_wallet():
 # ============================================================
 #   REGISTRAR WALLET EN BLOCKCHAIN
 # ============================================================
-@app.route("/generate_wallet", methods=["POST"])
+@app.route("/crypto/generate_wallet", methods=["POST"])
 def generate_wallet_route():
     data = request.json
     user_id = data.get("user_id")
@@ -151,10 +149,12 @@ def generate_wallet_route():
         "public_key": wallet["public_key"],
         "private_key": wallet["private_key"]
     })
+
+
 # ============================================================
 #   TRANSACCIONES DEL USUARIO
 # ============================================================
-@app.route("/user_transactions/<address>", methods=["GET"])
+@app.route("/crypto/user_transactions/<address>", methods=["GET"])
 def user_transactions(address):
     txs = []
     for block in blockchain.chain:
@@ -165,12 +165,12 @@ def user_transactions(address):
 
 
 # ============================================================
-#   NUEVO: SUBIR DOCUMENTO KYC POR PASO
+#   SUBIR DOCUMENTO KYC
 # ============================================================
-@app.route("/upload_kyc_step", methods=["POST"])
+@app.route("/crypto/upload_kyc_step", methods=["POST"])
 def upload_kyc_step():
     user_id = request.form.get("user_id")
-    step = request.form.get("step")  # id_document / address_document / selfie
+    step = request.form.get("step")
     file = request.files.get("file")
 
     if step not in ["id_document", "address_document", "selfie"]:
@@ -195,9 +195,9 @@ def upload_kyc_step():
 
 
 # ============================================================
-#   NUEVO: ACTUALIZAR ESTADO DE UN PASO KYC
+#   ACTUALIZAR ESTADO KYC
 # ============================================================
-@app.route("/update_kyc_status", methods=["POST"])
+@app.route("/crypto/update_kyc_status", methods=["POST"])
 def update_kyc_status():
     data = request.json
     user_id = data.get("user_id")
@@ -218,9 +218,9 @@ def update_kyc_status():
 
 
 # ============================================================
-#   NUEVO: OBTENER ESTADO KYC COMPLETO
+#   OBTENER ESTADO KYC
 # ============================================================
-@app.route("/get_kyc_status/<user_id>", methods=["GET"])
+@app.route("/crypto/get_kyc_status/<user_id>", methods=["GET"])
 def get_kyc_status(user_id):
     db = load_db()
     for u in db["users"]:
@@ -230,9 +230,9 @@ def get_kyc_status(user_id):
 
 
 # ============================================================
-#   NUEVO: ADMIN APRUEBA UN PASO KYC
+#   ADMIN APRUEBA KYC
 # ============================================================
-@app.route("/admin/kyc/approve_step", methods=["POST"])
+@app.route("/crypto/admin/kyc/approve_step", methods=["POST"])
 @require_admin
 def admin_approve_step():
     data = request.json
@@ -247,7 +247,6 @@ def admin_approve_step():
         if u["id"] == user_id:
             u["kyc"][step]["status"] = "approved"
 
-            # Si todos los pasos están aprobados → overall_status = approved
             steps = u["kyc"]
             if all(
                 steps[s]["status"] == "approved"
@@ -264,7 +263,7 @@ def admin_approve_step():
 # ============================================================
 #   BALANCE
 # ============================================================
-@app.route("/balance/<address>", methods=["GET"])
+@app.route("/crypto/balance/<address>", methods=["GET"])
 def balance(address):
     return jsonify({"address": address, "balance": blockchain.get_balance(address)})
 
@@ -272,7 +271,7 @@ def balance(address):
 # ============================================================
 #   TRANSACCIÓN FIRMADA
 # ============================================================
-@app.route("/send_tx", methods=["POST"])
+@app.route("/crypto/send_tx", methods=["POST"])
 def send_tx():
     data = request.json
     tx = data.get("tx")
@@ -304,7 +303,7 @@ def send_tx():
 # ============================================================
 #   CREAR BLOQUE
 # ============================================================
-@app.route("/commit", methods=["POST"])
+@app.route("/crypto/commit", methods=["POST"])
 def commit():
     block = blockchain.commit_pending_transactions()
     if block is None:
@@ -315,7 +314,7 @@ def commit():
 # ============================================================
 #   VER BLOCKCHAIN
 # ============================================================
-@app.route("/chain", methods=["GET"])
+@app.route("/crypto/chain", methods=["GET"])
 def chain():
     return jsonify([{
         "index": b.index,
@@ -329,14 +328,14 @@ def chain():
 # ============================================================
 #   PANEL ADMIN
 # ============================================================
-@app.route("/admin/users", methods=["GET"])
+@app.route("/crypto/admin/users", methods=["GET"])
 @require_admin
 def admin_users():
     db = load_db()
     return jsonify(db["users"])
 
 
-@app.route("/admin/transactions", methods=["GET"])
+@app.route("/crypto/admin/transactions", methods=["GET"])
 @require_admin
 def admin_transactions():
     txs = []
@@ -346,7 +345,7 @@ def admin_transactions():
     return jsonify(txs)
 
 
-@app.route("/admin/blocks", methods=["GET"])
+@app.route("/crypto/admin/blocks", methods=["GET"])
 @require_admin
 def admin_blocks():
     return jsonify([{

@@ -73,40 +73,41 @@
   </section>
 
   <script>
-    const API = "http://localhost:8888";
+    // API detrás de NGINX
+    const API = "https://empireyoncar.duckdns.org/api/admin";
     const adminId = "{{ session['user_id'] }}";
 
     // 1. Estadísticas
     document.getElementById("btnStats").onclick = async () => {
-      const res = await fetch(`${API}/admin/stats?user_id=${adminId}`);
+      const res = await fetch(`${API}/stats?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("stats").textContent = JSON.stringify(data, null, 2);
     };
 
     // 2. Usuarios
     document.getElementById("btnUsers").onclick = async () => {
-      const res = await fetch(`${API}/admin/users?user_id=${adminId}`);
+      const res = await fetch(`${API}/users?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("users").textContent = JSON.stringify(data, null, 2);
     };
 
     // 3. Transacciones
     document.getElementById("btnTx").onclick = async () => {
-      const res = await fetch(`${API}/admin/transactions?user_id=${adminId}`);
+      const res = await fetch(`${API}/transactions?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
     };
 
     document.getElementById("btnTxAddress").onclick = async () => {
       const address = document.getElementById("txAddress").value;
-      const res = await fetch(`${API}/admin/transactions/${address}?user_id=${adminId}`);
+      const res = await fetch(`${API}/transactions/${address}?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
     };
 
     // 4. Bloques
     document.getElementById("btnBlocks").onclick = async () => {
-      const res = await fetch(`${API}/admin/blocks?user_id=${adminId}`);
+      const res = await fetch(`${API}/blocks?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("blocks").textContent = JSON.stringify(data, null, 2);
     };
@@ -114,7 +115,7 @@
     // 5. KYC
     document.getElementById("btnKycDocs").onclick = async () => {
       const user_id = document.getElementById("kycUserId").value;
-      const res = await fetch(`${API}/admin/kyc/docs/${user_id}?user_id=${adminId}`);
+      const res = await fetch(`${API}/kyc/docs/${user_id}?user_id=${adminId}`);
       const data = await res.json();
       document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
     };
@@ -122,7 +123,7 @@
     document.getElementById("btnApproveKYC").onclick = async () => {
       const user_id = document.getElementById("kycUserId").value;
 
-      const res = await fetch(`${API}/admin/kyc/approve?user_id=${adminId}`, {
+      const res = await fetch(`${API}/kyc/approve?user_id=${adminId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id })
@@ -135,7 +136,7 @@
     document.getElementById("btnRejectKYC").onclick = async () => {
       const user_id = document.getElementById("kycUserId").value;
 
-      const res = await fetch(`${API}/admin/kyc/reject?user_id=${adminId}`, {
+      const res = await fetch(`${API}/kyc/reject?user_id=${adminId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id })

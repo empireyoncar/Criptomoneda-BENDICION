@@ -3,47 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <title>Login Administrador – BENDICIÓN</title>
+
     <style>
+        /* ------------------------------
+           TEMA OSCURO ESTILO BINANCE
+        ------------------------------ */
         body {
-            font-family: Arial;
-            background: #f4f4f4;
+            font-family: Arial, sans-serif;
+            background: #0b0e11;
+            color: #eaecef;
+            margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
+
         .login-box {
-            background: white;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            width: 350px;
+            background: #181a20;
+            padding: 35px;
+            border-radius: 10px;
+            width: 380px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+            animation: fadeIn 0.6s ease;
         }
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0056b3;
-        }
+
         h2 {
             text-align: center;
+            color: #f0b90b;
+            margin-bottom: 25px;
+            font-size: 26px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #eaecef;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            margin-bottom: 18px;
+            border: 1px solid #2b3139;
+            border-radius: 6px;
+            background: #0b0e11;
+            color: #eaecef;
+            font-size: 15px;
+            transition: 0.2s;
+        }
+
+        input:focus {
+            border-color: #f0b90b;
+            outline: none;
+            box-shadow: 0 0 5px rgba(240,185,11,0.4);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #f0b90b;
+            color: #181a20;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #c99700;
+        }
+
+        .footer-text {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #8b8d90;
         }
     </style>
 </head>
+
 <body>
 
 <div class="login-box">
@@ -54,10 +101,12 @@
         <input type="text" name="email" placeholder="admin@bendicion.com" required>
 
         <label>Contraseña:</label>
-        <input type="password" name="password" placeholder="••••••" required>
+        <input type="password" name="password" placeholder="••••••••" required>
 
         <button type="submit">Ingresar</button>
     </form>
+
+    <p class="footer-text">Acceso exclusivo para administradores</p>
 </div>
 
 </body>

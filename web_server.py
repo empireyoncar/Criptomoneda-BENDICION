@@ -8,10 +8,14 @@ CORS(app)
 # -----------------------------------------
 # PERMITIR VARIAS CARPETAS DE PLANTILLAS
 # -----------------------------------------
+# ORDEN CORRECTO:
+# 1. templates_web     → Login y páginas del usuario
+# 2. templates_ADMIN   → Panel admin
+# 3. templates_KYC     → Páginas KYC
 app.jinja_loader = ChoiceLoader([
-    FileSystemLoader("templates"),        # Panel admin
-    FileSystemLoader("templates_web"),    # Web pública
-    FileSystemLoader("templates_KYC")     # Páginas KYC
+    FileSystemLoader("templates_web"),     # Web pública (PRIMERO)
+    FileSystemLoader("templates_ADMIN"),   # Panel admin
+    FileSystemLoader("templates_KYC")      # Páginas KYC
 ])
 
 # -----------------------------
@@ -43,7 +47,7 @@ def blockchain_page():
 def register_page():
     return render_template("register.html")
 
-# LOGIN
+# LOGIN (USUARIO)
 @app.route("/login")
 @app.route("/login.html")
 def login_page():

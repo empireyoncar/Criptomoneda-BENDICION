@@ -8,9 +8,7 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      # SOLO los archivos de datos se guardan en volumen
-      - ./database.json:/app/database.json
-      - ./wallet.json:/app/wallet.json
+      - dbdata:/app/db
     restart: always
     networks:
       - bendicion_net
@@ -22,9 +20,7 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      # MISMO volumen de datos
-      - ./database.json:/app/database.json
-      - ./wallet.json:/app/wallet.json
+      - dbdata:/app/db
     restart: always
     networks:
       - bendicion_net
@@ -36,13 +32,14 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Aquí montamos tus templates locales
-      - ./templates_web:/app/templates_web
+      - dbdata:/app/db
     restart: always
     networks:
       - bendicion_net
 
+volumes:
+  dbdata:
+
 networks:
   bendicion_net:
     driver: bridge
-    

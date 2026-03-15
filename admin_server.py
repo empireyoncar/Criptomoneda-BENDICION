@@ -48,7 +48,7 @@ def admin_login():
     session["user_id"] = user_id
 
     # Redirigir al panel admin
-    return redirect("/admin_panel")
+    return redirect("/admin")
 
 
 # -----------------------------
@@ -63,7 +63,7 @@ def logout():
 # -----------------------------
 # PANEL ADMIN
 # -----------------------------
-@app.route("/admin_panel")
+@app.route("/admin")
 @require_admin
 def admin_panel():
     return render_template("admin.html")
@@ -125,7 +125,26 @@ def admin_approve_kyc():
 
     return jsonify({"error": "Usuario no encontrado"}), 404
 
-#
+
+# -----------------------------
+# RECHAZAR KYC
+# -----------------------------
+@app.route("/admin/kyc/reject", methods=["POST"])
+@require_admin
+def admin_reject_kyc():
+    data = request.json
+    user_id = data.get("user_id")
+
+    db = load_db()
+    for u in db["users"]:
+        if u["id"] == user_id:
+            u["kyc"]["status"] = "rejected"
+            save_db(db)
+            return jsonify({"message": "KYC rechazado"})
+
+    return jsonify({"error": "Usuario no encontrado"}), 404
+
+
 # -----------------------------
 # INICIAR SERVIDOR ADMIN
 # -----------------------------

@@ -4,7 +4,7 @@ from database import load_db, save_db, is_admin, login_user
 from node import blockchain
 from functools import wraps
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates_ADMIN")
 app.secret_key = "clave-super-secreta-123"   # Necesario para sesiones
 CORS(app)
 

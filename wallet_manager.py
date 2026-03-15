@@ -4,7 +4,7 @@ import os
 from wallet import generate_wallet
 
 WALLETS_FILE = "wallets.json"
-DB_FILE = "database.json"
+DB_FILE = os.path.join("/app/db", "database.json")
 
 # Crear wallets.json si no existe
 if not os.path.exists(WALLETS_FILE):

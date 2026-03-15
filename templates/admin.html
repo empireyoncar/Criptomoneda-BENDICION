@@ -3,65 +3,219 @@
 <head>
   <meta charset="UTF-8">
   <title>Panel Admin – BENDICIÓN</title>
+
   <style>
-    body { font-family: Arial; margin: 20px; }
-    pre { background: #eee; padding: 10px; }
-    button { margin: 5px; padding: 8px 15px; }
-    input { padding: 6px; width: 300px; }
-    h2 { margin-top: 40px; }
+    /* ------------------------------
+       TEMA OSCURO ESTILO BINANCE
+    ------------------------------ */
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0e11;
+      color: #eaecef;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #181a20;
+      color: #f0b90b;
+      padding: 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      border-bottom: 2px solid #f0b90b;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1400px;
+      margin: auto;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #f0b90b;
+      border-left: 4px solid #f0b90b;
+      padding-left: 10px;
+    }
+
+    .box {
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    button {
+      background: #f0b90b;
+      color: #181a20;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 0;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #c99700;
+    }
+
+    input {
+      padding: 10px;
+      width: 280px;
+      background: #0b0e11;
+      border: 1px solid #2b3139;
+      color: #eaecef;
+      border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #0b0e11;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #2b3139;
+      text-align: left;
+    }
+
+    th {
+      background: #181a20;
+      color: #f0b90b;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #2b3139;
+    }
+
+    .stat-box {
+      display: inline-block;
+      width: 30%;
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f0b90b;
+    }
+
+    .stat-label {
+      font-size: 16px;
+      color: #eaecef;
+    }
   </style>
 </head>
+
 <body>
 
-  <h1>Panel de Administrador – BENDICIÓN</h1>
+<header>Panel de Administración – BENDICIÓN</header>
 
-  <p><strong>Admin ID:</strong> <span id="adminId">{{ session['user_id'] }}</span></p>
+<div class="container">
 
-  <hr>
+  <p><strong>Admin ID:</strong> {{ session['user_id'] }}</p>
 
-  <!-- 1. ESTADÍSTICAS -->
-  <section>
-    <h2>1. Estadísticas del sistema</h2>
-    <button id="btnStats">Ver estadísticas</button>
-    <pre id="stats"></pre>
+  <!-- DASHBOARD -->
+  <section class="box">
+    <h2>Dashboard General</h2>
+
+    <div id="dashboardStats">
+      <div class="stat-box">
+        <div class="stat-number" id="statUsers">0</div>
+        <div class="stat-label">Usuarios Registrados</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-number" id="statTx">0</div>
+        <div class="stat-label">Transacciones Totales</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-number" id="statBlocks">0</div>
+        <div class="stat-label">Bloques en la Blockchain</div>
+      </div>
+    </div>
+
+    <button id="btnLoadDashboard">Actualizar Dashboard</button>
   </section>
 
-  <hr>
+  <!-- USUARIOS -->
+  <section class="box">
+    <h2>Usuarios Registrados</h2>
 
-  <!-- 2. USUARIOS -->
-  <section>
-    <h2>2. Gestión de usuarios</h2>
-    <button id="btnUsers">Ver todos los usuarios</button>
-    <pre id="users"></pre>
+    <input type="text" id="searchUser" placeholder="Buscar por nombre o email">
+    <button id="btnUsers">Cargar Usuarios</button>
+
+    <table id="usersTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>País</th>
+          <th>Wallet</th>
+          <th>KYC</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 
-  <hr>
-
-  <!-- 3. TRANSACCIONES -->
-  <section>
-    <h2>3. Gestión de transacciones</h2>
-    <button id="btnTx">Ver todas las transacciones</button><br><br>
+  <!-- TRANSACCIONES -->
+  <section class="box">
+    <h2>Transacciones</h2>
 
     <input type="text" id="txAddress" placeholder="Filtrar por address">
     <button id="btnTxAddress">Buscar</button>
+    <button id="btnTx">Cargar Todas</button>
 
-    <pre id="tx"></pre>
+    <table id="txTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Emisor</th>
+          <th>Receptor</th>
+          <th>Monto</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 
-  <hr>
+  <!-- BLOQUES -->
+  <section class="box">
+    <h2>Blockchain</h2>
+    <button id="btnBlocks">Cargar Bloques</button>
 
-  <!-- 4. BLOQUES -->
-  <section>
-    <h2>4. Bloques</h2>
-    <button id="btnBlocks">Ver blockchain</button>
-    <pre id="blocks"></pre>
+    <table id="blocksTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Index</th>
+          <th>Timestamp</th>
+          <th>Transacciones</th>
+          <th>Hash</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 
-  <hr>
-
-  <!-- 5. KYC -->
-  <section>
-    <h2>5. Gestión KYC</h2>
+  <!-- KYC -->
+  <section class="box">
+    <h2>Gestión KYC</h2>
 
     <input type="text" id="kycUserId" placeholder="ID del usuario"><br><br>
 
@@ -72,77 +226,154 @@
     <pre id="kycResult"></pre>
   </section>
 
-  <script>
-    const adminId = "{{ session['user_id'] }}";
+</div>
 
-    // 1. Estadísticas (si la agregas luego)
-    document.getElementById("btnStats").onclick = async () => {
-      const res = await fetch(`/admin/stats`);
-      const data = await res.json();
-      document.getElementById("stats").textContent = JSON.stringify(data, null, 2);
-    };
+<script>
+  const adminId = "{{ session['user_id'] }}";
 
-    // 2. Usuarios
-    document.getElementById("btnUsers").onclick = async () => {
-      const res = await fetch(`/admin/users`);
-      const data = await res.json();
-      document.getElementById("users").textContent = JSON.stringify(data, null, 2);
-    };
+  // -------------------------
+  // DASHBOARD
+  // -------------------------
+  document.getElementById("btnLoadDashboard").onclick = async () => {
+    const users = await (await fetch(`/admin/users`)).json();
+    const txs = await (await fetch(`/admin/transactions`)).json();
+    const blocks = await (await fetch(`/admin/blocks`)).json();
 
-    // 3. Transacciones
-    document.getElementById("btnTx").onclick = async () => {
-      const res = await fetch(`/admin/transactions`);
-      const data = await res.json();
-      document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
-    };
+    document.getElementById("statUsers").textContent = users.length;
+    document.getElementById("statTx").textContent = txs.length;
+    document.getElementById("statBlocks").textContent = blocks.length;
+  };
 
-    document.getElementById("btnTxAddress").onclick = async () => {
-      const address = document.getElementById("txAddress").value;
-      const res = await fetch(`/admin/transactions/${address}`);
-      const data = await res.json();
-      document.getElementById("tx").textContent = JSON.stringify(data, null, 2);
-    };
+  // -------------------------
+  // USUARIOS
+  // -------------------------
+  document.getElementById("btnUsers").onclick = async () => {
+    const res = await fetch(`/admin/users`);
+    const users = await res.json();
 
-    // 4. Bloques
-    document.getElementById("btnBlocks").onclick = async () => {
-      const res = await fetch(`/admin/blocks`);
-      const data = await res.json();
-      document.getElementById("blocks").textContent = JSON.stringify(data, null, 2);
-    };
+    const table = document.getElementById("usersTable");
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
 
-    // 5. KYC
-    document.getElementById("btnKycDocs").onclick = async () => {
-      const user_id = document.getElementById("kycUserId").value;
-      const res = await fetch(`/admin/kyc/docs/${user_id}`);
-      const data = await res.json();
-      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
-    };
+    const search = document.getElementById("searchUser").value.toLowerCase();
 
-    document.getElementById("btnApproveKYC").onclick = async () => {
-      const user_id = document.getElementById("kycUserId").value;
-
-      const res = await fetch(`/admin/kyc/approve`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id })
+    users
+      .filter(u => u.fullname.toLowerCase().includes(search) || u.email.toLowerCase().includes(search))
+      .forEach(u => {
+        const row = `
+          <tr>
+            <td>${u.id}</td>
+            <td>${u.fullname}</td>
+            <td>${u.email}</td>
+            <td>${u.country}</td>
+            <td>${u.wallets.length > 0 ? u.wallets[0] : "Sin wallet"}</td>
+            <td>${u.kyc.overall_status}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
       });
 
-      const data = await res.json();
-      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
-    };
+    table.style.display = "table";
+  };
 
-    document.getElementById("btnRejectKYC").onclick = async () => {
-      const user_id = document.getElementById("kycUserId").value;
+  // -------------------------
+  // TRANSACCIONES
+  // -------------------------
+  document.getElementById("btnTx").onclick = async () => {
+    const res = await fetch(`/admin/transactions`);
+    const txs = await res.json();
 
-      const res = await fetch(`/admin/kyc/reject`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id })
-      });
+    renderTxTable(txs);
+  };
 
-      const data = await res.json();
-      document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
-    };
+  document.getElementById("btnTxAddress").onclick = async () => {
+    const address = document.getElementById("txAddress").value;
+    const res = await fetch(`/admin/transactions/${address}`);
+    const txs = await res.json();
+
+    renderTxTable(txs);
+  };
+
+  function renderTxTable(txs) {
+    const table = document.getElementById("txTable");
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    txs.forEach(tx => {
+      const row = `
+        <tr>
+          <td>${tx.sender}</td>
+          <td>${tx.receiver}</td>
+          <td>${tx.amount}</td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+
+    table.style.display = "table";
+  }
+
+  // -------------------------
+  // BLOQUES
+  // -------------------------
+  document.getElementById("btnBlocks").onclick = async () => {
+    const res = await fetch(`/admin/blocks`);
+    const blocks = await res.json();
+
+    const table = document.getElementById("blocksTable");
+    const tbody = table.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    blocks.forEach(b => {
+      const row = `
+        <tr>
+          <td>${b.index}</td>
+          <td>${b.timestamp}</td>
+          <td>${b.transactions.length}</td>
+          <td>${b.hash}</td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+
+    table.style.display = "table";
+  };
+
+  // -------------------------
+  // KYC
+  // -------------------------
+  document.getElementById("btnKycDocs").onclick = async () => {
+    const user_id = document.getElementById("kycUserId").value;
+    const res = await fetch(`/admin/kyc/docs/${user_id}`);
+    const data = await res.json();
+    document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+  };
+
+  document.getElementById("btnApproveKYC").onclick = async () => {
+    const user_id = document.getElementById("kycUserId").value;
+
+    const res = await fetch(`/admin/kyc/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id })
+    });
+
+    const data = await res.json();
+    document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+  };
+
+  document.getElementById("btnRejectKYC").onclick = async () => {
+    const user_id = document.getElementById("kycUserId").value;
+
+    const res = await fetch(`/admin/kyc/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id })
+    });
+
+    const data = await res.json();
+    document.getElementById("kycResult").textContent = JSON.stringify(data, null, 2);
+  };
 </script>
 
 </body>

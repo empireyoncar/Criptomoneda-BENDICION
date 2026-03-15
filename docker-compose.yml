@@ -8,7 +8,6 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      # Montamos los JSON exactamente donde tu código los busca
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
     restart: always
@@ -35,9 +34,10 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Tus templates se editan en VSCode y se reflejan al instante
-      - ./templates_web:/app/templates_web
-      # Y también necesitan acceso a los JSON
+      # 🔥 Montamos TODO el proyecto dentro del contenedor
+      - ./:/app
+
+      # 🔥 Pero mantenemos los JSON como archivos persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
     restart: always

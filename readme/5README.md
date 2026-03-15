@@ -242,7 +242,7 @@ Navegador moderno
 
 🧪 10. Cómo probar
 Backend:
-http://localhost:7777
+https://empireyoncar.duckdns.org/api
 
 Admin:
 http://localhost:8888

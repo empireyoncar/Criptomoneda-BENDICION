@@ -8,8 +8,9 @@ services:
     ports:
       - "7777:7777"
     volumes:
-      - ./database.json:/app/database.json
-      - ./wallet.json:/app/wallet.json
+      # Montamos los JSON exactamente donde tu código los busca
+      - ./database.json:/app/db/database.json
+      - ./wallet.json:/app/db/wallet.json
     restart: always
     networks:
       - bendicion_net
@@ -21,8 +22,8 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./database.json:/app/database.json
-      - ./wallet.json:/app/wallet.json
+      - ./database.json:/app/db/database.json
+      - ./wallet.json:/app/db/wallet.json
     restart: always
     networks:
       - bendicion_net
@@ -34,7 +35,11 @@ services:
     ports:
       - "5000:5000"
     volumes:
+      # Tus templates se editan en VSCode y se reflejan al instante
       - ./templates_web:/app/templates_web
+      # Y también necesitan acceso a los JSON
+      - ./database.json:/app/db/database.json
+      - ./wallet.json:/app/db/wallet.json
     restart: always
     networks:
       - bendicion_net

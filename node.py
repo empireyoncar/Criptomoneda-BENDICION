@@ -362,9 +362,9 @@ def admin_blocks():
 @app.route("/crypto/admin/mint", methods=["POST"])
 @require_admin
 def admin_mint():
-    data = request.json
-    address = data.get("address")
-    amount = data.get("amount")
+    # Recibir datos por query params (más seguro y sin problemas CORS)
+    address = request.args.get("address")
+    amount = request.args.get("amount")
 
     if not address or not amount:
         return jsonify({"error": "Faltan datos"}), 400
@@ -376,7 +376,6 @@ def admin_mint():
     except:
         return jsonify({"error": "Cantidad inválida"}), 400
 
-    # Crear transacción desde el sistema
     ok = blockchain.add_transaction("SYSTEM", address, amount)
     if not ok:
         return jsonify({"error": "No se pudo crear la transacción"}), 400

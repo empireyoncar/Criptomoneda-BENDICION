@@ -109,33 +109,34 @@
 
 <script>
     async function mint() {
-        const address = document.getElementById("address").value.trim();
-        const amount = document.getElementById("amount").value.trim();
+    const address = document.getElementById("address").value.trim();
+    const amount = document.getElementById("amount").value.trim();
 
-        if (!address || !amount) {
-            alert("Completa todos los campos.");
-            return;
-        }
-
-        const res = await fetch("https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ address, amount })
-        });
-
-        const data = await res.json();
-
-        const box = document.getElementById("resultBox");
-        box.style.display = "block";
-
-        if (data.error) {
-            box.style.color = "#f6465d";
-            box.textContent = "Error: " + data.error;
-        } else {
-            box.style.color = "#0ecb81";
-            box.textContent = "Éxito: " + data.message;
-        }
+    if (!address || !amount) {
+        alert("Completa todos los campos.");
+        return;
     }
+
+    const url = `https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}&address=${address}&amount=${amount}`;
+
+    const res = await fetch(url, {
+        method: "POST",
+        mode: "cors"
+    });
+
+    const data = await res.json();
+
+    const box = document.getElementById("resultBox");
+    box.style.display = "block";
+
+    if (data.error) {
+        box.style.color = "#f6465d";
+        box.textContent = "Error: " + data.error;
+    } else {
+        box.style.color = "#0ecb81";
+        box.textContent = "Éxito: " + data.message;
+    }
+}
 </script>
 
 </body>

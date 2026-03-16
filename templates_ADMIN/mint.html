@@ -117,7 +117,7 @@
             return;
         }
 
-        const res = await fetch("https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}", {
+        const res = await fetch("http://192.168.1.178:8888/crypto/admin/mint?user_id={{ session['user_id'] }}", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ address, amount })

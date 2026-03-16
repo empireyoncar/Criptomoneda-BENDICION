@@ -72,6 +72,11 @@ def kyc_aprobado_page():
 def kyc_telefono_page():
     return render_template("KYCtelefono.html")
 
+@app.route("/home")
+@app.route("/home.html")
+def home_page():
+    return render_template("home.html")
+
 # -----------------------------
 # API LOGIN (POST)
 # -----------------------------

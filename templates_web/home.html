@@ -141,13 +141,23 @@
             </button>
         </section>
 
-        <!-- NUEVA SECCIÓN: Mercado P2P -->
+        <!-- Mercado P2P -->
         <section class="card">
             <h2>Mercado P2P</h2>
             <p>Compra y vende activos directamente con otros usuarios de forma segura.</p>
 
             <button id="btnGoP2P" class="btn btn-secondary">
                 Ir al mercado P2P
+            </button>
+        </section>
+
+        <!-- NUEVA SECCIÓN: Mi Wallet -->
+        <section class="card">
+            <h2>Mi Wallet</h2>
+            <p>Consulta tu dirección, saldo y claves asociadas a tu wallet importada.</p>
+
+            <button id="btnGoWallet" class="btn btn-secondary">
+                Ver mi Wallet
             </button>
         </section>
 
@@ -207,6 +217,10 @@
 
     document.getElementById("btnGoP2P").onclick = () => {
         window.location.href = "p2p.html";
+    };
+
+    document.getElementById("btnGoWallet").onclick = () => {
+        window.location.href = "wallet.html";
     };
 </script>
 

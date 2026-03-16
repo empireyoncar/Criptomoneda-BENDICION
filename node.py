@@ -362,7 +362,6 @@ def admin_blocks():
 @app.route("/crypto/admin/mint", methods=["POST"])
 @require_admin
 def admin_mint():
-    # Recibir datos por query params (más seguro y sin problemas CORS)
     address = request.args.get("address")
     amount = request.args.get("amount")
 

@@ -34,21 +34,12 @@ services:
     ports:
       - "5000:5000"
     volumes:
+      # 🔥 Montamos TODO el proyecto dentro del contenedor
       - ./:/app
+
+      # 🔥 Pero mantenemos los JSON como archivos persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
-    restart: always
-    networks:
-      - bendicion_net
-
-  p2p:
-    build: .
-    container_name: bendicion_p2p
-    command: python p2p_server.py
-    ports:
-      - "9999:9999"
-    volumes:
-      - ./p2p_data.json:/app/db/p2p_data.json
     restart: always
     networks:
       - bendicion_net

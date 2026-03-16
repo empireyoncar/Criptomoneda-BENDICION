@@ -52,8 +52,8 @@ class Blockchain:
         self.create_wallet(sender)
         self.create_wallet(receiver)
 
-        # Comprobar saldo
-        if self.wallets[sender] < amount:
+        # PERMITIR que SYSTEM emita monedas sin saldo
+        if sender != "SYSTEM" and self.wallets[sender] < amount:
             return False
 
         tx = {
@@ -80,8 +80,15 @@ class Blockchain:
 
         # Aplicar transacciones
         for tx in self.pending_transactions:
-            self.wallets[tx["from"]] -= float(tx["amount"])
-            self.wallets[tx["to"]] += float(tx["amount"])
+            sender = tx["from"]
+            receiver = tx["to"]
+            amount = float(tx["amount"])
+
+            # SYSTEM no pierde saldo al emitir
+            if sender != "SYSTEM":
+                self.wallets[sender] -= amount
+
+            self.wallets[receiver] += amount
 
         self.pending_transactions = []
         self.chain.append(new_block)

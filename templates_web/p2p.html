@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mercado P2P – BENDICIÓN</title>
+    <style>
+        :root {
+            --bg: #0b0e11;
+            --bg-box: #181a20;
+            --bg-soft: #0f1115;
+            --text: #eaecef;
+            --text-muted: #8b8d90;
+            --primary: #f0b90b;
+            --primary-hover: #c99700;
+            --border: #2b3139;
+            --danger: #f6465d;
+            --success: #0ecb81;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .layout {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .logo {
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--primary);
+        }
+
+        .user-info {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .user-info span {
+            color: var(--text);
+            font-weight: bold;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .top-card {
+            background: var(--bg-box);
+            border-radius: 12px;
+            padding: 16px 18px;
+            margin-top: 16px;
+            box-shadow: 0 0 18px rgba(0,0,0,0.5);
+        }
+
+        /* Tabs Compra / Venta */
+        .tabs {
+            display: inline-flex;
+            border-radius: 999px;
+            background: var(--bg-soft);
+            padding: 3px;
+            margin-bottom: 16px;
+        }
+
+        .tab {
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Filtros */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .filters label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .filters select,
+        .filters input {
+            background: #0f1115;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 8px;
+            color: var(--text);
+            font-size: 13px;
+            min-width: 120px;
+        }
+
+        .filters .btn-filter {
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            background: var(--primary);
+            color: #000;
+        }
+
+        .filters .btn-filter:hover {
+            background: var(--primary-hover);
+        }
+
+        /* Tabla de ofertas */
+        .table-wrapper {
+            margin-top: 10px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-box);
+        }
+
+        thead {
+            background: #111318;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            font-size: 13px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        tbody tr:hover {
+            background: #14171f;
+        }
+
+        .tag-buy {
+            color: var(--success);
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .tag-sell {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .btn {
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .payment-methods {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .limit {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Crear oferta */
+        .create-offer-card {
+            margin-top: 24px;
+            background: var(--bg-box);
+            border-radius: 12px;
+            padding: 16px 18px;
+        }
+
+        .create-offer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            background: #0f1115;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 7px 8px;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .create-offer-actions {
+            margin-top: 12px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 700px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <header>
+        <div>
+            <div class="logo">BENDICIÓN P2P</div>
+            <h1>Mercado P2P</h1>
+            <p class="subtitle">Compra y vende BENDICIÓN Coin directamente con otros usuarios.</p>
+        </div>
+        <div class="user-info">
+            Usuario: <span id="userId">-</span>
+        </div>
+    </header>
+
+    <div class="top-card">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" id="tabCompra" onclick="cambiarModo('compra')">Comprar</button>
+            <button class="tab" id="tabVenta" onclick="cambiarModo('venta')">Vender</button>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters">
+            <div>
+                <label>Moneda fiat</label><br>
+                <select id="filtroFiat">
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="MXN">MXN</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Método de pago</label><br>
+                <select id="filtroPago">
+                    <option value="todos">Todos</option>
+                    <option value="SEPA">Transferencia SEPA</option>
+                    <option value="BIZUM">Bizum</option>
+                    <option value="REVOLUT">Revolut</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Buscar usuario</label><br>
+                <input type="text" id="filtroUsuario" placeholder="ID o nombre">
+            </div>
+
+            <button class="btn-filter" onclick="aplicarFiltros()">Filtrar</button>
+        </div>
+
+        <!-- Tabla de ofertas -->
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Tipo</th>
+                        <th>Precio (EUR)</th>
+                        <th>Cantidad BDC</th>
+                        <th>Límite</th>
+                        <th>Métodos de pago</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyOfertas">
+                    <!-- Rellenado por JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Crear oferta -->
+    <div class="create-offer-card">
+        <h2>Publicar una oferta</h2>
+        <p class="subtitle">Crea tu propia oferta de compra o venta para que otros usuarios operen contigo.</p>
+
+        <div class="create-offer-grid">
+            <div class="field">
+                <label>Tipo de oferta</label>
+                <select id="ofertaTipo">
+                    <option value="compra">Comprar BDC</option>
+                    <option value="venta">Vender BDC</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Cantidad BDC</label>
+                <input type="number" id="ofertaCantidad" min="0" step="0.0001" placeholder="Ej: 100">
+            </div>
+
+            <div class="field">
+                <label>Precio por BDC (EUR)</label>
+                <input type="number" id="ofertaPrecio" min="0" step="0.0001" placeholder="Ej: 1.05">
+            </div>
+
+            <div class="field">
+                <label>Límite mínimo (EUR)</label>
+                <input type="number" id="ofertaMin" min="0" step="0.01" placeholder="Ej: 50">
+            </div>
+
+            <div class="field">
+                <label>Límite máximo (EUR)</label>
+                <input type="number" id="ofertaMax" min="0" step="0.01" placeholder="Ej: 500">
+            </div>
+
+            <div class="field">
+                <label>Métodos de pago (separados por coma)</label>
+                <input type="text" id="ofertaPagos" placeholder="Ej: SEPA, Bizum">
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+                <label>Comentario para el comprador/vendedor</label>
+                <textarea id="ofertaComentario" placeholder="Ej: Solo bancos españoles, respondo rápido."></textarea>
+            </div>
+        </div>
+
+        <div class="create-offer-actions">
+            <button class="btn btn-primary" onclick="publicarOferta()">Publicar oferta</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simulación de usuario logueado
+    let userId = localStorage.getItem("user_id") || "usuario_demo";
+    document.getElementById("userId").textContent = userId;
+
+    // Ofertas en memoria (puedes luego conectarlo a backend)
+    let ofertas = JSON.parse(localStorage.getItem("ofertas_p2p") || "[]");
+
+    // Modo actual: 'compra' o 'venta' (lo que el usuario quiere hacer)
+    let modoActual = "compra";
+
+    function guardarOfertas() {
+        localStorage.setItem("ofertas_p2p", JSON.stringify(ofertas));
+    }
+
+    function cambiarModo(modo) {
+        modoActual = modo;
+        document.getElementById("tabCompra").classList.toggle("active", modo === "compra");
+        document.getElementById("tabVenta").classList.toggle("active", modo === "venta");
+        renderOfertas();
+    }
+
+    function aplicarFiltros() {
+        renderOfertas();
+    }
+
+    function renderOfertas() {
+        const tbody = document.getElementById("tbodyOfertas");
+        tbody.innerHTML = "";
+
+        const filtroFiat = document.getElementById("filtroFiat").value;
+        const filtroPago = document.getElementById("filtroPago").value;
+        const filtroUsuario = document.getElementById("filtroUsuario").value.trim().toLowerCase();
+
+        // El usuario en modo "compra" ve ofertas de "venta" y viceversa
+        const tipoBuscado = modoActual === "compra" ? "venta" : "compra";
+
+        const filtradas = ofertas.filter(o => {
+            if (o.tipo !== tipoBuscado) return false;
+            if (o.fiat !== filtroFiat) return false;
+
+            if (filtroPago !== "todos") {
+                if (!o.pagos.some(p => p.toUpperCase() === filtroPago.toUpperCase())) return false;
+            }
+
+            if (filtroUsuario && !o.usuario.toLowerCase().includes(filtroUsuario)) return false;
+
+            return true;
+        });
+
+        if (filtradas.length === 0) {
+            const tr = document.createElement("tr");
+            const td = document.createElement("td");
+            td.colSpan = 7;
+            td.style.textAlign = "center";
+            td.style.color = "#8b8d90";
+            td.textContent = "No hay ofertas disponibles con los filtros seleccionados.";
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+
+        filtradas.forEach((o, idx) => {
+            const tr = document.createElement("tr");
+
+            const tdUsuario = document.createElement("td");
+            tdUsuario.textContent = o.usuario;
+            tr.appendChild(tdUsuario);
+
+            const tdTipo = document.createElement("td");
+            tdTipo.innerHTML = o.tipo === "compra"
+                ? '<span class="tag-buy">COMPRA</span>'
+                : '<span class="tag-sell">VENTA</span>';
+            tr.appendChild(tdTipo);
+
+            const tdPrecio = document.createElement("td");
+            tdPrecio.textContent = parseFloat(o.precio).toFixed(4);
+            tr.appendChild(tdPrecio);
+
+            const tdCantidad = document.createElement("td");
+            tdCantidad.textContent = parseFloat(o.cantidad).toFixed(4);
+            tr.appendChild(tdCantidad);
+
+            const tdLimite = document.createElement("td");
+            tdLimite.innerHTML = `
+                <div class="limit">
+                    Mín: ${parseFloat(o.min).toFixed(2)} EUR<br>
+                    Máx: ${parseFloat(o.max).toFixed(2)} EUR
+                </div>
+            `;
+            tr.appendChild(tdLimite);
+
+            const tdPagos = document.createElement("td");
+            tdPagos.innerHTML = `<div class="payment-methods">${o.pagos.join(", ")}</div>`;
+            tr.appendChild(tdPagos);
+
+            const tdAccion = document.createElement("td");
+            const btn = document.createElement("button");
+            btn.className = "btn btn-primary";
+            btn.textContent = modoActual === "compra" ? "Comprar" : "Vender";
+            btn.onclick = () => iniciarOperacion(o);
+            tdAccion.appendChild(btn);
+            tr.appendChild(tdAccion);
+
+            tbody.appendChild(tr);
+        });
+    }
+
+    function publicarOferta() {
+        const tipo = document.getElementById("ofertaTipo").value;
+        const cantidad = parseFloat(document.getElementById("ofertaCantidad").value);
+        const precio = parseFloat(document.getElementById("ofertaPrecio").value);
+        const min = parseFloat(document.getElementById("ofertaMin").value);
+        const max = parseFloat(document.getElementById("ofertaMax").value);
+        const pagosStr = document.getElementById("ofertaPagos").value;
+        const comentario = document.getElementById("ofertaComentario").value.trim();
+        const fiat = document.getElementById("filtroFiat").value; // asumimos misma fiat que filtro actual
+
+        if (!cantidad || !precio || !min || !max || !pagosStr) {
+            alert("Completa todos los campos obligatorios de la oferta.");
+            return;
+        }
+
+        if (min > max) {
+            alert("El límite mínimo no puede ser mayor que el máximo.");
+            return;
+        }
+
+        const pagos = pagosStr.split(",").map(p => p.trim()).filter(p => p);
+
+        const oferta = {
+            id: Date.now(),
+            usuario: userId,
+            tipo,
+            cantidad,
+            precio,
+            min,
+            max,
+            pagos,
+            comentario,
+            fiat
+        };
+
+        ofertas.push(oferta);
+        guardarOfertas();
+        renderOfertas();
+
+        document.getElementById("ofertaCantidad").value = "";
+        document.getElementById("ofertaPrecio").value = "";
+        document.getElementById("ofertaMin").value = "";
+        document.getElementById("ofertaMax").value = "";
+        document.getElementById("ofertaPagos").value = "";
+        document.getElementById("ofertaComentario").value = "";
+
+        alert("Oferta publicada correctamente.");
+    }
+
+    function iniciarOperacion(oferta) {
+        let mensaje = `Vas a iniciar una operación con ${oferta.usuario}.\n\n`;
+        mensaje += `Tipo: ${oferta.tipo.toUpperCase()} BDC\n`;
+        mensaje += `Precio: ${oferta.precio} EUR\n`;
+        mensaje += `Cantidad disponible: ${oferta.cantidad} BDC\n`;
+        mensaje += `Límites: ${oferta.min} - ${oferta.max} EUR\n`;
+        mensaje += `Métodos de pago: ${oferta.pagos.join(", ")}\n\n`;
+        if (oferta.comentario) {
+            mensaje += `Comentario del anunciante:\n${oferta.comentario}\n\n`;
+        }
+        mensaje += "Aquí podrías abrir un modal de chat, escrow, etc.";
+
+        alert(mensaje);
+    }
+
+    // Inicial
+    if (ofertas.length === 0) {
+        // Semillas de ejemplo
+        ofertas = [
+            {
+                id: 1,
+                usuario: "trader_juan",
+                tipo: "venta",
+                cantidad: 150,
+                precio: 1.02,
+                min: 50,
+                max: 500,
+                pagos: ["SEPA", "Bizum"],
+                comentario: "Solo bancos españoles. Libero rápido.",
+                fiat: "EUR"
+            },
+            {
+                id: 2,
+                usuario: "ana_p2p",
+                tipo: "compra",
+                cantidad: 80,
+                precio: 0.99,
+                min: 30,
+                max: 300,
+                pagos: ["REVOLUT"],
+                comentario: "",
+                fiat: "EUR"
+            },
+            {
+                id: 3,
+                usuario: "mex_trader",
+                tipo: "venta",
+                cantidad: 500,
+                precio: 1.10,
+                min: 100,
+                max: 1000,
+                pagos: ["SEPA"],
+                comentario: "Opero solo horario laboral.",
+                fiat: "EUR"
+            }
+        ];
+        guardarOfertas();
+    }
+
+    renderOfertas();
+</script>
+
+</body>
+</html>

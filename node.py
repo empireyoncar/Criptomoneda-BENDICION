@@ -356,6 +356,36 @@ def admin_blocks():
         "hash": b.hash
     } for b in blockchain.chain])
 
+# ============================================================
+#   ADMIN: CREAR CRIPTOMONEDAS (MINT)
+# ============================================================
+@app.route("/crypto/admin/mint", methods=["POST"])
+@require_admin
+def admin_mint():
+    data = request.json
+    address = data.get("address")
+    amount = data.get("amount")
+
+    if not address or not amount:
+        return jsonify({"error": "Faltan datos"}), 400
+
+    try:
+        amount = float(amount)
+        if amount <= 0:
+            return jsonify({"error": "La cantidad debe ser mayor a 0"}), 400
+    except:
+        return jsonify({"error": "Cantidad inválida"}), 400
+
+    # Crear transacción desde el sistema
+    ok = blockchain.add_transaction("SYSTEM", address, amount)
+    if not ok:
+        return jsonify({"error": "No se pudo crear la transacción"}), 400
+
+    return jsonify({
+        "message": "Monedas creadas correctamente",
+        "address": address,
+        "amount": amount
+    })
 
 # ============================================================
 #   INICIAR SERVIDOR

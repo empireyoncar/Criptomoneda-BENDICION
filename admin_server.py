@@ -144,6 +144,13 @@ def admin_reject_kyc():
 
     return jsonify({"error": "Usuario no encontrado"}), 404
 
+# -----------------------------
+# PÁGINA MINT (ADMIN)
+# -----------------------------
+@app.route("/admin/mint")
+@require_admin
+def admin_mint_page():
+    return render_template("mint.html")
 
 # -----------------------------
 # INICIAR SERVIDOR ADMIN

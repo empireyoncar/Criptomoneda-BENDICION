@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mint – Panel Admin</title>
+
+    <style>
+        :root {
+            --bg: #0b0e11;
+            --bg-box: #181a20;
+            --text: #eaecef;
+            --text-muted: #8b8d90;
+            --primary: #f0b90b;
+            --primary-hover: #c99700;
+            --border: #2b3139;
+            --danger: #f6465d;
+            --success: #0ecb81;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: var(--bg-box);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #0f1115;
+            color: var(--text);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #0f1115;
+            border: 1px solid var(--border);
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>Mint de Criptomonedas</h1>
+    <p>Como administrador puedes crear nuevas monedas y asignarlas a cualquier wallet.</p>
+
+    <label>Dirección de la wallet</label>
+    <input type="text" id="address" placeholder="Ej: 4f8a9b...">
+
+    <label>Cantidad a crear</label>
+    <input type="number" id="amount" placeholder="Ej: 1000">
+
+    <button class="btn btn-primary" onclick="mint()">Crear monedas</button>
+
+    <div class="result" id="resultBox"></div>
+</div>
+
+<script>
+    async function mint() {
+        const address = document.getElementById("address").value.trim();
+        const amount = document.getElementById("amount").value.trim();
+
+        if (!address || !amount) {
+            alert("Completa todos los campos.");
+            return;
+        }
+
+        const res = await fetch("http://localhost:7777/crypto/admin/mint?user_id={{ session['user_id'] }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address, amount })
+        });
+
+        const data = await res.json();
+
+        const box = document.getElementById("resultBox");
+        box.style.display = "block";
+
+        if (data.error) {
+            box.style.color = "#f6465d";
+            box.textContent = "Error: " + data.error;
+        } else {
+            box.style.color = "#0ecb81";
+            box.textContent = "Éxito: " + data.message;
+        }
+    }
+</script>
+
+</body>
+</html>

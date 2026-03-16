@@ -4,29 +4,29 @@
     <meta charset="UTF-8">
     <title>Mercado P2P – BENDICIÓN</title>
     <style>
+        /* PANEL DE NAVEGACIÓN */
         .nav-panel {
-    display: flex;
-    gap: 10px;
-    background: #111;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
+            display: flex;
+            gap: 10px;
+            background: #111;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .nav-panel button {
+            background: #222;
+            color: white;
+            border: 1px solid #444;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-panel button:hover {
+            background: #333;
+        }
 
-.nav-panel button {
-    background: #222;
-    color: white;
-    border: 1px solid #444;
-    padding: 10px 14px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.nav-panel button:hover {
-    background: #333;
-}
-
+        /* ESTILOS ORIGINALES */
         :root {
             --bg: #0b0e11;
             --bg-box: #181a20;
@@ -39,57 +39,29 @@
             --danger: #f6465d;
             --success: #0ecb81;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; }
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
         }
-
         .layout {
             max-width: 1100px;
             margin: 0 auto;
             padding: 20px 16px 40px;
         }
-
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 18px;
         }
-
-        .logo {
-            font-weight: bold;
-            letter-spacing: 1px;
-            color: var(--primary);
-        }
-
-        .user-info {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
-        .user-info span {
-            color: var(--text);
-            font-weight: bold;
-        }
-
-        h1 {
-            margin: 0 0 8px 0;
-            font-size: 24px;
-        }
-
-        .subtitle {
-            margin: 0;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
+        .logo { font-weight: bold; letter-spacing: 1px; color: var(--primary); }
+        .user-info { font-size: 14px; color: var(--text-muted); }
+        .user-info span { color: var(--text); font-weight: bold; }
+        h1 { margin: 0 0 8px 0; font-size: 24px; }
+        .subtitle { margin: 0; color: var(--text-muted); font-size: 14px; }
 
         .top-card {
             background: var(--bg-box);
@@ -99,7 +71,6 @@
             box-shadow: 0 0 18px rgba(0,0,0,0.5);
         }
 
-        /* Tabs Compra / Venta */
         .tabs {
             display: inline-flex;
             border-radius: 999px;
@@ -107,7 +78,6 @@
             padding: 3px;
             margin-bottom: 16px;
         }
-
         .tab {
             padding: 8px 18px;
             border-radius: 999px;
@@ -117,14 +87,12 @@
             background: transparent;
             color: var(--text-muted);
         }
-
         .tab.active {
             background: var(--primary);
             color: #000;
             font-weight: bold;
         }
 
-        /* Filtros */
         .filters {
             display: flex;
             flex-wrap: wrap;
@@ -132,12 +100,7 @@
             margin-bottom: 10px;
             align-items: center;
         }
-
-        .filters label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
+        .filters label { font-size: 12px; color: var(--text-muted); }
         .filters select,
         .filters input {
             background: #0f1115;
@@ -148,7 +111,6 @@
             font-size: 13px;
             min-width: 120px;
         }
-
         .filters .btn-filter {
             padding: 7px 14px;
             border-radius: 6px;
@@ -159,56 +121,27 @@
             background: var(--primary);
             color: #000;
         }
+        .filters .btn-filter:hover { background: var(--primary-hover); }
 
-        .filters .btn-filter:hover {
-            background: var(--primary-hover);
-        }
-
-        /* Tabla de ofertas */
         .table-wrapper {
             margin-top: 10px;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border);
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-box);
-        }
-
-        thead {
-            background: #111318;
-        }
-
+        table { width: 100%; border-collapse: collapse; background: var(--bg-box); }
+        thead { background: #111318; }
         th, td {
             padding: 10px 12px;
             font-size: 13px;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
+        th { color: var(--text-muted); font-weight: normal; }
+        tbody tr:hover { background: #14171f; }
 
-        th {
-            color: var(--text-muted);
-            font-weight: normal;
-        }
-
-        tbody tr:hover {
-            background: #14171f;
-        }
-
-        .tag-buy {
-            color: var(--success);
-            font-weight: bold;
-            font-size: 12px;
-        }
-
-        .tag-sell {
-            color: var(--danger);
-            font-weight: bold;
-            font-size: 12px;
-        }
+        .tag-buy { color: var(--success); font-weight: bold; font-size: 12px; }
+        .tag-sell { color: var(--danger); font-weight: bold; font-size: 12px; }
 
         .btn {
             padding: 7px 14px;
@@ -218,54 +151,30 @@
             font-weight: bold;
             font-size: 12px;
         }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:hover { background: var(--primary-hover); }
 
-        .btn-primary {
-            background: var(--primary);
-            color: #000;
-        }
+        .payment-methods { font-size: 12px; color: var(--text-muted); }
+        .limit { font-size: 12px; color: var(--text-muted); }
 
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--primary);
-            border: 1px solid var(--primary);
-        }
-
-        .payment-methods {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .limit {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Crear oferta */
         .create-offer-card {
             margin-top: 24px;
             background: var(--bg-box);
             border-radius: 12px;
             padding: 16px 18px;
         }
-
         .create-offer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 12px;
             margin-top: 10px;
         }
-
         .field label {
             display: block;
             font-size: 12px;
             color: var(--text-muted);
             margin-bottom: 4px;
         }
-
         .field input,
         .field select,
         .field textarea {
@@ -277,28 +186,18 @@
             color: var(--text);
             font-size: 13px;
         }
-
-        .field textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
+        .field textarea { resize: vertical; min-height: 60px; }
         .create-offer-actions {
             margin-top: 12px;
             display: flex;
             justify-content: flex-end;
         }
-
-        @media (max-width: 700px) {
-            header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 6px;
-            }
-        }
     </style>
 </head>
+
 <body>
+
+<!-- PANEL DE NAVEGACIÓN -->
 <div class="nav-panel">
     <button id="btnGoHome">Inicio</button>
     <button id="btnGoWallet">Wallet</button>
@@ -322,13 +221,11 @@
     </header>
 
     <div class="top-card">
-        <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" id="tabCompra" onclick="cambiarModo('compra')">Comprar</button>
             <button class="tab" id="tabVenta" onclick="cambiarModo('venta')">Vender</button>
         </div>
 
-        <!-- Filtros -->
         <div class="filters">
             <div>
                 <label>Moneda fiat</label><br>
@@ -357,7 +254,6 @@
             <button class="btn-filter" onclick="aplicarFiltros()">Filtrar</button>
         </div>
 
-        <!-- Tabla de ofertas -->
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -371,14 +267,11 @@
                         <th></th>
                     </tr>
                 </thead>
-                <tbody id="tbodyOfertas">
-                    <!-- Rellenado por JS -->
-                </tbody>
+                <tbody id="tbodyOfertas"></tbody>
             </table>
         </div>
     </div>
 
-    <!-- Crear oferta -->
     <div class="create-offer-card">
         <h2>Publicar una oferta</h2>
         <p class="subtitle">Crea tu propia oferta de compra o venta para que otros usuarios operen contigo.</p>
@@ -418,7 +311,7 @@
             </div>
 
             <div class="field" style="grid-column: 1 / -1;">
-                <label>Comentario para el comprador/vendedor</label>
+                <label>Comentario</label>
                 <textarea id="ofertaComentario" placeholder="Ej: Solo bancos españoles, respondo rápido."></textarea>
             </div>
         </div>
@@ -430,165 +323,166 @@
 </div>
 
 <script>
+/* ===========================
+   CONFIGURACIÓN DEL BACKEND
+=========================== */
 
-    /* ===========================
-           PANEL DE NAVEGACIÓN
-       ============================ */
-    document.getElementById("btnGoHome").onclick = () => window.location.href = "home.html";
-    document.getElementById("btnGoWallet").onclick = () => window.location.href = "wallet.html";
-    document.getElementById("btnGoEnvio").onclick = () => window.location.href = "envio.html";
-    document.getElementById("btnGoP2P").onclick = () => window.location.href = "p2p.html";
-    document.getElementById("btnGoChain").onclick = () => window.location.href = "blockchainbendicion.html";
-    document.getElementById("btnGoLogin").onclick = () => window.location.href = "login.html";
-    document.getElementById("btnGoRegister").onclick = () => window.location.href = "register.html";
+// PARA USAR EN TU RED LOCAL (LAN)
+// const API_URL = "http://192.168.X.X:9999";
 
+// PARA USAR CON DUCKDNS + NGINX
+const API_URL = "https://empireyoncar.duckdns.org/mercado2p2";
 
-    // ===========================
-    //   TU CÓDIGO ORIGINAL
-    // ===========================
+/* ===========================
+   PANEL DE NAVEGACIÓN
+=========================== */
+document.getElementById("btnGoHome").onclick = () => window.location.href = "home.html";
+document.getElementById("btnGoWallet").onclick = () => window.location.href = "wallet.html";
+document.getElementById("btnGoEnvio").onclick = () => window.location.href = "envio.html";
+document.getElementById("btnGoP2P").onclick = () => window.location.href = "p2p.html";
+document.getElementById("btnGoChain").onclick = () => window.location.href = "blockchainbendicion.html";
+document.getElementById("btnGoLogin").onclick = () => window.location.href = "login.html";
+document.getElementById("btnGoRegister").onclick = () => window.location.href = "register.html";
 
-    let userId = localStorage.getItem("user_id") || "usuario_demo";
-    document.getElementById("userId").textContent = userId;
+/* ===========================
+   SISTEMA P2P CON BACKEND
+=========================== */
 
-    let ofertas = JSON.parse(localStorage.getItem("ofertas_p2p") || "[]");
+let userId = localStorage.getItem("user_id") || "usuario_demo";
+document.getElementById("userId").textContent = userId;
 
-    let modoActual = "compra";
+let ofertas = [];
+let modoActual = "compra";
 
-    function guardarOfertas() {
-        localStorage.setItem("ofertas_p2p", JSON.stringify(ofertas));
-    }
-
-    function cambiarModo(modo) {
-        modoActual = modo;
-        document.getElementById("tabCompra").classList.toggle("active", modo === "compra");
-        document.getElementById("tabVenta").classList.toggle("active", modo === "venta");
+/* Cargar ofertas desde el servidor */
+async function cargarOfertas() {
+    try {
+        const res = await fetch(`${API_URL}/ofertas`);
+        ofertas = await res.json();
         renderOfertas();
+    } catch (err) {
+        console.error("Error cargando ofertas:", err);
     }
+}
 
-    function aplicarFiltros() {
-        renderOfertas();
-    }
+/* Cambiar modo compra/venta */
+function cambiarModo(modo) {
+    modoActual = modo;
+    document.getElementById("tabCompra").classList.toggle("active", modo === "compra");
+    document.getElementById("tabVenta").classList.toggle("active", modo === "venta");
+    renderOfertas();
+}
 
-    function renderOfertas() {
-        const tbody = document.getElementById("tbodyOfertas");
-        tbody.innerHTML = "";
+/* Aplicar filtros */
+function aplicarFiltros() {
+    renderOfertas();
+}
 
-        const filtroFiat = document.getElementById("filtroFiat").value;
-        const filtroPago = document.getElementById("filtroPago").value;
-        const filtroUsuario = document.getElementById("filtroUsuario").value.trim().toLowerCase();
+/* Renderizar ofertas */
+function renderOfertas() {
+    const tbody = document.getElementById("tbodyOfertas");
+    tbody.innerHTML = "";
 
-        const tipoBuscado = modoActual === "compra" ? "venta" : "compra";
+    const filtroFiat = document.getElementById("filtroFiat").value;
+    const filtroPago = document.getElementById("filtroPago").value;
+    const filtroUsuario = document.getElementById("filtroUsuario").value.trim().toLowerCase();
 
-        const filtradas = ofertas.filter(o => {
-            if (o.tipo !== tipoBuscado) return false;
-            if (o.fiat !== filtroFiat) return false;
+    const tipoBuscado = modoActual === "compra" ? "venta" : "compra";
 
-            if (filtroPago !== "todos") {
-                if (!o.pagos.some(p => p.toUpperCase() === filtroPago.toUpperCase())) return false;
-            }
+    const filtradas = ofertas.filter(o => {
+        if (o.tipo !== tipoBuscado) return false;
+        if (o.fiat !== filtroFiat) return false;
 
-            if (filtroUsuario && !o.usuario.toLowerCase().includes(filtroUsuario)) return false;
-
-            return true;
-        });
-
-        if (filtradas.length === 0) {
-            const tr = document.createElement("tr");
-            const td = document.createElement("td");
-            td.colSpan = 7;
-            td.style.textAlign = "center";
-            td.style.color = "#8b8d90";
-            td.textContent = "No hay ofertas disponibles con los filtros seleccionados.";
-            tr.appendChild(td);
-            tbody.appendChild(tr);
-            return;
+        if (filtroPago !== "todos") {
+            if (!o.pagos.some(p => p.toUpperCase() === filtroPago.toUpperCase())) return false;
         }
 
-        filtradas.forEach((o, idx) => {
-            const tr = document.createElement("tr");
+        if (filtroUsuario && !o.usuario.toLowerCase().includes(filtroUsuario)) return false;
 
-            const tdUsuario = document.createElement("td");
-            tdUsuario.textContent = o.usuario;
-            tr.appendChild(tdUsuario);
+        return true;
+    });
 
-            const tdTipo = document.createElement("td");
-            tdTipo.innerHTML = o.tipo === "compra"
-                ? '<span class="tag-buy">COMPRA</span>'
-                : '<span class="tag-sell">VENTA</span>';
-            tr.appendChild(tdTipo);
+    if (filtradas.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 7;
+        td.style.textAlign = "center";
+        td.style.color = "#8b8d90";
+        td.textContent = "No hay ofertas disponibles.";
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
 
-            const tdPrecio = document.createElement("td");
-            tdPrecio.textContent = parseFloat(o.precio).toFixed(4);
-            tr.appendChild(tdPrecio);
+    filtradas.forEach(o => {
+        const tr = document.createElement("tr");
 
-            const tdCantidad = document.createElement("td");
-            tdCantidad.textContent = parseFloat(o.cantidad).toFixed(4);
-            tr.appendChild(tdCantidad);
-
-            const tdLimite = document.createElement("td");
-            tdLimite.innerHTML = `
+        tr.innerHTML = `
+            <td>${o.usuario}</td>
+            <td>${o.tipo === "compra" ? '<span class="tag-buy">COMPRA</span>' : '<span class="tag-sell">VENTA</span>'}</td>
+            <td>${parseFloat(o.precio).toFixed(4)}</td>
+            <td>${parseFloat(o.cantidad).toFixed(4)}</td>
+            <td>
                 <div class="limit">
                     Mín: ${parseFloat(o.min).toFixed(2)} EUR<br>
                     Máx: ${parseFloat(o.max).toFixed(2)} EUR
                 </div>
-            `;
-            tr.appendChild(tdLimite);
+            </td>
+            <td><div class="payment-methods">${o.pagos.join(", ")}</div></td>
+            <td><button class="btn btn-primary" onclick='iniciarOperacion(${JSON.stringify(o)})'>${modoActual === "compra" ? "Comprar" : "Vender"}</button></td>
+        `;
 
-            const tdPagos = document.createElement("td");
-            tdPagos.innerHTML = `<div class="payment-methods">${o.pagos.join(", ")}</div>`;
-            tr.appendChild(tdPagos);
+        tbody.appendChild(tr);
+    });
+}
 
-            const tdAccion = document.createElement("td");
-            const btn = document.createElement("button");
-            btn.className = "btn btn-primary";
-            btn.textContent = modoActual === "compra" ? "Comprar" : "Vender";
-            btn.onclick = () => iniciarOperacion(o);
-            tdAccion.appendChild(btn);
-            tr.appendChild(tdAccion);
+/* Publicar oferta al backend */
+async function publicarOferta() {
+    const tipo = document.getElementById("ofertaTipo").value;
+    const cantidad = parseFloat(document.getElementById("ofertaCantidad").value);
+    const precio = parseFloat(document.getElementById("ofertaPrecio").value);
+    const min = parseFloat(document.getElementById("ofertaMin").value);
+    const max = parseFloat(document.getElementById("ofertaMax").value);
+    const pagosStr = document.getElementById("ofertaPagos").value;
+    const comentario = document.getElementById("ofertaComentario").value.trim();
+    const fiat = document.getElementById("filtroFiat").value;
 
-            tbody.appendChild(tr);
-        });
+    if (!cantidad || !precio || !min || !max || !pagosStr) {
+        alert("Completa todos los campos obligatorios.");
+        return;
     }
 
-    function publicarOferta() {
-        const tipo = document.getElementById("ofertaTipo").value;
-        const cantidad = parseFloat(document.getElementById("ofertaCantidad").value);
-        const precio = parseFloat(document.getElementById("ofertaPrecio").value);
-        const min = parseFloat(document.getElementById("ofertaMin").value);
-        const max = parseFloat(document.getElementById("ofertaMax").value);
-        const pagosStr = document.getElementById("ofertaPagos").value;
-        const comentario = document.getElementById("ofertaComentario").value.trim();
-        const fiat = document.getElementById("filtroFiat").value;
+    if (min > max) {
+        alert("El límite mínimo no puede ser mayor que el máximo.");
+        return;
+    }
 
-        if (!cantidad || !precio || !min || !max || !pagosStr) {
-            alert("Completa todos los campos obligatorios de la oferta.");
-            return;
-        }
+    const pagos = pagosStr.split(",").map(p => p.trim()).filter(p => p);
 
-        if (min > max) {
-            alert("El límite mínimo no puede ser mayor que el máximo.");
-            return;
-        }
+    const oferta = {
+        id: Date.now(),
+        usuario: userId,
+        tipo,
+        cantidad,
+        precio,
+        min,
+        max,
+        pagos,
+        comentario,
+        fiat
+    };
 
-        const pagos = pagosStr.split(",").map(p => p.trim()).filter(p => p);
+    try {
+        await fetch(`${API_URL}/ofertas`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(oferta)
+        });
 
-        const oferta = {
-            id: Date.now(),
-            usuario: userId,
-            tipo,
-            cantidad,
-            precio,
-            min,
-            max,
-            pagos,
-            comentario,
-            fiat
-        };
+        // Recargar ofertas desde el servidor
+        await cargarOfertas();
 
-        ofertas.push(oferta);
-        guardarOfertas();
-        renderOfertas();
-
+        // Limpiar formulario
         document.getElementById("ofertaCantidad").value = "";
         document.getElementById("ofertaPrecio").value = "";
         document.getElementById("ofertaMin").value = "";
@@ -597,25 +491,32 @@
         document.getElementById("ofertaComentario").value = "";
 
         alert("Oferta publicada correctamente.");
+    } catch (err) {
+        console.error("Error publicando oferta:", err);
+        alert("Error al publicar la oferta. Verifica el servidor.");
+    }
+}
+
+/* Iniciar operación */
+function iniciarOperacion(oferta) {
+    let mensaje = `Vas a iniciar una operación con ${oferta.usuario}.\n\n`;
+    mensaje += `Tipo: ${oferta.tipo.toUpperCase()} BDC\n`;
+    mensaje += `Precio: ${oferta.precio} EUR\n`;
+    mensaje += `Cantidad disponible: ${oferta.cantidad} BDC\n`;
+    mensaje += `Límites: ${oferta.min} - ${oferta.max} EUR\n`;
+    mensaje += `Métodos de pago: ${oferta.pagos.join(", ")}\n\n`;
+
+    if (oferta.comentario) {
+        mensaje += `Comentario del anunciante:\n${oferta.comentario}\n\n`;
     }
 
-    function iniciarOperacion(oferta) {
-        let mensaje = `Vas a iniciar una operación con ${oferta.usuario}.\n\n`;
-        mensaje += `Tipo: ${oferta.tipo.toUpperCase()} BDC\n`;
-        mensaje += `Precio: ${oferta.precio} EUR\n`;
-        mensaje += `Cantidad disponible: ${oferta.cantidad} BDC\n`;
-        mensaje += `Límites: ${oferta.min} - ${oferta.max} EUR\n`;
-        mensaje += `Métodos de pago: ${oferta.pagos.join(", ")}\n\n`;
-        if (oferta.comentario) {
-            mensaje += `Comentario del anunciante:\n${oferta.comentario}\n\n`;
-        }
-        mensaje += "Aquí podrías abrir un modal de chat, escrow, etc.";
+    mensaje += "Aquí podrías abrir un chat, escrow, etc.";
 
-        alert(mensaje);
-    }
+    alert(mensaje);
+}
 
-    renderOfertas();
-
+/* Cargar ofertas al iniciar */
+cargarOfertas();
 </script>
 
 </body>

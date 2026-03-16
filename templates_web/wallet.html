@@ -17,16 +17,6 @@
             --success: #52c41a;
         }
 
-        body.light {
-            --bg: #f4f4f4;
-            --bg-box: white;
-            --text: #222;
-            --text-muted: #555;
-            --primary: #d4a20a;
-            --primary-hover: #b58900;
-            --border: #ccc;
-        }
-
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -36,44 +26,6 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        #particles {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--primary);
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: float 8s infinite linear;
-        }
-
-        @keyframes float {
-            from { transform: translateY(0); opacity: 0.7; }
-            to { transform: translateY(-800px); opacity: 0; }
-        }
-
-        #themeToggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: var(--bg-box);
-            border: none;
-            padding: 10px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            z-index: 30;
         }
 
         .wrapper {
@@ -93,11 +45,6 @@
         .header-box h1 {
             margin: 0 0 10px 0;
             color: var(--primary);
-        }
-
-        .header-box p {
-            margin: 4px 0;
-            color: var(--text-muted);
         }
 
         .grid {
@@ -120,11 +67,6 @@
             font-size: 18px;
         }
 
-        .card p {
-            font-size: 14px;
-            color: var(--text-muted);
-        }
-
         .btn {
             width: 100%;
             padding: 10px;
@@ -133,7 +75,6 @@
             cursor: pointer;
             font-weight: bold;
             margin-top: 10px;
-            transition: 0.2s;
         }
 
         .btn-primary {
@@ -141,35 +82,13 @@
             color: #000;
         }
 
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background: #2b3139;
-            color: var(--text);
-        }
-
-        .btn-secondary:hover {
-            background: #3a414c;
-        }
-
         .btn-warning {
             background: #f39c12;
             color: #000;
         }
 
-        .btn-warning:hover {
-            background: #d68910;
-        }
-
-        .label-inline {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
         .mono {
-            font-family: "Consolas", "Courier New", monospace;
+            font-family: "Consolas", monospace;
             font-size: 12px;
             word-break: break-all;
         }
@@ -177,285 +96,172 @@
         .hidden {
             filter: blur(6px);
         }
-
-        .alert {
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            text-align: center;
-            font-size: 14px;
-            display: none;
-        }
-
-        .alert.error {
-            background: rgba(255,77,79,0.2);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-
-        .alert.success {
-            background: rgba(82,196,26,0.2);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
     </style>
 </head>
 
 <body>
-
-<div id="particles"></div>
-<button id="themeToggle">Modo Claro</button>
 
 <div class="wrapper">
 
     <div class="header-box">
         <h1>Mi Wallet BENDICIÓN</h1>
         <p>ID de usuario: <span id="userId"></span></p>
-        <p class="label-inline">Asegúrate de guardar tus claves en un lugar seguro. Nunca compartas tu clave privada.</p>
+        <p class="label-inline">Nunca compartas tu clave privada. Guárdala en un lugar seguro.</p>
     </div>
-
-    <div id="alertBox" class="alert"></div>
 
     <div class="grid">
 
-        <!-- Cargar wallet -->
         <section class="card">
             <h2>Cargar wallet asociada</h2>
-            <p>Carga la wallet que ya está vinculada a tu cuenta de usuario.</p>
+            <p>Carga la wallet que ya está vinculada a tu cuenta.</p>
             <button id="btnLoadWallet" class="btn btn-primary">Cargar wallet</button>
         </section>
 
-        <!-- Crear wallet -->
         <section class="card">
             <h2>Crear nueva wallet</h2>
             <p>Genera una nueva wallet y asígnala a tu usuario.</p>
             <button id="btnCreateWallet" class="btn btn-primary">Crear wallet</button>
         </section>
 
-        <!-- Importar wallet -->
-        <section class="card">
-            <h2>Importar wallet</h2>
-            <p>Importa una wallet existente usando tu clave privada en formato hex.</p>
-            <button id="btnImportWallet" class="btn btn-secondary">Importar mediante clave privada</button>
-        </section>
-
-        <!-- Claves -->
         <section class="card">
             <h2>Claves de la wallet</h2>
 
             <p><strong>Address:</strong></p>
-            <p class="mono" id="address"></p>
+            <p id="address" class="mono"></p>
 
             <p><strong>Clave pública:</strong></p>
-            <p class="mono hidden" id="publicKey"></p>
+            <p id="publicKey" class="mono hidden"></p>
 
             <p><strong>Clave privada:</strong></p>
-            <p class="mono hidden" id="privateKey"></p>
+            <p id="privateKey" class="mono hidden"></p>
 
             <button id="btnShowKeys" class="btn btn-warning">Mostrar claves (10 segundos)</button>
-        </section>
-
-        <!-- KYC -->
-        <section class="card">
-            <h2>Verificación KYC</h2>
-            <p>Para cumplir con regulaciones, verifica tu identidad antes de operar con grandes montos.</p>
-            <button id="btnKYC" class="btn btn-primary">Ir a KYC</button>
-        </section>
-
-        <!-- Navegación -->
-        <section class="card">
-            <h2>Otras opciones</h2>
-            <p>Accede a las operaciones de envío y al explorador de la blockchain.</p>
-            <button id="btnGoEnvio" class="btn btn-secondary">Ir a Operaciones</button>
-            <button id="btnGoChain" class="btn btn-secondary">Ver Blockchain</button>
         </section>
 
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.js"></script>
-
+<!-- SCRIPT CONECTADO AL BACKEND -->
 <script>
-    // Partículas
-    const particles = document.getElementById("particles");
-    function createParticle() {
-        const p = document.createElement("div");
-        p.classList.add("particle");
-        p.style.left = Math.random() * 100 + "%";
-        p.style.top = "100%";
-        p.style.animationDuration = 4 + Math.random() * 6 + "s";
-        p.style.opacity = Math.random();
-        particles.appendChild(p);
-        setTimeout(() => p.remove(), 10000);
-    }
-    setInterval(createParticle, 150);
+const API = "http://localhost:7777/crypto"; // Cambia si usas dominio
 
-    // Modo claro/oscuro
-    const toggle = document.getElementById("themeToggle");
-    toggle.onclick = () => {
-        document.body.classList.toggle("light");
-        toggle.textContent = document.body.classList.contains("light")
-            ? "Modo Oscuro"
-            : "Modo Claro";
-    };
+function showAlert(msg) {
+    alert(msg);
+}
 
-    const API = "https://empireyoncar.duckdns.org/crypto";
-    const ec = new elliptic.ec("secp256k1");
-    const sha256 = (msg) => CryptoJS.SHA256(msg).toString();
+// Seguridad: exigir login
+let userId = localStorage.getItem("user_id");
+if (!userId) {
+    alert("Debes iniciar sesión primero.");
+    window.location.href = "login.html";
+} else {
+    document.getElementById("userId").textContent = userId;
+}
 
-    const alertBox = document.getElementById("alertBox");
-    function showAlert(msg, type="error") {
-        alertBox.textContent = msg;
-        alertBox.className = "alert " + type;
-        alertBox.style.display = "block";
-    }
+// ============================================================
+// 1) Cargar wallet asociada
+// ============================================================
+document.getElementById("btnLoadWallet").onclick = async () => {
+    try {
+        const res = await fetch(`${API}/user_wallet/${userId}`);
+        const data = await res.json();
 
-    // Seguridad: exigir login
-    let userId = localStorage.getItem("user_id");
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "login.html";
-    } else {
-        document.getElementById("userId").textContent = userId;
-    }
-
-    // Cargar wallet asociada
-    document.getElementById("btnLoadWallet").onclick = async () => {
-        try {
-            const res = await fetch(`${API}/user_wallet/${userId}`);
-            const data = await res.json();
-
-            if (!data.wallet) {
-                showAlert("No tienes wallet asociada. Crea una nueva.", "error");
-                return;
-            }
-
-            const address = data.wallet;
-            const res2 = await fetch(`${API}/wallet_info/${address}`);
-            const wallet = await res2.json();
-
-            if (!wallet || !wallet.private_key) {
-                showAlert("Error: la wallet existe pero no tiene clave privada en el nodo.", "error");
-                return;
-            }
-
-            document.getElementById("address").textContent = wallet.address;
-            document.getElementById("publicKey").textContent = wallet.public_key;
-            document.getElementById("privateKey").textContent = wallet.private_key;
-
-            localStorage.setItem("private_key", wallet.private_key);
-            localStorage.setItem("public_key", wallet.public_key);
-            localStorage.setItem("address", wallet.address);
-
-            showAlert("Wallet asociada cargada correctamente.", "success");
-        } catch (err) {
-            console.error(err);
-            showAlert("Error al cargar la wallet asociada.", "error");
-        }
-    };
-
-    // Crear wallet nueva
-    document.getElementById("btnCreateWallet").onclick = async () => {
-        try {
-            const res = await fetch(`${API}/user_wallet/${userId}`);
-            const data = await res.json();
-
-            if (data.wallet) {
-                showAlert("Ya tienes una wallet asociada.", "error");
-                return;
-            }
-
-            const res2 = await fetch(`${API}/generate_wallet`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: userId })
-            });
-
-            const wallet = await res2.json();
-
-            if (!wallet || !wallet.private_key) {
-                showAlert("Error al crear la wallet en el backend.", "error");
-                return;
-            }
-
-            document.getElementById("address").textContent = wallet.address;
-            document.getElementById("publicKey").textContent = wallet.public_key;
-            document.getElementById("privateKey").textContent = wallet.private_key;
-
-            localStorage.setItem("private_key", wallet.private_key);
-            localStorage.setItem("public_key", wallet.public_key);
-            localStorage.setItem("address", wallet.address);
-
-            showAlert("Wallet creada y guardada correctamente.", "success");
-        } catch (err) {
-            console.error(err);
-            showAlert("Error al crear la wallet.", "error");
-        }
-    };
-
-    // Importar wallet
-    document.getElementById("btnImportWallet").onclick = () => {
-        const priv = prompt("Introduce la clave privada en formato hex:");
-
-        if (!priv) return;
-
-        try {
-            const key = ec.keyFromPrivate(priv.trim(), "hex");
-            const publicKey = key.getPublic("hex");
-            const address = sha256(publicKey);
-
-            document.getElementById("address").textContent = address;
-            document.getElementById("publicKey").textContent = publicKey;
-            document.getElementById("privateKey").textContent = priv.trim();
-
-            localStorage.setItem("private_key", priv.trim());
-            localStorage.setItem("public_key", publicKey);
-            localStorage.setItem("address", address);
-
-            showAlert("Wallet importada localmente.", "success");
-        } catch (e) {
-            console.error(e);
-            showAlert("Clave privada inválida.", "error");
-        }
-    };
-
-    // Mostrar claves 10 segundos
-    document.getElementById("btnShowKeys").onclick = () => {
-        const pk = localStorage.getItem("private_key");
-        const pub = localStorage.getItem("public_key");
-
-        if (!pk || !pub) {
-            showAlert("Primero carga o crea una wallet.", "error");
+        if (!data.wallet) {
+            showAlert("No tienes wallet asociada. Crea una nueva.");
             return;
         }
 
-        const privSpan = document.getElementById("privateKey");
-        const pubSpan = document.getElementById("publicKey");
+        const address = data.wallet;
 
-        privSpan.classList.remove("hidden");
-        pubSpan.classList.remove("hidden");
+        const res2 = await fetch(`${API}/wallet_info/${address}`);
+        const wallet = await res2.json();
 
-        setTimeout(() => {
-            privSpan.classList.add("hidden");
-            pubSpan.classList.add("hidden");
-        }, 10000);
-    };
+        if (wallet.error) {
+            showAlert("No se encontró la wallet en el servidor.");
+            return;
+        }
 
-    // KYC
-    document.getElementById("btnKYC").onclick = () => {
-        window.location.href = "kyc.html";
-    };
+        document.getElementById("address").textContent = wallet.address;
+        document.getElementById("publicKey").textContent = wallet.public_key;
+        document.getElementById("privateKey").textContent = wallet.private_key;
 
-    // Navegación
-    document.getElementById("btnGoEnvio").onclick = () => {
-        window.location.href = "envio.html";
-    };
+        localStorage.setItem("address", wallet.address);
+        localStorage.setItem("public_key", wallet.public_key);
+        localStorage.setItem("private_key", wallet.private_key);
 
-    document.getElementById("btnGoChain").onclick = () => {
-        window.location.href = "blockchainbendicion.html";
-    };
+        showAlert("Wallet cargada correctamente.");
 
+    } catch (err) {
+        console.error(err);
+        showAlert("Error al cargar la wallet.");
+    }
+};
+
+// ============================================================
+// 2) Crear nueva wallet
+// ============================================================
+document.getElementById("btnCreateWallet").onclick = async () => {
+    try {
+        const resCheck = await fetch(`${API}/user_wallet/${userId}`);
+        const check = await resCheck.json();
+
+        if (check.wallet) {
+            showAlert("Ya tienes una wallet asociada.");
+            return;
+        }
+
+        const res = await fetch(`${API}/generate_wallet`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId })
+        });
+
+        const wallet = await res.json();
+
+        if (wallet.error) {
+            showAlert("Error al crear wallet.");
+            return;
+        }
+
+        document.getElementById("address").textContent = wallet.address;
+        document.getElementById("publicKey").textContent = wallet.public_key;
+        document.getElementById("privateKey").textContent = wallet.private_key;
+
+        localStorage.setItem("address", wallet.address);
+        localStorage.setItem("public_key", wallet.public_key);
+        localStorage.setItem("private_key", wallet.private_key);
+
+        showAlert("Wallet creada correctamente.");
+
+    } catch (err) {
+        console.error(err);
+        showAlert("Error al crear wallet.");
+    }
+};
+
+// ============================================================
+// 3) Mostrar claves por 10 segundos
+// ============================================================
+document.getElementById("btnShowKeys").onclick = () => {
+    const priv = localStorage.getItem("private_key");
+    const pub = localStorage.getItem("public_key");
+
+    if (!priv || !pub) {
+        showAlert("Primero carga o crea una wallet.");
+        return;
+    }
+
+    const privSpan = document.getElementById("privateKey");
+    const pubSpan = document.getElementById("publicKey");
+
+    privSpan.classList.remove("hidden");
+    pubSpan.classList.remove("hidden");
+
+    setTimeout(() => {
+        privSpan.classList.add("hidden");
+        pubSpan.classList.add("hidden");
+    }, 10000);
+};
 </script>
 
 </body>

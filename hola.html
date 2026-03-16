@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – BENDICIÓN</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+
+<div id="particles"></div>
+
+<button id="themeToggle">Modo Claro</button>
+
+<div class="box">
+
+    <h1>Iniciar sesión</h1>
+
+    <div id="alertBox" class="alert"></div>
+
+    <label>Email:</label>
+    <input type="email" id="email">
+
+    <label>Contraseña:</label>
+    <input type="password" id="password">
+
+    <button id="btnLogin">Entrar</button>
+
+    <p class="center">
+      ¿Olvidaste tu contraseña?
+      <a href="https://discord.gg/ze4YDqJYBy" target="_blank">Recuperar</a>
+    </p>
+
+    <p class="center">
+      ¿No tienes cuenta?
+      <a href="register.html">Regístrate</a>
+    </p>
+
+</div>
+
+<script>
+    /* ------------------------------
+       PARTICULAS
+    ------------------------------ */
+    const particles = document.getElementById("particles");
+
+    function createParticle() {
+        const p = document.createElement("div");
+        p.classList.add("particle");
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = "100%";
+        p.style.animationDuration = 4 + Math.random() * 6 + "s";
+        p.style.opacity = Math.random();
+        particles.appendChild(p);
+
+        setTimeout(() => p.remove(), 10000);
+    }
+
+    setInterval(createParticle, 150);
+
+    /* ------------------------------
+       MODO CLARO/OSCURO
+    ------------------------------ */
+    const toggle = document.getElementById("themeToggle");
+
+    toggle.onclick = () => {
+        document.body.classList.toggle("light");
+        toggle.textContent = document.body.classList.contains("light")
+            ? "Modo Oscuro"
+            : "Modo Claro";
+    };
+
+    /* ------------------------------
+       LOGIN
+    ------------------------------ */
+    const API = "/CriptoBendicion"; // backend público
+
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const alertBox = document.getElementById("alertBox");
+
+    function showAlert(msg, type="error") {
+        alertBox.textContent = msg;
+        alertBox.className = "alert " + type;
+        alertBox.style.display = "block";
+    }
+
+    document.getElementById("btnLogin").onclick = async () => {
+        const emailVal = email.value.trim();
+        const passVal = password.value.trim();
+
+        if (!emailVal || !passVal) {
+            showAlert("Completa todos los campos.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API}/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: emailVal, password: passVal })
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: "Error en el servidor" }));
+                showAlert(err.error || "Error desconocido.");
+                return;
+            }
+
+            const data = await res.json();
+
+            if (data.error) {
+                showAlert(data.error);
+                return;
+            }
+
+            if (data.user_id) {
+                localStorage.setItem("user_id", data.user_id);
+                showAlert("Login correcto", "success");
+
+                setTimeout(() => {
+                    window.location.href = "/CriptoBendicion/home";
+                }, 800);
+            } else {
+                showAlert("Credenciales incorrectas.");
+            }
+
+        } catch (e) {
+            showAlert("No se pudo conectar con el servidor.");
+            console.error("Error en login:", e);
+        }
+    };
+</script>
+
+</body>
+</html>

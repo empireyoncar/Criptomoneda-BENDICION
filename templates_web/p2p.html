@@ -4,6 +4,29 @@
     <meta charset="UTF-8">
     <title>Mercado P2P – BENDICIÓN</title>
     <style>
+        .nav-panel {
+    display: flex;
+    gap: 10px;
+    background: #111;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.nav-panel button {
+    background: #222;
+    color: white;
+    border: 1px solid #444;
+    padding: 10px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.nav-panel button:hover {
+    background: #333;
+}
+
         :root {
             --bg: #0b0e11;
             --bg-box: #181a20;
@@ -276,6 +299,15 @@
     </style>
 </head>
 <body>
+<div class="nav-panel">
+    <button id="btnGoHome">Inicio</button>
+    <button id="btnGoWallet">Wallet</button>
+    <button id="btnGoEnvio">Enviar</button>
+    <button id="btnGoP2P">P2P</button>
+    <button id="btnGoChain">Blockchain</button>
+    <button id="btnGoLogin">Login</button>
+    <button id="btnGoRegister">Registro</button>
+</div>
 
 <div class="layout">
     <header>
@@ -398,14 +430,28 @@
 </div>
 
 <script>
-    // Simulación de usuario logueado
+
+    /* ===========================
+           PANEL DE NAVEGACIÓN
+       ============================ */
+    document.getElementById("btnGoHome").onclick = () => window.location.href = "home.html";
+    document.getElementById("btnGoWallet").onclick = () => window.location.href = "wallet.html";
+    document.getElementById("btnGoEnvio").onclick = () => window.location.href = "envio.html";
+    document.getElementById("btnGoP2P").onclick = () => window.location.href = "p2p.html";
+    document.getElementById("btnGoChain").onclick = () => window.location.href = "blockchainbendicion.html";
+    document.getElementById("btnGoLogin").onclick = () => window.location.href = "login.html";
+    document.getElementById("btnGoRegister").onclick = () => window.location.href = "register.html";
+
+
+    // ===========================
+    //   TU CÓDIGO ORIGINAL
+    // ===========================
+
     let userId = localStorage.getItem("user_id") || "usuario_demo";
     document.getElementById("userId").textContent = userId;
 
-    // Ofertas en memoria (puedes luego conectarlo a backend)
     let ofertas = JSON.parse(localStorage.getItem("ofertas_p2p") || "[]");
 
-    // Modo actual: 'compra' o 'venta' (lo que el usuario quiere hacer)
     let modoActual = "compra";
 
     function guardarOfertas() {
@@ -431,7 +477,6 @@
         const filtroPago = document.getElementById("filtroPago").value;
         const filtroUsuario = document.getElementById("filtroUsuario").value.trim().toLowerCase();
 
-        // El usuario en modo "compra" ve ofertas de "venta" y viceversa
         const tipoBuscado = modoActual === "compra" ? "venta" : "compra";
 
         const filtradas = ofertas.filter(o => {
@@ -513,7 +558,7 @@
         const max = parseFloat(document.getElementById("ofertaMax").value);
         const pagosStr = document.getElementById("ofertaPagos").value;
         const comentario = document.getElementById("ofertaComentario").value.trim();
-        const fiat = document.getElementById("filtroFiat").value; // asumimos misma fiat que filtro actual
+        const fiat = document.getElementById("filtroFiat").value;
 
         if (!cantidad || !precio || !min || !max || !pagosStr) {
             alert("Completa todos los campos obligatorios de la oferta.");
@@ -569,51 +614,8 @@
         alert(mensaje);
     }
 
-    // Inicial
-    if (ofertas.length === 0) {
-        // Semillas de ejemplo
-        ofertas = [
-            {
-                id: 1,
-                usuario: "trader_juan",
-                tipo: "venta",
-                cantidad: 150,
-                precio: 1.02,
-                min: 50,
-                max: 500,
-                pagos: ["SEPA", "Bizum"],
-                comentario: "Solo bancos españoles. Libero rápido.",
-                fiat: "EUR"
-            },
-            {
-                id: 2,
-                usuario: "ana_p2p",
-                tipo: "compra",
-                cantidad: 80,
-                precio: 0.99,
-                min: 30,
-                max: 300,
-                pagos: ["REVOLUT"],
-                comentario: "",
-                fiat: "EUR"
-            },
-            {
-                id: 3,
-                usuario: "mex_trader",
-                tipo: "venta",
-                cantidad: 500,
-                precio: 1.10,
-                min: 100,
-                max: 1000,
-                pagos: ["SEPA"],
-                comentario: "Opero solo horario laboral.",
-                fiat: "EUR"
-            }
-        ];
-        guardarOfertas();
-    }
-
     renderOfertas();
+
 </script>
 
 </body>

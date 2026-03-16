@@ -79,6 +79,15 @@
             background: var(--primary-hover);
         }
 
+        .btn-secondary {
+            background: #2b3139;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #3a414c;
+        }
+
         .result {
             margin-top: 20px;
             padding: 15px;
@@ -104,39 +113,56 @@
 
     <button class="btn btn-primary" onclick="mint()">Crear monedas</button>
 
+    <button class="btn btn-secondary" onclick="crearBloque()">Crear bloque</button>
+
     <div class="result" id="resultBox"></div>
 </div>
 
 <script>
     async function mint() {
-    const address = document.getElementById("address").value.trim();
-    const amount = document.getElementById("amount").value.trim();
+        const address = document.getElementById("address").value.trim();
+        const amount = document.getElementById("amount").value.trim();
 
-    if (!address || !amount) {
-        alert("Completa todos los campos.");
-        return;
+        if (!address || !amount) {
+            alert("Completa todos los campos.");
+            return;
+        }
+
+        const url = `https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}&address=${address}&amount=${amount}`;
+
+        const res = await fetch(url, {
+            method: "POST",
+            mode: "cors"
+        });
+
+        const data = await res.json();
+        mostrarResultado(data);
     }
 
-    const url = `https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}&address=${address}&amount=${amount}`;
+    async function crearBloque() {
+        const url = "https://empireyoncar.duckdns.org/crypto/commit";
 
-    const res = await fetch(url, {
-        method: "POST",
-        mode: "cors"
-    });
+        const res = await fetch(url, {
+            method: "POST",
+            mode: "cors"
+        });
 
-    const data = await res.json();
-
-    const box = document.getElementById("resultBox");
-    box.style.display = "block";
-
-    if (data.error) {
-        box.style.color = "#f6465d";
-        box.textContent = "Error: " + data.error;
-    } else {
-        box.style.color = "#0ecb81";
-        box.textContent = "Éxito: " + data.message;
+        const data = await res.json();
+        mostrarResultado(data);
     }
-}
+
+    function mostrarResultado(data) {
+        const box = document.getElementById("resultBox");
+        box.style.display = "block";
+
+        if (data.error) {
+            box.style.color = "#f6465d";
+            box.textContent = "Error: " + data.error;
+        } else {
+            box.style.color = "#0ecb81";
+            box.textContent = "Éxito: " + (data.message || JSON.stringify(data));
+        }
+    }
 </script>
 
 </body>

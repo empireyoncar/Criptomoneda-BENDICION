@@ -76,6 +76,10 @@ def kyc_telefono_page():
 @app.route("/home.html")
 def home_page():
     return render_template("home.html")
+@app.route("/p2p")
+@app.route("/p2p.html")
+def p2p_page():
+    return render_template("p2p.html")
 
 # -----------------------------
 # API LOGIN (POST)

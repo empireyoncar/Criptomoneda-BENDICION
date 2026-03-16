@@ -5,9 +5,6 @@
     <title>Operaciones – BENDICIÓN</title>
 
     <style>
-        /* ===========================
-           PALETA GLOBAL
-        ============================ */
         :root {
             --bg: #0b0e11;
             --bg-box: #181a20;
@@ -20,17 +17,28 @@
             --success: #52c41a;
         }
 
+        body.light {
+            --bg: #f4f4f4;
+            --bg-box: white;
+            --text: #222;
+            --text-muted: #555;
+            --primary: #d4a20a;
+            --primary-hover: #b58900;
+            --border: #ccc;
+        }
+
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* ===========================
-           PARTÍCULAS
-        ============================ */
         #particles {
             position: fixed;
             width: 100%;
@@ -54,118 +62,78 @@
             to { transform: translateY(-800px); opacity: 0; }
         }
 
-        /* ===========================
-           HEADER + NAV
-        ============================ */
-        .header {
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: var(--bg-box);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 30;
+        }
+
+        .wrapper {
             width: 100%;
-            background: var(--bg-box);
-            padding: 18px 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .logo {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-right: 20px;
-        }
-
-        .user-info {
-            font-size: 16px;
-            color: var(--text);
-            font-weight: bold;
-        }
-
-        .nav {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .nav a {
-            margin: 0 12px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .nav a:hover {
-            color: var(--primary);
-        }
-
-        /* ===========================
-           CONTENEDOR
-        ============================ */
-        .container {
             max-width: 1100px;
-            margin: 40px auto;
             padding: 20px;
         }
 
-        .title {
-            font-size: 26px;
-            margin-bottom: 10px;
+        .header-box {
+            background: var(--bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        .header-box h1 {
+            margin: 0 0 10px 0;
             color: var(--primary);
-            text-align: center;
         }
 
-        .subtitle {
+        .header-box p {
+            margin: 4px 0;
             color: var(--text-muted);
-            margin-bottom: 30px;
-            text-align: center;
         }
 
-        /* ===========================
-           GRID DE TARJETAS
-        ============================ */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 16px;
         }
 
         .card {
             background: var(--bg-box);
-            padding: 20px;
+            padding: 18px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 12px rgba(0,0,0,0.4);
-            transition: transform .2s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
         }
 
         .card h2 {
             margin-top: 0;
+            margin-bottom: 10px;
             color: var(--primary);
             font-size: 18px;
         }
 
         .card p {
-            color: var(--text-muted);
             font-size: 14px;
+            color: var(--text-muted);
         }
 
-        /* ===========================
-           BOTONES
-        ============================ */
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 12px;
-            font-size: 14px;
+            margin-top: 10px;
+            transition: 0.2s;
         }
 
         .btn-primary {
@@ -195,9 +163,6 @@
             background: #d68910;
         }
 
-        /* ===========================
-           INPUTS
-        ============================ */
         label {
             font-size: 13px;
             color: var(--text-muted);
@@ -229,14 +194,11 @@
         }
 
         .mono {
-            font-family: "Consolas", monospace;
+            font-family: "Consolas", "Courier New", monospace;
             font-size: 12px;
             word-break: break-all;
         }
 
-        /* ===========================
-           ALERTAS
-        ============================ */
         .alert {
             padding: 10px;
             border-radius: 6px;
@@ -263,27 +225,15 @@
 <body>
 
 <div id="particles"></div>
+<button id="themeToggle">Modo Claro</button>
 
-<!-- HEADER -->
-<header class="header">
-    <div class="logo">BENDICIÓN</div>
-    <div class="user-info">ID: <span id="userId"></span></div>
-</header>
+<div class="wrapper">
 
-<!-- NAV -->
-<div class="nav">
-    <a href="home.html">Inicio</a>
-    <a href="wallet.html">Wallet</a>
-    <a href="envio.html">Envíos</a>
-    <a href="p2p.html">P2P</a>
-    <a href="blockchainbendicion.html">Blockchain</a>
-</div>
-
-<!-- CONTENIDO -->
-<div class="container">
-
-    <h1 class="title">Operaciones BENDICIÓN</h1>
-    <p class="subtitle">Envía, consulta y gestiona tus transacciones.</p>
+    <div class="header-box">
+        <h1>Operaciones BENDICIÓN</h1>
+        <p>Address actual: <span id="address" class="mono"></span></p>
+        <p class="mono">Usuario ID: <span id="userId"></span></p>
+    </div>
 
     <div id="alertBox" class="alert"></div>
 
@@ -292,7 +242,7 @@
         <!-- Balance -->
         <section class="card">
             <h2>Balance</h2>
-            <p>Consulta cuántas monedas BENDICIÓN tienes actualmente.</p>
+            <p>Consulta cuántas monedas BENDICIÓN tienes actualmente en tu wallet.</p>
             <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
             <p><strong>Balance:</strong> <span id="balance"></span></p>
         </section>
@@ -314,7 +264,7 @@
         <!-- Mis transacciones -->
         <section class="card">
             <h2>Mis transacciones</h2>
-            <p>Consulta todas tus transacciones.</p>
+            <p>Consulta todas las transacciones asociadas a tu dirección.</p>
             <button id="btnMyTx" class="btn btn-secondary">Ver transacciones</button>
             <pre id="myTx"></pre>
         </section>
@@ -322,19 +272,23 @@
         <!-- Crear bloque -->
         <section class="card">
             <h2>Crear bloque</h2>
-            <p>Procesa transacciones pendientes y crea un bloque.</p>
+            <p>Toma las transacciones pendientes y crea un nuevo bloque en la blockchain.</p>
             <button id="btnCommit" class="btn btn-warning">Crear bloque</button>
             <pre id="commitResult"></pre>
+        </section>
+
+        <!-- Navegación -->
+        <section class="card">
+            <h2>Navegación</h2>
+            <button id="btnGoWallet" class="btn btn-secondary">Volver a Wallet</button>
+            <button id="btnGoChain" class="btn btn-secondary">Ver Blockchain</button>
         </section>
 
     </div>
 </div>
 
-<!-- SCRIPT -->
 <script>
-    /* ===========================
-       PARTÍCULAS
-    ============================ */
+    // Partículas
     const particles = document.getElementById("particles");
     function createParticle() {
         const p = document.createElement("div");
@@ -348,11 +302,25 @@
     }
     setInterval(createParticle, 150);
 
-    /* ===========================
-       LOGIN OBLIGATORIO
-    ============================ */
+    // Modo claro/oscuro
+    const toggle = document.getElementById("themeToggle");
+    toggle.onclick = () => {
+        document.body.classList.toggle("light");
+        toggle.textContent = document.body.classList.contains("light")
+            ? "Modo Oscuro"
+            : "Modo Claro";
+    };
+
     const API = "https://empireyoncar.duckdns.org/crypto";
 
+    const alertBox = document.getElementById("alertBox");
+    function showAlert(msg, type="error") {
+        alertBox.textContent = msg;
+        alertBox.className = "alert " + type;
+        alertBox.style.display = "block";
+    }
+
+    // Seguridad: exigir login y wallet
     let userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("Debes iniciar sesión primero.");
@@ -366,47 +334,36 @@
     const publicKey = localStorage.getItem("public_key");
 
     if (!address || !privateKey || !publicKey) {
-        alert("Primero configura tu wallet.");
+        alert("Primero configura tu wallet en la página principal.");
         window.location.href = "wallet.html";
+    } else {
+        document.getElementById("address").textContent = address;
     }
 
-    document.getElementById("address")?.textContent = address;
-
-    /* ===========================
-       ALERTAS
-    ============================ */
-    const alertBox = document.getElementById("alertBox");
-    function showAlert(msg, type="error") {
-        alertBox.textContent = msg;
-        alertBox.className = "alert " + type;
-        alertBox.style.display = "block";
-    }
-
-    /* ===========================
-       BALANCE
-    ============================ */
+    // Ver balance
     document.getElementById("btnGetBalance").onclick = async () => {
         try {
             const res = await fetch(`${API}/balance/${address}`);
             const data = await res.json();
             document.getElementById("balance").textContent =
-                data?.balance ?? "Error";
-        } catch {
-            showAlert("Error al obtener el balance.");
+                data && typeof data.balance !== "undefined" ? data.balance : "Error";
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al obtener el balance.", "error");
         }
     };
 
-    /* ===========================
-       ENVIAR TRANSACCIÓN
-    ============================ */
+    // Enviar transacción
     document.getElementById("btnSend").onclick = async () => {
         const toAddress = document.getElementById("toAddress").value.trim();
         const amount = parseFloat(document.getElementById("amount").value);
 
         if (!toAddress || !amount || amount <= 0) {
-            showAlert("Completa los campos correctamente.");
+            showAlert("Completa los campos con un monto válido.", "error");
             return;
         }
+
+        const tx = { from: address, to: toAddress, amount };
 
         try {
             const res = await fetch(`${API}/send_tx`, {
@@ -415,45 +372,49 @@
                 body: JSON.stringify({
                     private_key: privateKey,
                     public_key: publicKey,
-                    tx: { from: address, to: toAddress, amount }
+                    tx
                 })
             });
 
             const data = await res.json();
-            document.getElementById("sendResult").textContent =
-                JSON.stringify(data, null, 2);
-
-        } catch {
-            showAlert("Error al enviar la transacción.");
+            document.getElementById("sendResult").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al enviar la transacción.", "error");
         }
     };
 
-    /* ===========================
-       MIS TRANSACCIONES
-    ============================ */
+    // Mis transacciones
     document.getElementById("btnMyTx").onclick = async () => {
         try {
             const res = await fetch(`${API}/my_transactions/${address}`);
             const data = await res.json();
-            document.getElementById("myTx").textContent =
-                JSON.stringify(data, null, 2);
-        } catch {
-            showAlert("Error al obtener transacciones.");
+            document.getElementById("myTx").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al obtener tus transacciones.", "error");
         }
     };
 
-    /* ===========================
-       CREAR BLOQUE
-    ============================ */
+    // Crear bloque
     document.getElementById("btnCommit").onclick = async () => {
         try {
             const res = await fetch(`${API}/commit`, { method: "POST" });
             const data = await res.json();
-            document.getElementById("commitResult").textContent =
-                JSON.stringify(data, null, 2);
-        } catch {
-            showAlert("Error al crear bloque.");
+            document.getElementById("commitResult").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            console.error(err);
+            showAlert("Error al crear el bloque.", "error");
         }
+    };
+
+    // Navegación
+    document.getElementById("btnGoWallet").onclick = () => {
+        window.location.href = "wallet.html";
+    };
+
+    document.getElementById("btnGoChain").onclick = () => {
+        window.location.href = "blockchainbendicion.html";
     };
 </script>
 

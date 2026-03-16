@@ -5,9 +5,6 @@
     <title>Mi Wallet – BENDICIÓN</title>
 
     <style>
-        /* ===========================
-           PALETA GLOBAL
-        ============================ */
         :root {
             --bg: #0b0e11;
             --bg-box: #181a20;
@@ -25,147 +22,59 @@
             font-family: Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
-            overflow-x: hidden;
-        }
-
-        /* ===========================
-           PARTÍCULAS
-        ============================ */
-        #particles {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--primary);
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: float 8s infinite linear;
-        }
-
-        @keyframes float {
-            from { transform: translateY(0); opacity: 0.7; }
-            to { transform: translateY(-800px); opacity: 0; }
-        }
-
-        /* ===========================
-           HEADER + NAV
-        ============================ */
-        .header {
-            width: 100%;
-            background: var(--bg-box);
-            padding: 18px 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            min-height: 100vh;
         }
 
-        .logo {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-right: 20px;
-        }
-
-        .user-info {
-            font-size: 16px;
-            color: var(--text);
-            font-weight: bold;
-        }
-
-        .nav {
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .nav a {
-            margin: 0 12px;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .nav a:hover {
-            color: var(--primary);
-        }
-
-        /* ===========================
-           CONTENEDOR
-        ============================ */
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
+        .wrapper {
+            width: 100%;
+            max-width: 900px;
             padding: 20px;
         }
 
-        .title {
-            font-size: 26px;
-            margin-bottom: 10px;
+        .header-box {
+            background: var(--bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        .header-box h1 {
+            margin: 0 0 10px 0;
             color: var(--primary);
-            text-align: center;
         }
 
-        .subtitle {
-            color: var(--text-muted);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        /* ===========================
-           GRID DE TARJETAS
-        ============================ */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 16px;
         }
 
         .card {
             background: var(--bg-box);
-            padding: 20px;
+            padding: 18px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 12px rgba(0,0,0,0.4);
-            transition: transform .2s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
         }
 
         .card h2 {
             margin-top: 0;
+            margin-bottom: 10px;
             color: var(--primary);
             font-size: 18px;
         }
 
-        .card p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* ===========================
-           BOTONES
-        ============================ */
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 12px;
-            font-size: 14px;
+            margin-top: 10px;
         }
 
         .btn-primary {
@@ -173,18 +82,11 @@
             color: #000;
         }
 
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
         .btn-warning {
             background: #f39c12;
             color: #000;
         }
 
-        /* ===========================
-           TEXTO MONO
-        ============================ */
         .mono {
             font-family: "Consolas", monospace;
             font-size: 12px;
@@ -199,34 +101,19 @@
 
 <body>
 
-<div id="particles"></div>
+<div class="wrapper">
 
-<!-- HEADER -->
-<header class="header">
-    <div class="logo">BENDICIÓN</div>
-    <div class="user-info">ID: <span id="userId"></span></div>
-</header>
-
-<!-- NAV -->
-<div class="nav">
-    <a href="home.html">Inicio</a>
-    <a href="wallet.html">Wallet</a>
-    <a href="envio.html">Envíos</a>
-    <a href="p2p.html">P2P</a>
-    <a href="blockchainbendicion.html">Blockchain</a>
-</div>
-
-<!-- CONTENIDO -->
-<div class="container">
-
-    <h1 class="title">Mi Wallet</h1>
-    <p class="subtitle">Gestiona tu dirección, claves y seguridad.</p>
+    <div class="header-box">
+        <h1>Mi Wallet BENDICIÓN</h1>
+        <p>ID de usuario: <span id="userId"></span></p>
+        <p class="label-inline">Nunca compartas tu clave privada. Guárdala en un lugar seguro.</p>
+    </div>
 
     <div class="grid">
 
         <section class="card">
             <h2>Cargar wallet asociada</h2>
-            <p>Carga la wallet vinculada a tu cuenta.</p>
+            <p>Carga la wallet que ya está vinculada a tu cuenta.</p>
             <button id="btnLoadWallet" class="btn btn-primary">Cargar wallet</button>
         </section>
 
@@ -254,13 +141,15 @@
     </div>
 </div>
 
-<!-- SCRIPT BACKEND -->
+<!-- SCRIPT CONECTADO AL BACKEND -->
 <script>
-const API = "https://empireyoncar.duckdns.org/crypto";
+const API = "https://empireyoncar.duckdns.org/crypto"; // Cambia si usas dominio
 
-/* ===========================
-   LOGIN OBLIGATORIO
-=========================== */
+function showAlert(msg) {
+    alert(msg);
+}
+
+// Seguridad: exigir login
 let userId = localStorage.getItem("user_id");
 if (!userId) {
     alert("Debes iniciar sesión primero.");
@@ -269,42 +158,26 @@ if (!userId) {
     document.getElementById("userId").textContent = userId;
 }
 
-/* ===========================
-   PARTÍCULAS
-=========================== */
-const particles = document.getElementById("particles");
-
-function createParticle() {
-    const p = document.createElement("div");
-    p.classList.add("particle");
-    p.style.left = Math.random() * 100 + "%";
-    p.style.top = "100%";
-    p.style.animationDuration = 4 + Math.random() * 6 + "s";
-    p.style.opacity = Math.random();
-    particles.appendChild(p);
-    setTimeout(() => p.remove(), 10000);
-}
-
-setInterval(createParticle, 150);
-
-/* ===========================
-   1) Cargar wallet
-=========================== */
+// ============================================================
+// 1) Cargar wallet asociada
+// ============================================================
 document.getElementById("btnLoadWallet").onclick = async () => {
     try {
         const res = await fetch(`${API}/user_wallet/${userId}`);
         const data = await res.json();
 
         if (!data.wallet) {
-            alert("No tienes wallet asociada.");
+            showAlert("No tienes wallet asociada. Crea una nueva.");
             return;
         }
 
-        const res2 = await fetch(`${API}/wallet_info/${data.wallet}`);
+        const address = data.wallet;
+
+        const res2 = await fetch(`${API}/wallet_info/${address}`);
         const wallet = await res2.json();
 
         if (wallet.error) {
-            alert("No se encontró la wallet.");
+            showAlert("No se encontró la wallet en el servidor.");
             return;
         }
 
@@ -316,23 +189,24 @@ document.getElementById("btnLoadWallet").onclick = async () => {
         localStorage.setItem("public_key", wallet.public_key);
         localStorage.setItem("private_key", wallet.private_key);
 
-        alert("Wallet cargada correctamente.");
+        showAlert("Wallet cargada correctamente.");
 
     } catch (err) {
-        alert("Error al cargar la wallet.");
+        console.error(err);
+        showAlert("Error al cargar la wallet.");
     }
 };
 
-/* ===========================
-   2) Crear wallet
-=========================== */
+// ============================================================
+// 2) Crear nueva wallet
+// ============================================================
 document.getElementById("btnCreateWallet").onclick = async () => {
     try {
         const resCheck = await fetch(`${API}/user_wallet/${userId}`);
         const check = await resCheck.json();
 
         if (check.wallet) {
-            alert("Ya tienes una wallet asociada.");
+            showAlert("Ya tienes una wallet asociada.");
             return;
         }
 
@@ -345,7 +219,7 @@ document.getElementById("btnCreateWallet").onclick = async () => {
         const wallet = await res.json();
 
         if (wallet.error) {
-            alert("Error al crear wallet.");
+            showAlert("Error al crear wallet.");
             return;
         }
 
@@ -357,22 +231,23 @@ document.getElementById("btnCreateWallet").onclick = async () => {
         localStorage.setItem("public_key", wallet.public_key);
         localStorage.setItem("private_key", wallet.private_key);
 
-        alert("Wallet creada correctamente.");
+        showAlert("Wallet creada correctamente.");
 
     } catch (err) {
-        alert("Error al crear wallet.");
+        console.error(err);
+        showAlert("Error al crear wallet.");
     }
 };
 
-/* ===========================
-   3) Mostrar claves 10s
-=========================== */
+// ============================================================
+// 3) Mostrar claves por 10 segundos
+// ============================================================
 document.getElementById("btnShowKeys").onclick = () => {
     const priv = localStorage.getItem("private_key");
     const pub = localStorage.getItem("public_key");
 
     if (!priv || !pub) {
-        alert("Primero carga o crea una wallet.");
+        showAlert("Primero carga o crea una wallet.");
         return;
     }
 

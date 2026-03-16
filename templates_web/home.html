@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <title>Home – BENDICIÓN</title>
 
+    <!-- Estilos idénticos a la página principal -->
     <style>
-        /* ===========================
-           PALETA GLOBAL
-        ============================ */
         :root {
             --bg: #0b0e11;
             --bg-box: #181a20;
@@ -23,131 +21,59 @@
             font-family: Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
-            overflow-x: hidden;
-        }
-
-        /* ===========================
-           PARTÍCULAS
-        ============================ */
-        #particles {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: var(--primary);
-            border-radius: 50%;
-            opacity: 0.7;
-            animation: float 8s infinite linear;
-        }
-
-        @keyframes float {
-            from { transform: translateY(0); opacity: 0.7; }
-            to { transform: translateY(-800px); opacity: 0; }
-        }
-
-        /* ===========================
-           HEADER
-        ============================ */
-        .header {
-            width: 100%;
-            background: var(--bg-box);
-            padding: 18px 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border-bottom: 1px solid var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            min-height: 100vh;
         }
 
-        .logo {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-right: 20px;
-        }
-
-        .user-info {
-            font-size: 16px;
-            color: var(--text);
-            font-weight: bold;
-        }
-
-        /* ===========================
-           CONTENEDOR
-        ============================ */
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
+        .wrapper {
+            width: 100%;
+            max-width: 900px;
             padding: 20px;
         }
 
-        .title {
-            font-size: 26px;
-            margin-bottom: 10px;
+        .header-box {
+            background: var(--bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        .header-box h1 {
+            margin: 0 0 10px 0;
             color: var(--primary);
-            text-align: center;
         }
 
-        .subtitle {
-            color: var(--text-muted);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        /* ===========================
-           GRID DE TARJETAS
-        ============================ */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            gap: 16px;
         }
 
         .card {
             background: var(--bg-box);
-            padding: 20px;
+            padding: 18px;
             border-radius: 12px;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 12px rgba(0,0,0,0.4);
-            transition: transform .2s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
         }
 
         .card h2 {
             margin-top: 0;
+            margin-bottom: 10px;
             color: var(--primary);
             font-size: 18px;
         }
 
-        .card p {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* ===========================
-           BOTONES
-        ============================ */
         .btn {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
             font-weight: bold;
-            margin-top: 12px;
-            font-size: 14px;
+            margin-top: 10px;
         }
 
         .btn-primary {
@@ -155,73 +81,84 @@
             color: #000;
         }
 
-        .btn-primary:hover {
-            background: var(--primary-hover);
-        }
-
         .btn-secondary {
             background: #2b3139;
             color: var(--text);
-        }
-
-        .btn-secondary:hover {
-            background: #3a414c;
         }
     </style>
 </head>
 
 <body>
 
-<div id="particles"></div>
+<div class="wrapper">
 
-<!-- HEADER -->
-<header class="header">
-    <div class="logo">BENDICIÓN</div>
-    <div class="user-info">ID: <span id="userId"></span></div>
-</header>
-
-<!-- CONTENIDO -->
-<div class="container">
-
-    <h1 class="title">Panel Principal</h1>
-    <p class="subtitle">Selecciona una acción para continuar.</p>
+    <!-- Encabezado con ID de usuario -->
+    <div class="header-box">
+        <h1>Panel Principal</h1>
+        <p>ID de usuario: <span id="userId"></span></p>
+        <p class="label-inline">Selecciona una acción para continuar.</p>
+    </div>
 
     <div class="grid">
 
+        <!-- Verificación KYC -->
         <section class="card">
             <h2>Verificación KYC</h2>
-            <p>Requisito obligatorio para operar con montos altos.</p>
-            <button id="btnKYC" class="btn btn-primary">Ir a verificación KYC</button>
+            <p>Requisito obligatorio para operar con montos altos. Verifica tu identidad.</p>
+
+            <button id="btnKYC" class="btn btn-primary">
+                Ir a verificación KYC
+            </button>
         </section>
 
+        <!-- Importar wallet -->
         <section class="card">
             <h2>Importar wallet</h2>
-            <p>Importa una wallet existente usando tu clave privada.</p>
-            <button id="btnImportWallet" class="btn btn-secondary">Importar mediante clave privada</button>
+            <p>Importa una wallet existente usando tu clave privada en formato hex.</p>
+
+            <button id="btnImportWallet" class="btn btn-secondary">
+                Importar mediante clave privada
+            </button>
         </section>
 
+        <!-- Navegación a operaciones -->
         <section class="card">
             <h2>Operaciones</h2>
             <p>Accede al módulo de envío de transacciones.</p>
-            <button id="btnGoEnvio" class="btn btn-secondary">Ir a Operaciones</button>
+
+            <button id="btnGoEnvio" class="btn btn-secondary">
+                Ir a Operaciones
+            </button>
         </section>
 
+        <!-- Navegación al explorador blockchain -->
         <section class="card">
             <h2>Blockchain</h2>
             <p>Consulta bloques, transacciones y actividad de la red.</p>
-            <button id="btnGoChain" class="btn btn-secondary">Ver Blockchain</button>
+
+            <button id="btnGoChain" class="btn btn-secondary">
+                Ver Blockchain
+            </button>
         </section>
 
+        <!-- Mercado P2P -->
         <section class="card">
             <h2>Mercado P2P</h2>
-            <p>Compra y vende activos con otros usuarios.</p>
-            <button id="btnGoP2P" class="btn btn-secondary">Ir al mercado P2P</button>
+            <p>Compra y vende activos directamente con otros usuarios de forma segura.</p>
+
+            <button id="btnGoP2P" class="btn btn-secondary">
+                Ir al mercado P2P
+            </button>
         </section>
 
+        <!-- NUEVA SECCIÓN: Mi Wallet -->
         <section class="card">
             <h2>Mi Wallet</h2>
-            <p>Consulta tu dirección, saldo y claves asociadas.</p>
-            <button id="btnGoWallet" class="btn btn-secondary">Ver mi Wallet</button>
+            <p>Consulta tu dirección, saldo y claves asociadas a tu wallet importada.</p>
+
+            <button id="btnGoWallet" class="btn btn-secondary">
+                Ver mi Wallet
+            </button>
         </section>
 
     </div>
@@ -232,9 +169,7 @@
 <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.js"></script>
 
 <script>
-    /* ===========================
-       LOGIN OBLIGATORIO
-    ============================ */
+    // Seguridad: exigir login
     let userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("Debes iniciar sesión primero.");
@@ -243,38 +178,10 @@
         document.getElementById("userId").textContent = userId;
     }
 
-    /* ===========================
-       PARTÍCULAS
-    ============================ */
-    const particles = document.getElementById("particles");
-
-    function createParticle() {
-        const p = document.createElement("div");
-        p.classList.add("particle");
-        p.style.left = Math.random() * 100 + "%";
-        p.style.top = "100%";
-        p.style.animationDuration = 4 + Math.random() * 6 + "s";
-        p.style.opacity = Math.random();
-        particles.appendChild(p);
-        setTimeout(() => p.remove(), 10000);
-    }
-
-    setInterval(createParticle, 150);
-
-    /* ===========================
-       NAVEGACIÓN
-    ============================ */
-    document.getElementById("btnKYC").onclick = () => window.location.href = "kyc.html";
-    document.getElementById("btnGoEnvio").onclick = () => window.location.href = "envio.html";
-    document.getElementById("btnGoChain").onclick = () => window.location.href = "blockchainbendicion.html";
-    document.getElementById("btnGoP2P").onclick = () => window.location.href = "p2p.html";
-    document.getElementById("btnGoWallet").onclick = () => window.location.href = "wallet.html";
-
-    /* ===========================
-       IMPORTAR WALLET
-    ============================ */
+    // Importar wallet mediante clave privada
     document.getElementById("btnImportWallet").onclick = () => {
         const priv = prompt("Introduce la clave privada en formato hex:");
+
         if (!priv) return;
 
         try {
@@ -293,6 +200,27 @@
         } catch (e) {
             alert("Clave privada inválida.");
         }
+    };
+
+    // Navegación
+    document.getElementById("btnKYC").onclick = () => {
+        window.location.href = "kyc.html";
+    };
+
+    document.getElementById("btnGoEnvio").onclick = () => {
+        window.location.href = "envio.html";
+    };
+
+    document.getElementById("btnGoChain").onclick = () => {
+        window.location.href = "blockchainbendicion.html";
+    };
+
+    document.getElementById("btnGoP2P").onclick = () => {
+        window.location.href = "p2p.html";
+    };
+
+    document.getElementById("btnGoWallet").onclick = () => {
+        window.location.href = "wallet.html";
     };
 </script>
 

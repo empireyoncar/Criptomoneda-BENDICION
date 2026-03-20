@@ -21,7 +21,7 @@ jobs:
 
     - name: Actualizar código en el servidor
       run: |
-        ssh -p 2222 empire@88.8.43.131 "
+        ssh -p 2222 empire@88.8.39.103 "
           cd ~/Documentos/github/Criptomoneda-BENDICION &&
           git pull
         "

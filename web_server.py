@@ -12,9 +12,10 @@ CORS(app)
 # PERMITIR VARIAS CARPETAS DE PLANTILLAS
 # -----------------------------------------
 app.jinja_loader = ChoiceLoader([
-    FileSystemLoader("templates_web"),     # Web pública
-    FileSystemLoader("templates_ADMIN"),   # Panel admin
-    FileSystemLoader("templates_KYC")      # Páginas KYC
+    FileSystemLoader("templates_web"),       # Web pública
+    FileSystemLoader("templates_ADMIN"),     # Panel admin
+    FileSystemLoader("templates_KYC"),       # Páginas KYC
+    FileSystemLoader("templates_staking")    # NUEVA carpeta para staking
 ])
 
 # -----------------------------
@@ -77,10 +78,19 @@ def kyc_telefono_page():
 def home_page():
     return render_template("home.html")
 
+# -----------------------------
+# PÁGINAS DE STAKING (NUEVA CARPETA)
+# -----------------------------
+
 @app.route("/staking")
 @app.route("/staking.html")
 def staking_page():
-    return render_template("staking.html")
+    return render_template("staking.html")  # Flask buscará en TODAS las carpetas
+
+@app.route("/staking_dashboard")
+@app.route("/staking_dashboard.html")
+def staking_dashboard_page():
+    return render_template("staking_dashboard.html")
 
 # -----------------------------
 # API LOGIN (POST)

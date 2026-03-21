@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard de Staking - Bendición</title>
+
+    <style>
+        body {
+            background: #0b0e11;
+            color: #eaecef;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #181a20;
+            padding: 20px;
+            border-bottom: 2px solid #f0b90b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #f0b90b;
+        }
+
+        .wallet-info {
+            text-align: right;
+            font-size: 14px;
+        }
+
+        .container {
+            padding: 25px;
+        }
+
+        .card {
+            background: #181a20;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #f0b90b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #2b3139;
+            text-align: left;
+        }
+
+        th {
+            color: #f0b90b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background: #2b3139;
+            border-radius: 6px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: #f0b90b;
+            width: 0%;
+        }
+
+        button {
+            padding: 8px 12px;
+            background: #f0b90b;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #d9a20a;
+        }
+
+        .btn-cancel {
+            background: #c0392b;
+        }
+
+        .btn-cancel:hover {
+            background: #992d22;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+        }
+
+        .toast-ok {
+            background: #1f4b2c;
+            color: #a6f3c0;
+        }
+
+        .toast-err {
+            background: #4b1f1f;
+            color: #f3a6a6;
+        }
+
+        .new-stake-btn {
+            background: #f0b90b;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 16px;
+            display: inline-block;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .new-stake-btn:hover {
+            background: #d9a20a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Dashboard de Staking</h1>
+
+    <div class="wallet-info">
+        <div><b>Wallet:</b> <span id="walletAddress"></span></div>
+        <div><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
+        <div><b>Recompensas:</b> <span id="walletRewards"></span> BEND</div>
+    </div>
+</div>
+
+<div class="container">
+
+    <a href="staking.html" class="new-stake-btn">+ Crear nuevo staking</a>
+
+    <!-- STAKES ACTIVOS -->
+    <div class="card">
+        <h2>Stakes Activos</h2>
+        <table id="activeStakesTable">
+            <thead>
+                <tr>
+                    <th>Monto</th>
+                    <th>APR</th>
+                    <th>Progreso</th>
+                    <th>Recompensa</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="card">
+        <h2>Historial</h2>
+        <table id="historyTable">
+            <thead>
+                <tr>
+                    <th>Monto</th>
+                    <th>APR</th>
+                    <th>Recompensa</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script src="staking_dashboard.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Staking - Bendición</title>
+
+    <style>
+        body {
+            background: #0b0e11;
+            color: #eaecef;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #181a20;
+            padding: 30px;
+            border-radius: 14px;
+            width: 380px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            margin-top: 0;
+            text-align: center;
+            color: #f0b90b;
+        }
+
+        /* HEADER WALLET */
+        .wallet-box {
+            background: #0e1117;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #f0b90b;
+        }
+
+        .wallet-line {
+            font-size: 14px;
+            margin: 4px 0;
+        }
+
+        label {
+            font-size: 14px;
+            margin-top: 10px;
+            display: block;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 6px;
+            border: 1px solid #2b3139;
+            background: #0e1117;
+            color: #eaecef;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #f0b90b;
+        }
+
+        #rewardBox {
+            margin-top: 12px;
+            padding: 12px;
+            background: #0e1117;
+            border-left: 4px solid #f0b90b;
+            border-radius: 6px;
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 20px;
+            background: #f0b90b;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #d9a20a;
+        }
+
+        button:disabled {
+            background: #8a7a3a;
+            cursor: not-allowed;
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 14px 20px;
+            border-radius: 6px;
+            display: none;
+            font-weight: bold;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .toast-ok {
+            background: #1f4b2c;
+            color: #a6f3c0;
+        }
+
+        .toast-err {
+            background: #4b1f1f;
+            color: #f3a6a6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+
+    <h2>Staking Bendición</h2>
+
+    <!-- WALLET HEADER -->
+    <div class="wallet-box">
+        <div class="wallet-line"><b>Wallet:</b> <span id="walletAddress"></span></div>
+        <div class="wallet-line"><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
+    </div>
+
+    <label>Monto a stakear</label>
+    <input type="number" id="amount" placeholder="Ej: 100">
+
+    <label>Tiempo</label>
+    <select id="days">
+        <option value="30" data-apr="5">30 días — 5% APR</option>
+        <option value="60" data-apr="12">60 días — 12% APR</option>
+        <option value="90" data-apr="20">90 días — 20% APR</option>
+    </select>
+
+    <div id="rewardBox">
+        <p id="rewardText"></p>
+    </div>
+
+    <button id="btnStake">Iniciar Staking</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = "https://empireyoncar.duckdns.org/Staking/stake";
+
+const amountInput = document.getElementById("amount");
+const daysSelect = document.getElementById("days");
+const rewardBox = document.getElementById("rewardBox");
+const rewardText = document.getElementById("rewardText");
+const btn = document.getElementById("btnStake");
+const toast = document.getElementById("toast");
+
+const walletAddressEl = document.getElementById("walletAddress");
+const walletBalanceEl = document.getElementById("walletBalance");
+
+/* -------------------------
+   MOSTRAR WALLET Y SALDO
+-------------------------- */
+
+function shortenAddress(addr) {
+    return addr.slice(0, 6) + "..." + addr.slice(-4);
+}
+
+function loadWalletInfo() {
+    const address = localStorage.getItem("wallet_address") || "No asignada";
+    const balance = localStorage.getItem("wallet_balance") || "0.00";
+
+    walletAddressEl.innerText = address !== "No asignada" ? shortenAddress(address) : "No asignada";
+    walletBalanceEl.innerText = balance;
+}
+
+loadWalletInfo();
+
+/* -------------------------
+   CÁLCULO DE RECOMPENSA
+-------------------------- */
+
+function calcReward() {
+    const amount = parseFloat(amountInput.value);
+    const days = parseInt(daysSelect.value);
+    const apr = parseFloat(daysSelect.selectedOptions[0].dataset.apr);
+
+    if (!amount || amount <= 0) {
+        rewardBox.style.display = "none";
+        return;
+    }
+
+    const reward = amount * (apr / 100) * (days / 365);
+
+    rewardText.innerHTML = `
+        <b>Recompensa estimada:</b> ${reward.toFixed(4)} BEND<br>
+        <small>APR: ${apr}% — Duración: ${days} días</small>
+    `;
+
+    rewardBox.style.display = "block";
+}
+
+amountInput.oninput = calcReward;
+daysSelect.onchange = calcReward;
+
+/* -------------------------
+   ENVIAR STAKE
+-------------------------- */
+
+btn.onclick = async () => {
+    const amount = amountInput.value;
+    const days = daysSelect.value;
+
+    if (!amount || amount <= 0) {
+        showToast("Ingresa un monto válido", "err");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerText = "Procesando...";
+
+    try {
+        const res = await fetch(API, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: localStorage.getItem("user_id"),
+                amount,
+                days
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            showToast(data.error, "err");
+        } else {
+            showToast("Staking creado correctamente", "ok");
+
+            // Actualizar saldo local
+            let balance = parseFloat(localStorage.getItem("wallet_balance"));
+            balance -= parseFloat(amount);
+            localStorage.setItem("wallet_balance", balance.toFixed(2));
+            loadWalletInfo();
+        }
+
+    } catch (e) {
+        showToast("Error de conexión con el servidor", "err");
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Iniciar Staking";
+};
+
+/* -------------------------
+   TOAST
+-------------------------- */
+
+function showToast(text, type) {
+    toast.innerText = text;
+    toast.className = type === "ok" ? "toast-ok" : "toast-err";
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000);
+}
+</script>
+
+</body>
+</html>

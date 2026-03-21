@@ -34,9 +34,6 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Montamos todo el proyecto
-      - ./:/app
-
       # JSON persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json

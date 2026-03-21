@@ -9,7 +9,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar archivos del proyecto
-COPY . /app
+COPY *.py /app
+COPY db /app/db
 
 # Instalar dependencias Python
 RUN pip install --no-cache-dir flask flask-cors ecdsa werkzeug

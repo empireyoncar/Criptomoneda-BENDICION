@@ -34,6 +34,12 @@ services:
     ports:
       - "5000:5000"
     volumes:
+      # Montar SOLO las carpetas de plantillas y estáticos desde tu PC
+      - ./templates_web:/app/templates_web
+      - ./templates_ADMIN:/app/templates_ADMIN
+      - ./templates_KYC:/app/templates_KYC
+      - ./static:/app/static
+
       # JSON persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
@@ -48,7 +54,10 @@ services:
     ports:
       - "6666:6666"
     volumes:
-      # Acceso a los mismos JSON que usan los otros servicios
+      # Montar SOLO las plantillas si las usa
+      - ./templates_web:/app/templates_web
+
+      # JSON persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
       - ./staking.json:/app/db/staking.json

@@ -77,6 +77,11 @@ def kyc_telefono_page():
 def home_page():
     return render_template("home.html")
 
+@app.route("/staking")
+@app.route("/staking.html")
+def staking_page():
+    return render_template("staking.html")
+
 # -----------------------------
 # API LOGIN (POST)
 # -----------------------------

@@ -82,15 +82,15 @@ def home_page():
 # PÁGINAS DE STAKING (NUEVA CARPETA)
 # -----------------------------
 
-@app.route("/staking")
-@app.route("/staking.html")
+@app.route("/templates_staking/staking")
+@app.route("/templates_staking/staking.html")
 def staking_page():
-    return render_template("staking.html")  # Flask buscará en TODAS las carpetas
+    return render_template("/templates_staking/staking.html")  # Flask buscará en TODAS las carpetas
 
-@app.route("/staking_dashboard")
-@app.route("/staking_dashboard.html")
+@app.route("/templates_staking/staking_dashboard")
+@app.route("/templates_staking/staking_dashboard.html")
 def staking_dashboard_page():
-    return render_template("staking_dashboard.html")
+    return render_template("templates_staking/staking_dashboard.html")
 
 # -----------------------------
 # API LOGIN (POST)

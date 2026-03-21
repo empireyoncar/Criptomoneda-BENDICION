@@ -102,7 +102,7 @@ def user_wallet(user_id):
 @app.route("/crypto/wallet_info/<address>", methods=["GET"])
 def wallet_info(address):
     try:
-        with open("wallets.json", "r") as f:
+        with open("db/wallets.json", "r") as f:
             data = json.load(f)
 
         wallets = data.get("wallets", [])

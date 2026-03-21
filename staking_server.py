@@ -3,6 +3,10 @@ from staking_manager import stake_tokens
 
 app = Flask(__name__)
 
+@app.get("/stake")
+def stake_status():
+    return jsonify({"status": "staking server online"})
+
 @app.post("/stake")
 def api_stake():
     data = request.json

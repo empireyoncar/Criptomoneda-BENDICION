@@ -1,7 +1,7 @@
 import json
 from wallet_manager import load_wallets, save_wallets
 from staking import register_stake
-from staking_calculo import generar_stake_completo   # este genera ID, fechas, APR, etc.
+from staking_recompensa import generar_stake_completo   # este genera ID, fechas, APR, etc.
 
 
 # ---------------------------------------------------------

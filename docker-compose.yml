@@ -34,12 +34,27 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # 🔥 Montamos TODO el proyecto dentro del contenedor
+      # Montamos todo el proyecto
       - ./:/app
 
-      # 🔥 Pero mantenemos los JSON como archivos persistentes
+      # JSON persistentes
       - ./database.json:/app/db/database.json
       - ./wallet.json:/app/db/wallet.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  staking:
+    build: .
+    container_name: staking_server
+    command: python staking_server.py
+    ports:
+      - "6666:6666"
+    volumes:
+      # Acceso a los mismos JSON que usan los otros servicios
+      - ./database.json:/app/db/database.json
+      - ./wallet.json:/app/db/wallet.json
+      - ./staking.json:/app/db/staking.json
     restart: always
     networks:
       - bendicion_net

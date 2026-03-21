@@ -196,12 +196,12 @@
         <pre id="chain"></pre>
     </section>
 
+    <!-- Navegación -->
+
     <section class="card">
         <h2>Navegación</h2>
-        <button id="btnGoWallet" class="btn btn-secondary">Volver a Wallet</button>
-        <button id="btnGoEnvio" class="btn btn-secondary">Ir a Operaciones</button>
-    </section>
-
+        <button id="btnGohome" class="btn btn-secondary">Volver a Home</button>
+     </section>
 </div>
 
 <script>
@@ -256,14 +256,13 @@
         }
     };
 
-    // Navegación
-    document.getElementById("btnGoWallet").onclick = () => {
-        window.location.href = "wallet.html";
-    };
+     // Navegación
 
-    document.getElementById("btnGoEnvio").onclick = () => {
-        window.location.href = "envio.html";
-    };
+    document.getElementById("btnGohome").onclick = () => {
+
+        window.location.href = "home.html";
+     };
+
 </script>
 
 </body>

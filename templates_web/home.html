@@ -111,19 +111,9 @@
             </button>
         </section>
 
-        <!-- Importar wallet -->
-        <section class="card">
-            <h2>Importar wallet</h2>
-            <p>Importa una wallet existente usando tu clave privada en formato hex.</p>
-
-            <button id="btnImportWallet" class="btn btn-secondary">
-                Importar mediante clave privada
-            </button>
-        </section>
-
         <!-- Navegación a operaciones -->
         <section class="card">
-            <h2>Operaciones</h2>
+            <h2>Envios</h2>
             <p>Accede al módulo de envío de transacciones.</p>
 
             <button id="btnGoEnvio" class="btn btn-secondary">
@@ -177,34 +167,9 @@
     } else {
         document.getElementById("userId").textContent = userId;
     }
-
-    // Importar wallet mediante clave privada
-    document.getElementById("btnImportWallet").onclick = () => {
-        const priv = prompt("Introduce la clave privada en formato hex:");
-
-        if (!priv) return;
-
-        try {
-            const ec = new elliptic.ec("secp256k1");
-            const sha256 = (msg) => CryptoJS.SHA256(msg).toString();
-
-            const key = ec.keyFromPrivate(priv.trim(), "hex");
-            const publicKey = key.getPublic("hex");
-            const address = sha256(publicKey);
-
-            localStorage.setItem("private_key", priv.trim());
-            localStorage.setItem("public_key", publicKey);
-            localStorage.setItem("address", address);
-
-            alert("Wallet importada correctamente.");
-        } catch (e) {
-            alert("Clave privada inválida.");
-        }
-    };
-
-    // Navegación
+    // Navegación esta en la carpeta de templates_KYC
     document.getElementById("btnKYC").onclick = () => {
-        window.location.href = "kyc.html";
+        window.location.href = "../templates_KYC/kyc.html";
     };
 
     document.getElementById("btnGoEnvio").onclick = () => {

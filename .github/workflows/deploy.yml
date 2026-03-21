@@ -21,5 +21,5 @@ jobs:
 
     - name: Actualizar código en el servidor
       run: |
-        ssh -p 2222 empire@empire@empireyoncar.duckdns.org "
+        ssh -p 2222 empire@empireyoncar.duckdns.org "
           cd ~/Documentos/github/Criptomoneda-BENDICION && git pull"

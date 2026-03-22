@@ -9,3 +9,7 @@ def login_page():
 @usuarios_bp.route("/register")
 def register_page():
     return render_template("register.html")
+
+@usuarios_bp.route("/home")
+def home_page():
+    return render_template("home.html")

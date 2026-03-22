@@ -3,7 +3,7 @@ import os
 import hashlib
 import uuid
 
-DB_FILE = os.path.join("/app/db", "database.json")
+DB_FILE ="/app/database.json"
 
 # Crear archivo si no existe
 if not os.path.exists(DB_FILE):

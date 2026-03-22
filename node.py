@@ -8,7 +8,7 @@ import os
 from werkzeug.utils import secure_filename
 from wallet_manager import create_wallet_for_user
 
-from database import (
+from usuarios.backend.database import (
     register_user, login_user, add_wallet_to_user,
     get_user_wallet, load_db, save_db
 )

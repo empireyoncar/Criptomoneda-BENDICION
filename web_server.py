@@ -1,9 +1,6 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template
 from flask_cors import CORS
 from jinja2 import ChoiceLoader, FileSystemLoader
-
-# Importar funciones de la base de datos JSON
-from database import login_user, register_user, get_user_wallet, add_wallet_to_user
 
 app = Flask(__name__)
 CORS(app)
@@ -15,7 +12,7 @@ app.jinja_loader = ChoiceLoader([
     FileSystemLoader("templates_web"),       # Web pública
     FileSystemLoader("templates_ADMIN"),     # Panel admin
     FileSystemLoader("templates_KYC"),       # Páginas KYC
-    FileSystemLoader("templates_staking")    # NUEVA carpeta para staking
+    FileSystemLoader("templates_staking")    # Carpeta staking
 ])
 
 # -----------------------------
@@ -79,58 +76,18 @@ def home_page():
     return render_template("home.html")
 
 # -----------------------------
-# PÁGINAS DE STAKING (NUEVA CARPETA)
+# PÁGINAS DE STAKING
 # -----------------------------
 
 @app.route("/staking")
 @app.route("/staking.html")
 def staking_page():
-    return render_template("staking.html")  # Flask buscará en TODAS las carpetas
+    return render_template("staking.html")
 
 @app.route("/staking_dashboard")
 @app.route("/staking_dashboard.html")
 def staking_dashboard_page():
     return render_template("staking_dashboard.html")
-
-# -----------------------------
-# API LOGIN (POST)
-# -----------------------------
-@app.post("/login")
-def login_api():
-    data = request.get_json()
-
-    email = data.get("email")
-    password = data.get("password")
-
-    # Validar usuario en database.json
-    user_id = login_user(email, password)
-
-    if user_id:
-        return jsonify({"user_id": user_id})
-
-    return jsonify({"error": "Credenciales incorrectas"}), 401
-
-# -----------------------------
-# API REGISTER (POST)
-# -----------------------------
-@app.post("/register")
-def register_api():
-    data = request.get_json()
-
-    fullname = data.get("fullname")
-    birthdate = data.get("birthdate")
-    country = data.get("country")
-    address = data.get("address")
-    phone = data.get("phone")
-    email = data.get("email")
-    password = data.get("password")
-
-    user_id = register_user(fullname, birthdate, country, address, phone, email, password)
-
-    if user_id is None:
-        return jsonify({"error": "El email ya está registrado"}), 400
-
-    return jsonify({"user_id": user_id})
 
 # -----------------------------
 # INICIAR SERVIDOR WEB

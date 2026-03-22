@@ -154,6 +154,13 @@
     </div>
 
     <button id="btnStake">Iniciar Staking</button>
+<!-- Navegación -->
+        <section class="card">
+            <h2>Navegación</h2>
+             <p>ir panel principal</p>
+            <button id="btnGohome" class="btn btn-primary">Volver a Home</button>
+        </section>
+
 </div>
 
 <div id="toast"></div>
@@ -278,6 +285,11 @@ function showToast(text, type) {
         toast.style.display = "none";
     }, 3000);
 }
+// Navegación
+    document.getElementById("btnGohome").onclick = () => {
+        window.location.href = "home.html";
+    };
+
 </script>
 
 </body>

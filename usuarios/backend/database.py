@@ -10,12 +10,9 @@ if not os.path.exists(DB_FILE):
     with open(DB_FILE, "w") as f:
         json.dump({"users": []}, f)
 
-
-def load_db():
-    with open(DB_FILE, "r") as f:
-        return json.load()
-
-
+# -----------------------------
+# CARGAR Y GUARDAR BASE DE DATOS
+# -----------------------------
 def save_db(data):
     with open(DB_FILE, "w") as f:
         json.dump(data, f, indent=4)

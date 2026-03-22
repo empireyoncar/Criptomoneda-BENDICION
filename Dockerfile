@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Crear carpeta de trabajo
+# Carpeta de trabajo
 WORKDIR /app
 
 # Instalar dependencias del sistema
@@ -8,17 +8,14 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copiar archivos del proyecto
-COPY *.py /app
-# Instalar dependencias Python
+# Copiar SOLO el backend del servicio correspondiente
+COPY . /app
+
+# Instalar dependencias Python necesarias
 RUN pip install --no-cache-dir flask flask-cors ecdsa werkzeug
 
 # Crear carpetas necesarias
-RUN mkdir -p kyc_docs
+RUN mkdir -p /app/db
+RUN mkdir -p /app/kyc_docs
 
-# Exponer puertos (node.py = 7777, admin_server.py = 8888)
-EXPOSE 7777
-EXPOSE 8888
-
-# El comando final se define en docker-compose
-CMD ["python", "node.py"]
+# El CMD final lo define docker-compose

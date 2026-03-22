@@ -1,0 +1,6 @@
+compose
+
+usuarios:
+  build: ./usuarios/backend
+  ports:
+    - "5001:5001"

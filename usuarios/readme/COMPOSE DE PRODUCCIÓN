@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+
+  usuarios:
+    build: ./usuarios/backend
+    container_name: bendicion_usuarios
+    command: python login_server.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - usuarios_db:/app/db
+    restart: always
+    networks:
+      - bendicion_net

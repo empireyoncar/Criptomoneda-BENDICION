@@ -1,10 +1,15 @@
+import sys
+import os
+
+# Agregar ruta manual hacia wallet/backend
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../wallet/backend')))
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from blockchain import Blockchain
 from ecdsa import VerifyingKey, SECP256k1
 from hashlib import sha256
 import json
-import os
 from werkzeug.utils import secure_filename
 from wallet_manager import create_wallet_for_user
 

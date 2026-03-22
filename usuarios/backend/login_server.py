@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 # Importar funciones de la base de datos JSON
-from usuarios.backend.database import (
+from database import (
     login_user,
     register_user,
     get_user_wallet,
@@ -56,7 +56,7 @@ def register_api():
 # -----------------------------
 # API: Obtener wallet del usuario
 # -----------------------------
-@app.get("/wallet/<int:user_id>")
+@app.get("/wallet/<user_id>")
 def wallet_api(user_id):
     wallet = get_user_wallet(user_id)
 

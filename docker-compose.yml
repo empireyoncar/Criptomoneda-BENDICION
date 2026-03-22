@@ -2,14 +2,28 @@ version: "3.9"
 
 services:
 
-  usuarios:
+  usuarios_api:
     build: ./usuarios/backend
     container_name: bendicion_usuarios
     command: python login_server.py
     ports:
       - "5001:5001"
     volumes:
-      - ./database.json:/app/db/database.json
+      # Montar la base de datos JSON del repositorio dentro del contenedor
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  usuarios_web:
+    build: ./usuarios/backend
+    container_name: bendicion_usuarios_web
+    command: python usuarios_webserver.py
+    ports:
+      - "5000:5000"
+    volumes:
+      # Montar las plantillas HTML del frontend
+      - ./usuarios/frontend:/app/frontend
     restart: always
     networks:
       - bendicion_net

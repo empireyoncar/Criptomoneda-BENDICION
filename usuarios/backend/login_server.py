@@ -4,9 +4,7 @@ from flask_cors import CORS
 # Importar funciones de la base de datos JSON
 from database import (
     login_user,
-    register_user,
-    get_user_wallet,
-    add_wallet_to_user
+    register_user 
 )
 
 app = Flask(__name__)
@@ -51,38 +49,6 @@ def register_api():
         return jsonify({"error": "El email ya está registrado"}), 400
 
     return jsonify({"user_id": user_id})
-
-
-# -----------------------------
-# API: Obtener wallet del usuario
-# -----------------------------
-@app.get("/wallet/<user_id>")
-def wallet_api(user_id):
-    wallet = get_user_wallet(user_id)
-
-    if wallet is None:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    return jsonify(wallet)
-
-
-# -----------------------------
-# API: Añadir wallet al usuario
-# -----------------------------
-@app.post("/wallet/add")
-def wallet_add_api():
-    data = request.get_json()
-
-    user_id = data.get("user_id")
-    wallet_address = data.get("wallet")
-
-    if not user_id or not wallet_address:
-        return jsonify({"error": "Faltan parámetros"}), 400
-
-    result = add_wallet_to_user(user_id, wallet_address)
-
-    return jsonify(result)
-
 
 # -----------------------------
 # INICIAR SERVIDOR LOGIN

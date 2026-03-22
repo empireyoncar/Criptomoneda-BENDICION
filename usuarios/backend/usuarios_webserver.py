@@ -7,7 +7,7 @@ CORS(app)
 
 # Cargar plantillas desde usuarios/frontend
 app.jinja_loader = ChoiceLoader([
-    FileSystemLoader("../frontend")
+    FileSystemLoader("/app/frontend")
 ])
 
 @app.route("/")

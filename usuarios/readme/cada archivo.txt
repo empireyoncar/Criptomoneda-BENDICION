@@ -217,3 +217,7 @@ usuarios/
     ├── home.html
     ├── login.html
     └── register.html
+
+NOTA: actualmente, trabaja con las bases de datos del repositorio, 
+aun no se ha pasado a trabajar con volumenes dentro de docker 
+porque no esta hecho para produccion, estamos en desarrollo.

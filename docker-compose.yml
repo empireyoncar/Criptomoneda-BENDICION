@@ -51,7 +51,7 @@ services:
       - ./wallet/backend/wallet.py:/app/wallet.py
       - ./wallet/backend/wallet_manager.py:/app/wallet_manager.py
       - ./wallet/backend/wallets.json:/app/wallets.json
-      - ./wallet/backend/database.json:/app/database.json
+      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net

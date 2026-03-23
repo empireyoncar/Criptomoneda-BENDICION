@@ -1,9 +1,24 @@
-from flask import Flask
-from routeswallet import wallet_web_bp
+from flask import Flask, render_template
+from flask_cors import CORS
+from jinja2 import FileSystemLoader, ChoiceLoader
 
 app = Flask(__name__)
+CORS(app)
 
-app.register_blueprint(wallet_web_bp)
+# Cargar plantillas desde wallet/frontend
+app.jinja_loader = ChoiceLoader([
+    FileSystemLoader("/app/frontend")
+])
 
+# ============================================================
+# Página principal de Wallet
+# ============================================================
+@app.route("/wallet")
+def wallet_page():
+    return render_template("wallet.html")
+
+# ============================================================
+# Servidor
+# ============================================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5003)
+    app.run(host="0.0.0.0", port=5003, debug=True)

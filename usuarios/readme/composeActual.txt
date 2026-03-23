@@ -1,0 +1,29 @@
+name: criptobendicion
+
+services:
+
+  usuarios_api:
+    build: ./usuarios/backend
+    command: python login_server.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  usuarios_web:
+    build: ./usuarios/backend
+    command: python usuarios_webserver.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./usuarios/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+networks:
+  bendicion_net:
+    driver: bridge

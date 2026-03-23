@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, session, redirect
 from flask_cors import CORS
 from usuarios.backend.database import load_db, save_db, is_admin, login_user
-from node import blockchain
+from node.backend.node import blockchain
 from functools import wraps
 
 app = Flask(__name__, template_folder="templates_ADMIN")

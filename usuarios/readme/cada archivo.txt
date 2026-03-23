@@ -1,0 +1,219 @@
+Te lo dejo dividido en:
+
+Qué contiene cada archivo
+
+Cómo se conectan entre sí (arquitectura interna)
+
+Cómo se conectan con Docker y Nginx (arquitectura externa)
+
+Un resumen final del módulo Usuarios
+
+Un checkpoint para congelar esta versión
+
+Vamos allá.
+
+🟦 1. CONTENIDO DE CADA ARCHIVO DEL MÓDULO USUARIOS
+📁 usuarios/backend/
+database.json
+Base de datos en formato JSON.
+
+Guarda usuarios registrados.
+
+Persistente gracias al volumen de Docker.
+
+Estructura típica:
+
+json
+{ "users": [] }
+database.py
+Módulo encargado de manejar la base de datos JSON.
+
+Funciones típicas:
+
+load_db() → carga el JSON
+
+save_db() → guarda cambios
+
+add_user() → registra usuario
+
+find_user() → busca usuario por email
+
+validate_credentials() → login
+
+Es el corazón del almacenamiento del módulo.
+
+routesusuarios.py
+Define las rutas de la API REST.
+
+Importa funciones de database.py.
+
+Rutas típicas:
+
+POST /api/register
+
+POST /api/login
+
+Contiene la lógica de negocio:
+
+Validación de datos
+
+Comprobación de usuario existente
+
+Respuestas JSON
+
+Es el cerebro de la API.
+
+login_server.py
+Punto de entrada del backend.
+
+Crea la app Flask.
+
+Importa las rutas desde routesusuarios.py.
+
+Corre en el puerto 5001.
+
+Habilita CORS.
+
+Es el servidor de la API.
+
+usuarios_webserver.py
+Servidor Flask que sirve las páginas HTML.
+
+Rutas:
+
+/login
+
+/register
+
+/home
+
+Carga plantillas desde /app/frontend.
+
+Corre en el puerto 5000.
+
+Es el servidor web del frontend.
+
+Dockerfile
+Construye la imagen base para ambos servicios.
+
+Instala dependencias desde requirements.txt.
+
+Copia el código a /app.
+
+requirements.txt
+Dependencias Python:
+
+Flask
+
+Flask‑CORS
+
+Jinja2
+
+etc.
+
+📁 usuarios/frontend/
+login.html
+Formulario de login.
+
+Envía datos a /api/login.
+
+register.html
+Formulario de registro.
+
+Envía datos a /api/register.
+
+home.html
+Página principal tras iniciar sesión.
+
+Puede mostrar datos del usuario.
+
+🟩 2. CÓMO SE CONECTAN ENTRE SÍ (ARQUITECTURA INTERNA)
+Aquí tienes el flujo completo:
+
+Código
+[login.html] → POST /api/login → routesusuarios.py → database.py → respuesta JSON
+[register.html] → POST /api/register → routesusuarios.py → database.py → respuesta JSON
+Y para servir páginas:
+
+Código
+usuarios_webserver.py → render_template() → /app/frontend/*.html
+Y para la API:
+
+Código
+login_server.py → importa routesusuarios.py → usa database.py
+En resumen:
+
+database.py = almacenamiento
+
+routesusuarios.py = lógica de negocio
+
+login_server.py = servidor API
+
+usuarios_webserver.py = servidor HTML
+
+frontend/ = vistas
+
+🟦 3. CÓMO SE CONECTA CON DOCKER Y NGINX (ARQUITECTURA EXTERNA)
+🐳 Docker Compose
+Levanta dos contenedores:
+
+Código
+usuarios_api → puerto 5001
+usuarios_web → puerto 5000
+Volúmenes:
+
+database.json → persistencia
+
+frontend/ → plantillas en vivo
+
+Red:
+
+bendicion_net
+
+🌐 Nginx
+Redirige:
+
+Código
+/           → usuarios_web (5000)
+/api/       → usuarios_api (5001)
+Esto permite que el usuario acceda desde:
+
+Código
+https://tudominio/login
+https://tudominio/register
+https://tudominio/home
+Y la API desde:
+
+Código
+https://tudominio/api/login
+https://tudominio/api/register
+🟩 4. RESUMEN FINAL DEL MÓDULO USUARIOS
+El módulo Usuarios proporciona:
+
+✔ Registro de usuarios
+✔ Inicio de sesión
+✔ Servidor HTML
+✔ API REST
+✔ Persistencia en JSON
+✔ Contenedores Docker independientes
+✔ Integración con Nginx
+✔ Base sólida para conectar Wallet después
+Está completo, funcional y estable.
+
+Estructura del modulo usuarios:
+
+usuarios/
+│
+├── backend/
+│   ├── database.json
+│   ├── database.py
+│   ├── Dockerfile
+│   ├── login_server.py
+│   ├── requirements.txt
+│   ├── routesusuarios.py
+│   └── usuarios_webserver.py
+│
+└── frontend/
+    ├── home.html
+    ├── login.html
+    └── register.html

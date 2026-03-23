@@ -1,0 +1,91 @@
+  GNU nano 7.2                                                                                                                                                               /etc/nginx/sites-available/empireyoncar
+# REDIRECCIÓN HTTP → HTTPS
+server {
+    listen 80;
+    server_name empireyoncar.duckdns.org;
+    return 301 https://$host$request_uri;
+}
+
+# SERVIDOR PRINCIPAL HTTPS
+server {
+    listen 443 ssl;
+    server_name empireyoncar.duckdns.org;
+
+    ssl_certificate /etc/letsencrypt/live/empireyoncar.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/empireyoncar.duckdns.org/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # ⭐ API BACKEND PRINCIPAL → puerto 7777
+    # Mantiene /crypto/ al reenviar al backend Flask
+    location /crypto/ {
+        proxy_pass http://127.0.0.1:7777/crypto/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # WEB PRINCIPAL (puerto 3000)
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # CERTBOT
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # RUTA OCULTA → backend web en 5000
+    location /CriptoBendicion/ {
+        proxy_pass http://127.0.0.1:5000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # API ADMIN → puerto 8888
+    location /api/admin/ {
+        proxy_pass http://127.0.0.1:8888/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+        #SERVIDOR P2P → puerto 9999
+    # Mantiene /mercado2p2/ como prefijo
+    location /mercado2p2/ {
+        proxy_pass http://127.0.0.1:9999/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+        #SERVIDOR Staking → puerto 6666
+    # Mantiene /staking/ como prefijo
+    location /Staking/ {
+        proxy_pass http://127.0.0.1:6666/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+   }
+
+         #SERVIDOR Login → puerto 5001
+    # Mantiene /usuarios/ como prefijo
+    location /CriptoBendicion/usuarios/ {
+        proxy_pass http://127.0.0.1:5001/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+}
+

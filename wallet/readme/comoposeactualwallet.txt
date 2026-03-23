@@ -1,0 +1,85 @@
+name: criptobendicion
+
+services:
+
+  # ============================================================
+  # BACKEND DE USUARIOS (API)
+  # Puerto: 5001
+  # Maneja login, registro, validación, base de datos de usuarios
+  # ============================================================
+  usuarios_api:
+    build: ./usuarios/backend
+    command: python login_server.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+
+  # ============================================================
+  # FRONTEND DE USUARIOS (WEB)
+  # Puerto: 5000
+  # Sirve login.html, register.html, home.html, etc.
+  # ============================================================
+  usuarios_web:
+    build: ./usuarios/backend
+    command: python usuarios_webserver.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./usuarios/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+
+  # ============================================================
+  # BACKEND DE WALLET (API)
+  # Puerto: 5002
+  # Maneja creación de wallets, consulta de claves, vinculación a usuarios
+  # ============================================================
+  wallet_api:
+    build: ./wallet/backend
+    command: python wallet_server.py
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./wallet/backend/wallet_server.py:/app/wallet_server.py
+      - ./wallet/backend/wallet.py:/app/wallet.py
+      - ./wallet/backend/wallet_manager.py:/app/wallet_manager.py
+      - ./wallet/backend/wallets.json:/app/wallets.json
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+
+  # ============================================================
+  # FRONTEND DE WALLET (WEB)
+  # Puerto: 5003
+  # Sirve wallet.html y archivos estáticos
+  # ============================================================
+  wallet_web:
+    build: ./wallet/backend
+    command: python wallet_webserver.py
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./wallet/backend/wallet_webserver.py:/app/wallet_webserver.py
+      - ./wallet/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+
+# ============================================================
+# RED COMPARTIDA ENTRE TODOS LOS SERVICIOS
+# Permite que usuarios_api, usuarios_web, wallet_api y wallet_web
+# se comuniquen entre sí sin problemas
+# ============================================================
+networks:
+  bendicion_net:
+    driver: bridge

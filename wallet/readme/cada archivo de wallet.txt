@@ -1,0 +1,210 @@
+🟦 📘 RESUMEN COMPLETO DEL MÓDULO WALLET
+A continuación tienes una descripción profesional de cada archivo, su función dentro del ecosistema y cómo interactúan entre sí.
+
+🟨 1. wallet_manager.py — Manejador de datos de la Wallet
+Este archivo es el núcleo lógico del backend de Wallet.
+Se encarga de:
+
+🔹 1.1. Gestionar wallets.json
+Este archivo guarda:
+
+private_key
+
+public_key
+
+address
+
+user_id
+
+Funciones:
+
+load_wallets() → carga wallets.json
+
+save_wallets(data) → guarda wallets.json
+
+🔹 1.2. Gestionar database.json (base de usuarios)
+Este archivo viene del módulo Usuarios.
+
+Funciones:
+
+load_db() → carga database.json
+
+save_db(data) → guarda database.json
+
+🔹 1.3. Crear una wallet para un usuario
+Función principal:
+
+python
+create_wallet_for_user(user_id)
+Hace 3 cosas:
+
+Genera una wallet real usando generate_wallet()
+
+Guarda la wallet completa en wallets.json
+
+Añade el address al usuario dentro de database.json
+
+🔹 1.4. En resumen
+👉 Es el puente entre la criptografía y la base de datos.  
+👉 Guarda claves privadas y públicas.  
+👉 Asocia wallets a usuarios.
+
+🟨 2. wallet_server.py — API REST del módulo Wallet
+Este archivo expone las rutas que usa el frontend.
+
+🔹 2.1. GET /user_wallet/<user_id>
+Devuelve:
+
+la primera wallet asociada al usuario
+
+o None si no tiene
+
+Busca dentro de:
+
+json
+user["wallets"]
+🔹 2.2. GET /wallet_info/<address>
+Devuelve:
+
+address
+
+public_key
+
+private_key
+
+Buscando dentro de wallets.json.
+
+🔹 2.3. POST /generate_wallet
+Recibe:
+
+json
+{ "user_id": "..." }
+Hace:
+
+Llama a create_wallet_for_user()
+
+Devuelve la wallet generada
+
+🔹 2.4. En resumen
+👉 Es el API que usa el frontend.  
+👉 No guarda datos, solo llama a wallet_manager.
+
+🟨 3. wallet.py — Motor criptográfico
+Este archivo contiene la lógica para generar wallets reales.
+
+Qué hace:
+Genera claves privadas (secp256k1)
+
+Genera claves públicas
+
+Genera address (hash)
+
+Devuelve un diccionario con:
+
+json
+{
+  "private_key": "...",
+  "public_key": "...",
+  "address": "..."
+}
+En resumen:
+👉 Es la parte criptográfica del sistema.  
+👉 No toca la base de datos.
+
+🟨 4. wallets.json — Base de datos interna de wallets
+Formato:
+
+json
+{
+  "wallets": [
+    {
+      "user_id": "...",
+      "private_key": "...",
+      "public_key": "...",
+      "address": "..."
+    }
+  ]
+}
+En resumen:
+👉 Guarda las claves privadas y públicas.  
+👉 Es la base de datos interna del módulo Wallet.
+
+🟨 5. wallet_webserver.py — Servidor web del frontend
+Este archivo:
+
+Sirve la página HTML de la wallet
+
+No tiene lógica de API
+
+Solo muestra la interfaz al usuario
+
+En resumen:
+👉 Es el servidor que entrega wallet.html al navegador.
+
+🟨 6. wallet.html — Interfaz gráfica de la Wallet
+Este archivo es el frontend que usa el usuario.
+
+Qué hace:
+Cargar wallet asociada
+
+Crear wallet
+
+Importar wallet por clave privada
+
+Mostrar claves temporalmente
+
+Guardar claves en localStorage
+
+Navegar a Home
+
+Llamar al API Wallet
+
+En resumen:
+👉 Es la interfaz visual del módulo Wallet.
+
+🟦 📘 RESUMEN GLOBAL DEL ECOSISTEMA WALLET
+Archivo	Función
+wallet_manager.py	Maneja base de datos y wallets
+wallet_server.py	API REST del módulo Wallet
+wallet.py	Genera claves y address
+wallets.json	Guarda claves privadas/públicas
+wallet_webserver.py	Sirve la página HTML
+wallet.html	Interfaz de usuario
+
+🟦 📌 ESTRUCTURA VISUAL DEL MÓDULO WALLET
+wallet/
+│
+├── backend/                     ← Lógica del servidor y API
+│   │
+│   ├── wallet_server.py         ← API REST (endpoints)
+│   ├── wallet_manager.py        ← Manejo de base de datos y wallets
+│   ├── wallet.py                ← Motor criptográfico (claves y address)
+│   ├── wallet_webserver.py      ← Servidor web que sirve wallet.html
+│   ├── wallets.json             ← Base interna de wallets (claves)
+│   ├── Dockerfile               ← Imagen del backend
+│   └── requirements.txt         ← Dependencias del backend
+│
+└── frontend/                    ← Interfaz gráfica
+    │
+    └── wallet.html              ← UI del usuario (botones, scripts, API calls)
+
+
+
+🟩 📌 DIAGRAMA GENERAL DEL MÓDULO
+    [ Usuario ]
+     │
+     ▼
+[ wallet.html ]  ← Interfaz
+     │
+     ▼
+[ wallet_server.py ]  ← API REST
+     │
+     ▼
+[ wallet_manager.py ]  ← Lógica de datos
+     │         │
+     │         ├── [ wallets.json ]  ← Claves privadas/públicas
+     │         │
+     │         └── [ database.json ] ← Base de usuarios (montada)
+     │
+     ▼
+[ wallet.py ]  ← Generación de claves

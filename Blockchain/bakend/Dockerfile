@@ -23,13 +23,14 @@ WORKDIR /app
 # Copiamos TODO el contenido de la carpeta bakend al contenedor
 # ============================================================
 COPY . /app
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # ============================================================
 # INSTALAR DEPENDENCIAS PYTHON
 # Si tienes un requirements.txt, se instala aquí
 # Si no lo tienes, instalamos solo lo necesario
 # ============================================================
-RUN pip install --no-cache-dir flask
 
 # Si tu blockchain usa otras librerías, agrégalas aquí:
 # RUN pip install --no-cache-dir ecdsa

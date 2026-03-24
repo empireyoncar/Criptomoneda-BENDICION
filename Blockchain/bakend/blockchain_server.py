@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from Blockchain.bakend.blockchain import Blockchain
+from blockchain import Blockchain
 from hashlib import sha256
 from ecdsa import VerifyingKey, SECP256k1
 import json

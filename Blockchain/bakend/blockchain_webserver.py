@@ -1,29 +1,25 @@
-from flask import Flask, send_from_directory
+from flask import Flask, render_template
 from flask_cors import CORS
-import os
+from jinja2 import FileSystemLoader, ChoiceLoader
 
-app = Flask(__name__, static_folder="web")
+app = Flask(__name__)
 CORS(app)
 
-# ============================================================
-#   SERVIR LA PÁGINA PRINCIPAL DEL EXPLORADOR
-# ============================================================
-@app.route("/")
-def index():
-    return send_from_directory("web", "blockchain.html")
-
+# Cargar plantillas desde Blockchain/frontend
+app.jinja_loader = ChoiceLoader([
+    FileSystemLoader("/app/frontend")
+])
 
 # ============================================================
-#   SERVIR ARCHIVOS ESTÁTICOS (CSS, JS, IMÁGENES)
+#   PÁGINA PRINCIPAL DEL EXPLORADOR
 # ============================================================
-@app.route("/<path:filename>")
-def serve_static(filename):
-    return send_from_directory("web", filename)
-
+@app.route("/blockchainbendicion")
+def blockchain_page():
+    return render_template("blockchainbendicion.html")
 
 # ============================================================
-#   INICIAR SERVIDOR WEB
+#   SERVIDOR
 # ============================================================
 if __name__ == "__main__":
-    print("Servidor web del explorador blockchain iniciado en http://0.0.0.0:8080")
+    print("Explorador Blockchain iniciado en http://0.0.0.0:5005")
     app.run(host="0.0.0.0", port=5005, debug=True)

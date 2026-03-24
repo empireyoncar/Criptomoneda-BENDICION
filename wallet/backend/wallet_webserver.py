@@ -17,6 +17,10 @@ app.jinja_loader = ChoiceLoader([
 def wallet_page():
     return render_template("wallet.html")
 
+@app.route("/envio")
+def envio_page():
+    return render_template("envio.html")
+
 # ============================================================
 # Servidor
 # ============================================================

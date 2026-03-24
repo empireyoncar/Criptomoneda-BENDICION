@@ -128,7 +128,7 @@
             return;
         }
 
-        const url = `https://empireyoncar.duckdns.org/crypto/admin/mint?user_id={{ session['user_id'] }}&address=${address}&amount=${amount}`;
+        const url = `https://empireyoncar.duckdns.org/CriptoBendicion/blockchain/admin/mint?user_id={{ session['user_id'] }}&address=${address}&amount=${amount}`;
 
         const res = await fetch(url, {
             method: "POST",
@@ -140,7 +140,7 @@
     }
 
     async function crearBloque() {
-        const url = "https://empireyoncar.duckdns.org/crypto/commit";
+        const url = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain/commit";
 
         const res = await fetch(url, {
             method: "POST",

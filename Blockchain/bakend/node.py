@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../w
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from blockchain import Blockchain
+from Blockchain.bakend.blockchain import Blockchain
 from ecdsa import VerifyingKey, SECP256k1
 from hashlib import sha256
 import json
@@ -157,19 +157,6 @@ def generate_wallet_route():
 
 
 # ============================================================
-#   TRANSACCIONES DEL USUARIO
-# ============================================================
-@app.route("/crypto/user_transactions/<address>", methods=["GET"])
-def user_transactions(address):
-    txs = []
-    for block in blockchain.chain:
-        for tx in block.transactions:
-            if tx["from"] == address or tx["to"] == address:
-                txs.append(tx)
-    return jsonify({"transactions": txs})
-
-
-# ============================================================
 #   SUBIR DOCUMENTO KYC
 # ============================================================
 @app.route("/crypto/upload_kyc_step", methods=["POST"])
@@ -266,71 +253,6 @@ def admin_approve_step():
 
 
 # ============================================================
-#   BALANCE
-# ============================================================
-@app.route("/crypto/balance/<address>", methods=["GET"])
-def balance(address):
-    return jsonify({"address": address, "balance": blockchain.get_balance(address)})
-
-
-# ============================================================
-#   TRANSACCIÓN FIRMADA
-# ============================================================
-@app.route("/crypto/send_tx", methods=["POST"])
-def send_tx():
-    data = request.json
-    tx = data.get("tx")
-    public_key_hex = data.get("public_key")
-    signature_hex = data.get("signature")
-
-    sender = tx["from"]
-    receiver = tx["to"]
-    amount = tx["amount"]
-
-    recalculated_address = sha256(bytes.fromhex(public_key_hex)).hexdigest()
-    if recalculated_address != sender:
-        return jsonify({"error": "Address no coincide"}), 400
-
-    try:
-        vk = VerifyingKey.from_string(bytes.fromhex(public_key_hex), curve=SECP256k1)
-        tx_hash = sha256(json.dumps(tx, sort_keys=True).encode()).digest()
-        vk.verify(bytes.fromhex(signature_hex), tx_hash)
-    except:
-        return jsonify({"error": "Firma inválida"}), 400
-
-    ok = blockchain.add_transaction(sender, receiver, amount)
-    if not ok:
-        return jsonify({"error": "Saldo insuficiente"}), 400
-
-    return jsonify({"message": "Transacción añadida"})
-
-
-# ============================================================
-#   CREAR BLOQUE
-# ============================================================
-@app.route("/crypto/commit", methods=["POST"])
-def commit():
-    block = blockchain.commit_pending_transactions()
-    if block is None:
-        return jsonify({"error": "No hay transacciones"}), 400
-    return jsonify({"message": "Bloque creado", "index": block.index})
-
-
-# ============================================================
-#   VER BLOCKCHAIN
-# ============================================================
-@app.route("/crypto/chain", methods=["GET"])
-def chain():
-    return jsonify([{
-        "index": b.index,
-        "timestamp": b.timestamp,
-        "transactions": b.transactions,
-        "previous_hash": b.previous_hash,
-        "hash": b.hash
-    } for b in blockchain.chain])
-
-
-# ============================================================
 #   PANEL ADMIN
 # ============================================================
 @app.route("/crypto/admin/users", methods=["GET"])
@@ -339,56 +261,6 @@ def admin_users():
     db = load_db()
     return jsonify(db["users"])
 
-
-@app.route("/crypto/admin/transactions", methods=["GET"])
-@require_admin
-def admin_transactions():
-    txs = []
-    for block in blockchain.chain:
-        for tx in block.transactions:
-            txs.append(tx)
-    return jsonify(txs)
-
-
-@app.route("/crypto/admin/blocks", methods=["GET"])
-@require_admin
-def admin_blocks():
-    return jsonify([{
-        "index": b.index,
-        "timestamp": b.timestamp,
-        "transactions": b.transactions,
-        "previous_hash": b.previous_hash,
-        "hash": b.hash
-    } for b in blockchain.chain])
-
-# ============================================================
-#   ADMIN: CREAR CRIPTOMONEDAS (MINT)
-# ============================================================
-@app.route("/crypto/admin/mint", methods=["POST"])
-@require_admin
-def admin_mint():
-    address = request.args.get("address")
-    amount = request.args.get("amount")
-
-    if not address or not amount:
-        return jsonify({"error": "Faltan datos"}), 400
-
-    try:
-        amount = float(amount)
-        if amount <= 0:
-            return jsonify({"error": "La cantidad debe ser mayor a 0"}), 400
-    except:
-        return jsonify({"error": "Cantidad inválida"}), 400
-
-    ok = blockchain.add_transaction("SYSTEM", address, amount)
-    if not ok:
-        return jsonify({"error": "No se pudo crear la transacción"}), 400
-
-    return jsonify({
-        "message": "Monedas creadas correctamente",
-        "address": address,
-        "amount": amount
-    })
 
 # ============================================================
 #   INICIAR SERVIDOR

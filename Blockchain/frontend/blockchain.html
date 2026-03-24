@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Blockchain – BENDICIÓN</title>
+
+    <style>
+        /* 🎨 COLORES Y TEMAS */
+        :root {
+            --bg: #0b0e11;
+            --bg-box: #181a20;
+            --text: #eaecef;
+            --text-muted: #8b8d90;
+            --primary: #f0b90b;
+            --primary-hover: #c99700;
+            --border: #2b3139;
+            --error: #ff4d4f;
+            --success: #52c41a;
+        }
+
+        body.light {
+            --bg: #f4f4f4;
+            --bg-box: white;
+            --text: #222;
+            --text-muted: #555;
+            --primary: #d4a20a;
+            --primary-hover: #b58900;
+            --border: #ccc;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ✨ FONDO DE PARTÍCULAS */
+        #particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at center, #1a1d23 0%, var(--bg) 100%);
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: float 8s infinite linear;
+        }
+
+        @keyframes float {
+            from { transform: translateY(0); opacity: 0.7; }
+            to { transform: translateY(-800px); opacity: 0; }
+        }
+
+        /* 🌗 BOTÓN MODO CLARO/OSCURO */
+        #themeToggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: var(--bg-box);
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 30;
+        }
+
+        /* 📦 CONTENEDOR PRINCIPAL */
+        .wrapper {
+            width: 100%;
+            max-width: 1100px;
+            padding: 20px;
+        }
+
+        /* 🟨 CAJA DEL TÍTULO */
+        .header-box {
+            background: var(--bg-box);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(240,185,11,0.15);
+        }
+
+        .header-box h1 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .header-box p {
+            margin: 4px 0;
+            color: var(--text-muted);
+        }
+
+        /* 📦 TARJETAS */
+        .card {
+            background: var(--bg-box);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.4);
+            margin-bottom: 16px;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        /* 🔘 BOTONES */
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #2b3139;
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #3a414c;
+        }
+
+        /* 📄 CAJAS DE TEXTO */
+        pre {
+            background: #111318;
+            padding: 10px;
+            border-radius: 8px;
+            max-height: 500px;
+            overflow: auto;
+            font-size: 12px;
+        }
+
+        /* ⚠️ ALERTAS */
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.error {
+            background: rgba(255,77,79,0.2);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        .alert.success {
+            background: rgba(82,196,26,0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="particles"></div>
+<button id="themeToggle">Modo Claro</button>
+
+<div class="wrapper">
+
+    <!-- 🟨 TÍTULO PRINCIPAL -->
+    <div class="header-box">
+        <h1>Blockchain BENDICIÓN</h1>
+        <p>Explora la cadena completa de bloques generados en el sistema.</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- 🟦 ESTADO GENERAL -->
+    <section class="card">
+        <h2>Estado General</h2>
+        <p>En esta sección puedes ver un resumen rápido de cómo está funcionando la blockchain. 
+        Te muestra si todo está bien, cuántos bloques existen, cuántas transacciones hay y cuántas están esperando ser confirmadas.</p>
+        <pre id="statusBox">Cargando...</pre>
+        <button id="btnStatus" class="btn btn-primary">Actualizar Estado</button>
+    </section>
+
+    <!-- 🟩 VER BLOCKCHAIN -->
+    <section class="card">
+        <h2>Ver Blockchain</h2>
+        <p>Aquí puedes ver todos los bloques que existen en la blockchain. 
+        Cada bloque contiene transacciones y un código único llamado “hash” que lo hace imposible de modificar.</p>
+        <button id="btnChain" class="btn btn-primary">Cargar Blockchain</button>
+        <pre id="chain"></pre>
+    </section>
+
+    <!-- 🟧 TRANSACCIONES PENDIENTES -->
+    <section class="card">
+        <h2>Transacciones Pendientes</h2>
+        <p>Estas son las transacciones que todavía no han sido agregadas a un bloque. 
+        Es como una lista de tareas que la blockchain tiene pendiente por confirmar.</p>
+        <button id="btnPending" class="btn btn-primary">Ver Pendientes</button>
+        <pre id="pending"></pre>
+    </section>
+
+    <!-- 🔍 BUSCADOR AVANZADO -->
+    <section class="card">
+        <h2>Buscador Avanzado</h2>
+        <p>Usa este buscador para encontrar información dentro de la blockchain. 
+        Puedes buscar una dirección (wallet), un bloque por su código (hash) o una transacción específica.</p>
+        <input id="searchInput" type="text" placeholder="Dirección, hash de bloque o hash de transacción" style="width:100%; padding:10px; border-radius:6px;">
+        <button id="btnSearch" class="btn btn-primary">Buscar</button>
+        <pre id="searchResult"></pre>
+    </section>
+
+    <!-- 📜 HISTORIAL DE WALLET -->
+    <section class="card">
+        <h2>Historial de Wallet</h2>
+        <p>Aquí verás todo lo que ha hecho una wallet: cuánto dinero tiene, cuánto tiene bloqueado y todas las transacciones que ha enviado o recibido.</p>
+        <pre id="walletHistory"></pre>
+    </section>
+
+    <!-- 🏠 NAVEGACIÓN -->
+    <section class="card">
+        <h2>Navegación</h2>
+        <p>Usa este botón para volver a la página principal del sistema.</p>
+        <button id="btnGohome" class="btn btn-secondary">Volver a Home</button>
+    </section>
+
+</div>
+
+<script>
+    /* ✨ PARTÍCULAS DEL FONDO */
+    const particles = document.getElementById("particles");
+    function createParticle() {
+        const p = document.createElement("div");
+        p.classList.add("particle");
+        p.style.left = Math.random() * 100 + "%";
+        p.style.top = "100%";
+        p.style.animationDuration = 4 + Math.random() * 6 + "s";
+        p.style.opacity = Math.random();
+        particles.appendChild(p);
+        setTimeout(() => p.remove(), 10000);
+    }
+    setInterval(createParticle, 150);
+
+    /* 🌗 CAMBIO DE TEMA */
+    const toggle = document.getElementById("themeToggle");
+    toggle.onclick = () => {
+        document.body.classList.toggle("light");
+        toggle.textContent = document.body.classList.contains("light")
+            ? "Modo Oscuro"
+            : "Modo Claro";
+    };
+
+    /* 🌐 API */
+    const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain_api/";
+
+    /* ⚠️ ALERTAS */
+    const alertBox = document.getElementById("alertBox");
+    function showAlert(msg, type="error") {
+        alertBox.textContent = msg;
+        alertBox.className = "alert " + type;
+        alertBox.style.display = "block";
+    }
+
+    /* 🔐 LOGIN */
+    let userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("Debes iniciar sesión primero.");
+        window.location.href = "login.html";
+    }
+
+    /* 🟦 ESTADO GENERAL */
+    document.getElementById("btnStatus").onclick = async () => {
+        try {
+            const chain = await (await fetch(`${API}/chain`)).json();
+            const pending = await (await fetch(`${API}/pending`)).json();
+            const valid = await (await fetch(`${API}/validate`)).json();
+
+            const totalTx = chain.reduce((acc, b) => acc + b.transactions.length, 0);
+
+            document.getElementById("statusBox").textContent = JSON.stringify({
+                cadena_valida: valid.valid,
+                bloques_totales: chain.length,
+                transacciones_totales: totalTx,
+                pendientes: pending.length
+            }, null, 2);
+
+        } catch (err) {
+            showAlert("Error al obtener el estado general.");
+        }
+    };
+
+    /* 🟩 VER BLOCKCHAIN */
+    document.getElementById("btnChain").onclick = async () => {
+        try {
+            const res = await fetch(`${API}/chain`);
+            const data = await res.json();
+            document.getElementById("chain").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            showAlert("Error al obtener la blockchain.");
+        }
+    };
+
+    /* 🟧 VER PENDIENTES */
+    document.getElementById("btnPending").onclick = async () => {
+        try {
+            const res = await fetch(`${API}/pending`);
+            const data = await res.json();
+            document.getElementById("pending").textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+            showAlert("Error al obtener pendientes.");
+        }
+    };
+
+    /* 🔍 BUSCADOR */
+    document.getElementById("btnSearch").onclick = async () => {
+        const q = document.getElementById("searchInput").value.trim();
+        if (!q) return;
+
+        const resultBox = document.getElementById("searchResult");
+        const historyBox = document.getElementById("walletHistory");
+        resultBox.textContent = "";
+        historyBox.textContent = "";
+
+        try {
+            // Buscar wallet
+            let res = await fetch(`${API}/wallet/${q}`);
+            if (res.ok) {
+                const wallet = await res.json();
+                resultBox.textContent = JSON.stringify(wallet, null, 2);
+
+                // Historial
+                const hist = await (await fetch(`${API}/wallet/${q}/history`)).json();
+                historyBox.textContent = JSON.stringify(hist, null, 2);
+                return;
+            }
+
+            // Buscar bloque
+            res = await fetch(`${API}/block/${q}`);
+            if (res.ok) {
+                const block = await res.json();
+                resultBox.textContent = JSON.stringify(block, null, 2);
+                return;
+            }
+
+            // Buscar transacción
+            res = await fetch(`${API}/tx/${q}`);
+            if (res.ok) {
+                const tx = await res.json();
+                resultBox.textContent = JSON.stringify(tx, null, 2);
+                return;
+            }
+
+            showAlert("No se encontró nada con ese valor.");
+
+        } catch (err) {
+            showAlert("Error en la búsqueda.");
+        }
+    };
+
+    /* 🏠 VOLVER A HOME */
+    document.getElementById("btnGohome").onclick = () => {
+        window.location.href = "home.html";
+    };
+</script>
+
+</body>
+</html>

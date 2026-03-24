@@ -1,0 +1,194 @@
+🟦 📁 RESUMEN DE CADA ARCHIVO DEL MÓDULO BLOCKCHAIN
+A continuación te explico qué hace cada archivo, para qué sirve y cómo encaja en el sistema.
+
+🟩 1. /Blockchain/bakend/blockchain_server.py
+Rol: API principal de la blockchain
+Responsabilidad: Validación, transacciones, bloques, saldos
+Este archivo expone todos los endpoints REST:
+
+/crypto/send_tx → recibe transacciones firmadas
+
+/crypto/commit → crea un nuevo bloque
+
+/crypto/chain → devuelve la cadena completa
+
+/crypto/validate → valida integridad
+
+/crypto/wallet/<address> → saldo + saldo bloqueado
+
+/crypto/wallet/<address>/history → historial
+
+/crypto/pending → transacciones pendientes
+
+/crypto/block/<hash> → buscar bloque
+
+/crypto/tx/<hash> → buscar transacción
+
+Además:
+
+Verifica firmas ECDSA
+
+Reconstruye la dirección desde la clave pública
+
+Añade transacciones al mempool
+
+Llama a la clase Blockchain para toda la lógica interna
+
+👉 Es el cerebro externo del módulo.
+
+🟩 2. /Blockchain/bakend/blockchain.py
+Rol: Lógica interna de la blockchain
+Responsabilidad: Manejo de bloques, saldos, validación
+Contiene:
+
+✔ Clase Block
+index
+
+timestamp
+
+transactions
+
+previous_hash
+
+hash calculado
+
+✔ Clase Blockchain
+carga estado desde disco
+
+crea bloque génesis
+
+maneja wallets
+
+maneja saldos bloqueados
+
+añade transacciones
+
+crea nuevos bloques
+
+valida integridad de la cadena
+
+guarda estado en disco
+
+👉 Es el motor interno de la blockchain.
+
+🟩 3. /Blockchain/bakend/blockchain_blocks.py
+Rol: Persistencia y rotación de archivos
+Responsabilidad: Guardar blockchain.json y archivar bloques antiguos
+Funciones:
+
+load_state() → carga blockchain.json
+
+save_state() → guarda estado actual
+
+rotate_if_needed() → cuando hay 1000 bloques, archiva y reinicia
+
+Maneja carpeta /archive
+
+👉 Es el sistema de almacenamiento del módulo.
+
+🟩 4. /Blockchain/bakend/blockchain_webserver.py
+Rol: Servidor web del explorador blockchain
+Responsabilidad: Servir blockchain.html y archivos estáticos
+Sirve la interfaz visual del explorador
+
+No tiene lógica de blockchain
+
+Solo entrega HTML, CSS, JS
+
+👉 Es la capa visual del explorador.
+
+🟩 5. /Blockchain/bakend/archive/blockchain.json
+Rol: Estado persistente de la blockchain
+Responsabilidad: Guardar:
+cadena de bloques
+
+transacciones pendientes
+
+wallets
+
+saldos bloqueados
+
+👉 Es la base de datos del módulo.
+
+🟩 6. /Blockchain/frontend/blockchain.html
+Rol: Explorador visual de la blockchain
+Responsabilidad: Mostrar:
+bloques
+
+transacciones
+
+saldos
+
+historial
+
+validación
+
+👉 Es la interfaz gráfica del módulo.
+
+🟦 📁 ESTRUCTURA VISUAL DEL MÓDULO blockchain
+Código
+Blockchain/
+│
+├── bakend/
+│   ├── blockchain_server.py      ← API REST
+│   ├── blockchain.py             ← Lógica interna
+│   ├── blockchain_blocks.py      ← Persistencia / archivos
+│   ├── blockchain_webserver.py   ← Servidor web del explorador
+│   └── archive/
+│       └── blockchain.json       ← Estado persistente
+│
+└── frontend/
+    └── blockchain.html           ← Explorador visual
+🟦 📊 DIAGRAMA GENERAL DEL MÓDULO
+Código
+[ blockchain.html ]  ← usuario
+        │
+        ▼
+[ blockchain_webserver.py ]  ← sirve HTML
+        │
+        ▼
+[ blockchain_server.py ]  ← API REST
+        │
+        ▼
+[ Blockchain ] (blockchain.py)
+        │
+        ├── Manejo de bloques
+        ├── Manejo de wallets
+        ├── Validación
+        └── Persistencia
+                │
+                ▼
+     [ blockchain_blocks.py ]
+                │
+                ▼
+     [ archive/blockchain.json ]
+🟦 📘 RESUMEN VISUAL DE RESPONSABILIDADES
+Archivo	Rol	Qué hace
+blockchain_server.py	API	Recibe transacciones, crea bloques, expone endpoints
+blockchain.py	Lógica	Maneja cadena, wallets, saldos, validación
+blockchain_blocks.py	Persistencia	Guarda/lee blockchain.json, rota archivos
+blockchain_webserver.py	Webserver	Sirve blockchain.html
+blockchain.html	UI	Explorador visual
+archive/blockchain.json	BD	Estado persistente
+
+🟦 🌐 RESUMEN GLOBAL DEL ECOSISTEMA WALLET + BLOCKCHAIN
+Código
+[ usuarios_api ]  → login, registro
+[ wallet_api ]    → crea wallets, gestiona claves
+[ wallet_web ]    → interfaz de wallet
+[ blockchain_api ] → recibe transacciones firmadas
+[ blockchain_web ] → explorador visual
+Flujo completo:
+Usuario inicia sesión
+
+Wallet genera claves
+
+Usuario firma transacción
+
+blockchain_api valida firma
+
+blockchain_api añade transacción
+
+blockchain_api crea bloque
+
+blockchain_web muestra el bloque

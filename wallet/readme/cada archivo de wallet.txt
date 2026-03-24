@@ -208,3 +208,15 @@ wallet/
      │
      ▼
 [ wallet.py ]  ← Generación de claves
+
+
+🟦 📌 RESUMEN VISUAL DE RESPONSABILIDADES
+Archivo	Rol
+wallet_server.py	API REST (endpoints GET/POST)
+wallet_manager.py	Lee/escribe wallets y usuarios
+wallet.py	Genera claves privadas, públicas y address
+wallets.json	Guarda claves privadas/públicas
+wallet_webserver.py	Sirve la interfaz HTML
+wallet.html	Interfaz del usuario (botones + JS)
+Dockerfile	Construcción del backend
+requirements.txt	Librerías necesarias

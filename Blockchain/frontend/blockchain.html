@@ -64,20 +64,6 @@
             to { transform: translateY(-800px); opacity: 0; }
         }
 
-        /* 🌗 BOTÓN MODO CLARO/OSCURO */
-        #themeToggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: var(--bg-box);
-            border: none;
-            padding: 10px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            z-index: 30;
-        }
 
         /* 📦 CONTENEDOR PRINCIPAL */
         .wrapper {
@@ -188,8 +174,6 @@
 <body>
 
 <div id="particles"></div>
-<button id="themeToggle">Modo Claro</button>
-
 <div class="wrapper">
 
     <!-- 🟨 TÍTULO PRINCIPAL -->
@@ -267,15 +251,6 @@
         setTimeout(() => p.remove(), 10000);
     }
     setInterval(createParticle, 150);
-
-    /* 🌗 CAMBIO DE TEMA */
-    const toggle = document.getElementById("themeToggle");
-    toggle.onclick = () => {
-        document.body.classList.toggle("light");
-        toggle.textContent = document.body.classList.contains("light")
-            ? "Modo Oscuro"
-            : "Modo Claro";
-    };
 
     /* 🌐 API */
     const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
@@ -386,7 +361,7 @@
 
     /* 🏠 VOLVER A HOME */
     document.getElementById("btnGohome").onclick = () => {
-        window.location.href = "home.html";
+        window.location.href = "/CriptoBendicion/home";
     };
 </script>
 

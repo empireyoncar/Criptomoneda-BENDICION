@@ -15,7 +15,7 @@ blockchain = Blockchain()
 # ============================================================
 #   ESTADO DE LA CADENA
 # ============================================================
-@app.route("/crypto/validate", methods=["GET"])
+@app.route("/validate", methods=["GET"])
 def validate_chain():
     return jsonify({"valid": blockchain.is_chain_valid()})
 
@@ -23,7 +23,7 @@ def validate_chain():
 # ============================================================
 #   VER CADENA COMPLETA
 # ============================================================
-@app.route("/crypto/chain", methods=["GET"])
+@app.route("/chain", methods=["GET"])
 def get_chain():
     return jsonify([
         {
@@ -40,7 +40,7 @@ def get_chain():
 # ============================================================
 #   TRANSACCIONES PENDIENTES
 # ============================================================
-@app.route("/crypto/pending", methods=["GET"])
+@app.route("/pending", methods=["GET"])
 def get_pending():
     return jsonify(blockchain.pending_transactions)
 
@@ -48,7 +48,7 @@ def get_pending():
 # ============================================================
 #   BUSCAR BLOQUE POR HASH
 # ============================================================
-@app.route("/crypto/block/<hash_value>", methods=["GET"])
+@app.route("/block/<hash_value>", methods=["GET"])
 def get_block(hash_value):
     for b in blockchain.chain:
         if b.hash == hash_value:
@@ -65,7 +65,7 @@ def get_block(hash_value):
 # ============================================================
 #   BUSCAR TRANSACCIÓN POR HASH
 # ============================================================
-@app.route("/crypto/tx/<hash_value>", methods=["GET"])
+@app.route("/tx/<hash_value>", methods=["GET"])
 def get_tx(hash_value):
     for b in blockchain.chain:
         for tx in b.transactions:
@@ -78,7 +78,7 @@ def get_tx(hash_value):
 # ============================================================
 #   BALANCE + SALDO BLOQUEADO
 # ============================================================
-@app.route("/crypto/wallet/<address>", methods=["GET"])
+@app.route("/wallet/<address>", methods=["GET"])
 def wallet_info(address):
     balance = blockchain.get_balance(address)
     locked = blockchain._get_locked_balance(address)
@@ -92,7 +92,7 @@ def wallet_info(address):
 # ============================================================
 #   HISTORIAL DE WALLET
 # ============================================================
-@app.route("/crypto/wallet/<address>/history", methods=["GET"])
+@app.route("/wallet/<address>/history", methods=["GET"])
 def wallet_history(address):
     history = []
     for b in blockchain.chain:
@@ -105,8 +105,7 @@ def wallet_history(address):
 # ============================================================
 #   TRANSACCIÓN FIRMADA (SEGURA)
 # ============================================================
-
-@app.route("/crypto/send_tx", methods=["POST"])
+@app.route("/send_tx", methods=["POST"])
 def send_tx():
     data = request.json
     tx = data.get("tx")
@@ -144,7 +143,7 @@ def send_tx():
 # ============================================================
 #   CREAR BLOQUE
 # ============================================================
-@app.route("/crypto/commit", methods=["POST"])
+@app.route("/commit", methods=["POST"])
 def commit_block():
     block = blockchain.commit_pending_transactions()
     if block is None:

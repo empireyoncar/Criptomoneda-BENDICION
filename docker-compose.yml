@@ -74,12 +74,47 @@ services:
     networks:
       - bendicion_net
 
+  # ============================================================
+  # BLOCKCHAIN (API)
+  # Puerto: 5004
+  # Maneja transacciones firmadas, bloques, saldos y minería
+  # ============================================================
+  blockchain_api:
+    build: ./Blockchain/bakend
+    command: python blockchain_server.py
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./Blockchain/bakend/blockchain_server.py:/app/blockchain_server.py
+      - ./Blockchain/bakend/blockchain.py:/app/blockchain.py
+      - ./Blockchain/bakend/blockchain_blocks.py:/app/blockchain_blocks.py
+      - ./Blockchain/bakend/archive:/app/archive
+    restart: always
+    networks:
+      - bendicion_net
+  
+  # ============================================================
+  # BLOCKCHAIN (WEB)
+  # Puerto: 5005
+  #  # Sirve blockchain.html y otros archivos estáticos
+  # ============================================================
+  blockchain_web:
+    build: ./Blockchain/bakend
+    command: python blockchain_webserver.py
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./Blockchain/bakend/blockchain_webserver.py:/app/blockchain_webserver.py
+      - ./Blockchain/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
 
-# ============================================================
-# RED COMPARTIDA ENTRE TODOS LOS SERVICIOS
-# Permite que usuarios_api, usuarios_web, wallet_api y wallet_web
-# se comuniquen entre sí sin problemas
-# ============================================================
+  # ============================================================
+  # RED COMPARTIDA ENTRE TODOS LOS SERVICIOS
+  # Permite que usuarios_api, usuarios_web, wallet_api y wallet_web
+  # se comuniquen entre sí sin problemas
+  # ============================================================
 networks:
-  bendicion_net:
-    driver: bridge
+    bendicion_net:
+        driver: bridge

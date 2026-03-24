@@ -303,7 +303,7 @@
     // Ver balance
     document.getElementById("btnGetBalance").onclick = async () => {
         try {
-            const res = await fetch(`${API}/balance/${address}`);
+            const res = await fetch(`${API}/wallet/${address}`);
             const data = await res.json();
             document.getElementById("balance").textContent =
                 data && typeof data.balance !== "undefined" ? data.balance : "Error";

@@ -14,6 +14,7 @@ app.jinja_loader = ChoiceLoader([
 #   PÁGINA PRINCIPAL DEL EXPLORADOR
 # ============================================================
 @app.route("/CriptoBendicion/blockchainweb")
+@app.route("/CriptoBendicion/blockchainweb/")
 def blockchain_page():
     return render_template("blockchain.html")
 

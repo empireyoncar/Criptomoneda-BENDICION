@@ -1,3 +1,4 @@
+  GNU nano 7.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       /etc/nginx/sites-available/empireyoncar
 # ============================================================
 # REDIRECCIÓN HTTP → HTTPS
 # Fuerza que todo el tráfico en puerto 80 vaya a HTTPS
@@ -23,18 +24,6 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/empireyoncar.duckdns.org/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-    # ============================================================
-    # API BACKEND PRINCIPAL (puerto 7777)
-    # Mantiene el prefijo /crypto/
-    # ============================================================
-    location /crypto/ {
-        proxy_pass http://127.0.0.1:7777/crypto/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
 
     # ============================================================
     # WEB PRINCIPAL (puerto 3000)
@@ -143,9 +132,9 @@ server {
 
     # ============================================================
     # API BLOCKCHAIN (puerto 5004)
-    # Ruta: /CriptoBendicion/blockchain_api/
+    # Ruta: /CriptoBendicion/blockchain/
     # ============================================================
-    location /CriptoBendicion/blockchain_api/ {
+    location /CriptoBendicion/blockchain/ {
         proxy_pass http://127.0.0.1:5004/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -158,7 +147,7 @@ server {
     # Sirve blockchain.html
     # Ruta: /CriptoBendicion/blockchain
     # ============================================================
-    location /CriptoBendicion/blockchain {
+    location /CriptoBendicion/blockchainweb/ {
         proxy_pass http://127.0.0.1:5005/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -166,3 +155,18 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

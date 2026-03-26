@@ -65,7 +65,7 @@ POST	/commit	Crear bloque
 GET	/chain	Ver blockchain
 ✔ Endpoints de administrador
 Método	Endpoint	Descripción
-GET	/admin/users	Ver todos los usuarios
+GET	/CriptoBendicion/admin_api/users	Ver todos los usuarios
 GET	/admin/transactions	Ver todas las transacciones
 GET	/admin/transactions/
 Filtrar transacciones por address

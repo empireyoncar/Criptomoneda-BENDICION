@@ -100,7 +100,7 @@ GET	/get_kyc_status/	Obtener estado completo del KYC
 POST	/update_phone_verification	Marcar paso 4 como enviado
 ✔ Endpoints de administrador
 Método	Endpoint	Descripción
-GET	/admin/users	Ver todos los usuarios
+GET	/CriptoBendicion/admin_api/users	Ver todos los usuarios
 GET	/admin/transactions	Ver todas las transacciones
 GET	/admin/blocks	Ver todos los bloques
 POST	/admin/kyc/approve_step	Aprobar un paso del KYC

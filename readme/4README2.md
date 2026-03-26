@@ -244,7 +244,7 @@ GET	/get_kyc_status/	Estado completo
 POST	/update_phone_verification	Paso 4
 Admin
 Método	Endpoint	Descripción
-GET	/admin/users	Ver usuarios
+GET	/CriptoBendicion/admin_api/users	Ver usuarios
 GET	/admin/transactions	Ver transacciones
 GET	/admin/blocks	Ver bloques
 POST	/admin/kyc/approve_step	Aprobar paso

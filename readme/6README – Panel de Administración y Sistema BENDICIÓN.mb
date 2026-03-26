@@ -95,7 +95,7 @@ Código
 /login
 /admin_login
 /admin
-/admin/users
+/CriptoBendicion/admin_api/users
 /admin/transactions
 /admin/blocks
 /admin/kyc/approve

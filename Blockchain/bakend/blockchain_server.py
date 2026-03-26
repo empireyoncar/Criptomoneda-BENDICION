@@ -139,6 +139,30 @@ def send_tx():
 
     return jsonify({"message": "Transacción añadida"})
 
+# ============================================================
+#   MINT (CREAR MONEDAS)
+# ============================================================
+@app.route("/mint", methods=["POST"])
+def mint():
+    data = request.json
+    address = data.get("address")
+    amount = data.get("amount")
+
+    if not address or amount is None:
+        return jsonify({"error": "Faltan parámetros"}), 400
+
+    try:
+        amount = float(amount)
+    except:
+        return jsonify({"error": "Cantidad inválida"}), 400
+
+    # Transacción especial del sistema
+    ok = blockchain.add_transaction("SYSTEM", address, amount)
+
+    if not ok:
+        return jsonify({"error": "No se pudo crear la transacción"}), 400
+
+    return jsonify({"message": "Transacción de mint creada correctamente"})
 
 # ============================================================
 #   CREAR BLOQUE

@@ -1,31 +1,34 @@
 from flask import Flask, request, jsonify, render_template, session, redirect
 from flask_cors import CORS
 from usuarios.backend.database import load_db, save_db, is_admin, login_user
-from Blockchain.bakend.node import blockchain
 from functools import wraps
+import requests
+import json
 
 app = Flask(__name__, template_folder="templates_ADMIN")
-app.secret_key = "clave-super-secreta-123"   # Necesario para sesiones
+app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
-# -----------------------------
-# DECORADOR PARA VERIFICAR ADMIN
-# -----------------------------
+# URL de la blockchain real
+BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain"
+
+
+# ============================================================
+#   DECORADOR PARA VERIFICAR ADMIN
+# ============================================================
 def require_admin(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         user_id = session.get("user_id")
-
         if not is_admin(user_id):
             return redirect("/login")
-
         return func(*args, **kwargs)
     return wrapper
 
 
-# -----------------------------
-# LOGIN VISUAL
-# -----------------------------
+# ============================================================
+#   LOGIN
+# ============================================================
 @app.route("/login")
 def login_page():
     return render_template("login.html")
@@ -44,116 +47,99 @@ def admin_login():
     if not is_admin(user_id):
         return "No eres administrador"
 
-    # Guardar sesión
     session["user_id"] = user_id
-
-    # Redirigir al panel admin
     return redirect("/admin")
 
 
-# -----------------------------
-# LOGOUT
-# -----------------------------
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
 
-# -----------------------------
-# PANEL ADMIN
-# -----------------------------
+# ============================================================
+#   PANEL ADMIN
+# ============================================================
 @app.route("/admin")
 @require_admin
 def admin_panel():
     return render_template("admin.html")
 
 
-# -----------------------------
-# LISTA DE USUARIOS
-# -----------------------------
-@app.route("/admin/users", methods=["GET"])
+# ============================================================
+#   LISTA DE USUARIOS
+# ============================================================
+@app.route("/CriptoBendicion/admin_api/users", methods=["GET"])
 @require_admin
 def admin_users():
     db = load_db()
     return jsonify(db["users"])
 
 
-# -----------------------------
-# TRANSACCIONES
-# -----------------------------
-@app.route("/admin/transactions", methods=["GET"])
+# ============================================================
+#   BLOQUES (desde blockchain real)
+# ============================================================
+@app.route("/CriptoBendicion/admin_api/blocks", methods=["GET"])
+@require_admin
+def admin_blocks():
+    res = requests.get(f"{BC_API}/chain")
+    return jsonify(res.json())
+
+
+# ============================================================
+#   TRANSACCIONES (desde blockchain real)
+# ============================================================
+@app.route("/CriptoBendicion/admin_api/transactions", methods=["GET"])
 @require_admin
 def admin_transactions():
-    txs = []
-    for block in blockchain.chain:
-        for tx in block.transactions:
-            txs.append(tx)
+    chain = requests.get(f"{BC_API}/chain").json()
+    txs = [tx for block in chain for tx in block["transactions"]]
     return jsonify(txs)
 
 
-# -----------------------------
-# BLOQUES
-# -----------------------------
-@app.route("/admin/blocks", methods=["GET"])
+# ============================================================
+#   TRANSACCIONES POR WALLET
+# ============================================================
+@app.route("/CriptoBendicion/admin_api/transactions/<address>", methods=["GET"])
 @require_admin
-def admin_blocks():
-    return jsonify([{
-        "index": b.index,
-        "timestamp": b.timestamp,
-        "transactions": b.transactions,
-        "previous_hash": b.previous_hash,
-        "hash": b.hash
-    } for b in blockchain.chain])
+def admin_transactions_by_address(address):
+    res = requests.get(f"{BC_API}/wallet/{address}/history")
+    return jsonify(res.json())
 
 
-# -----------------------------
-# APROBAR KYC
-# -----------------------------
-@app.route("/admin/kyc/approve", methods=["POST"])
-@require_admin
-def admin_approve_kyc():
-    data = request.json
-    user_id = data.get("user_id")
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"]["status"] = "approved"
-            save_db(db)
-            return jsonify({"message": "KYC aprobado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-
-# -----------------------------
-# RECHAZAR KYC
-# -----------------------------
-@app.route("/admin/kyc/reject", methods=["POST"])
-@require_admin
-def admin_reject_kyc():
-    data = request.json
-    user_id = data.get("user_id")
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"]["status"] = "rejected"
-            save_db(db)
-            return jsonify({"message": "KYC rechazado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-# -----------------------------
-# PÁGINA MINT (ADMIN)
-# -----------------------------
+# ============================================================
+#   MINT (usa blockchain real)
+# ============================================================
 @app.route("/admin/mint")
 @require_admin
 def admin_mint_page():
     return render_template("mint.html")
 
-# -----------------------------
-# INICIAR SERVIDOR ADMIN
-# -----------------------------
+
+@app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
+@require_admin
+def admin_mint_create():
+    data = request.json
+    address = data.get("address")
+    amount = data.get("amount")
+
+    res = requests.post(f"{BC_API}/mint", json={
+        "address": address,
+        "amount": amount
+    })
+
+    return jsonify(res.json())
+
+
+@app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
+@require_admin
+def admin_mint_commit():
+    res = requests.post(f"{BC_API}/commit")
+    return jsonify(res.json())
+
+
+# ============================================================
+#   INICIAR SERVIDOR
+# ============================================================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8888, debug=True)
+    app.run(host="0.0.0.0", port=5010, debug=True)

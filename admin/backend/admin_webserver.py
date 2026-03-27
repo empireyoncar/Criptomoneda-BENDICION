@@ -13,6 +13,13 @@ app.jinja_loader = ChoiceLoader([
 ])
 
 # ============================================================
+# Ruta raíz (necesaria para NGINX y acceso directo)
+# ============================================================
+@app.route("/")
+def root_redirect():
+    return admin_dashboard()
+
+# ============================================================
 # Página de Login del Admin
 # ============================================================
 @app.route("/CriptoBendicion/admin/login")

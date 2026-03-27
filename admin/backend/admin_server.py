@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, session, redirect
 from flask_cors import CORS
-from usuarios.backend.database import load_db, save_db, is_admin, login_user
+from admin_manager import load_db, save_db, is_admin, login_user
 from functools import wraps
 import requests
 import json

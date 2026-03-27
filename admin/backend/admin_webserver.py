@@ -9,7 +9,7 @@ CORS(app)
 # Cargar plantillas desde admin/frontend (para Docker)
 # ============================================================
 app.jinja_loader = ChoiceLoader([
-    FileSystemLoader("/app/admin/frontend")
+    FileSystemLoader("/app/frontend")
 ])
 
 # ============================================================

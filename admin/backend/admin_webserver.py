@@ -1,47 +1,87 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, session, redirect
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
+from functools import wraps
+
+# Importar funciones reales del backend
+from usuarios.backend.database import login_user, is_admin
 
 app = Flask(__name__)
+app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
 # ============================================================
-# Cargar plantillas desde admin/frontend (para Docker)
+#   PROTECCIÓN DE RUTAS
+# ============================================================
+def require_admin(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        user_id = session.get("user_id")
+        if not is_admin(user_id):
+            return redirect("/CriptoBendicion/admin/login")
+        return func(*args, **kwargs)
+    return wrapper
+
+# ============================================================
+#   LOGIN
+# ============================================================
+@app.route("/CriptoBendicion/admin/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/CriptoBendicion/admin_login", methods=["POST"])
+def admin_login():
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    user_id = login_user(email, password)
+
+    if not user_id:
+        return "Credenciales incorrectas"
+
+    if not is_admin(user_id):
+        return "No eres administrador"
+
+    session["user_id"] = user_id
+    return redirect("/CriptoBendicion/admin/")
+
+
+@app.route("/CriptoBendicion/admin/logout")
+def logout():
+    session.clear()
+    return redirect("/CriptoBendicion/admin/login")
+
+# ============================================================
+#   PANEL ADMIN
+# ============================================================
+@app.route("/CriptoBendicion/admin/")
+@require_admin
+def admin_dashboard():
+    return render_template("admin.html")
+
+
+@app.route("/CriptoBendicion/admin/mint")
+@require_admin
+def admin_mint_page():
+    return render_template("mint.html")
+
+# ============================================================
+#   CARGA DE PLANTILLAS (Docker)
 # ============================================================
 app.jinja_loader = ChoiceLoader([
     FileSystemLoader("/app/frontend")
 ])
 
 # ============================================================
-# Ruta raíz (necesaria para NGINX y acceso directo)
+#   RUTA RAÍZ
 # ============================================================
 @app.route("/")
 def root_redirect():
-    return admin_dashboard()
+    return redirect("/CriptoBendicion/admin/login")
 
 # ============================================================
-# Página de Login del Admin
-# ============================================================
-@app.route("/CriptoBendicion/admin/login")
-def admin_login_page():
-    return render_template("login.html")
-
-# ============================================================
-# Panel Principal del Admin
-# ============================================================
-@app.route("/CriptoBendicion/admin/")
-def admin_dashboard():
-    return render_template("admin.html")
-
-# ============================================================
-# Página de Mint del Admin
-# ============================================================
-@app.route("/CriptoBendicion/admin/mint")
-def admin_mint_page():
-    return render_template("mint.html")
-
-# ============================================================
-# Servidor
+#   INICIAR SERVIDOR
 # ============================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5011, debug=True)

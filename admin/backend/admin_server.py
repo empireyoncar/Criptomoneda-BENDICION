@@ -10,7 +10,7 @@ app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
 # URL de la blockchain real
-BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain"
+BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/admin_api/mint/create"
 
 
 # ============================================================

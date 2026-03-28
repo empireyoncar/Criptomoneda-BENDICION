@@ -116,7 +116,7 @@ def admin_mint_page():
     return render_template("mint.html")
 
 
-@app.route("/CriptoBendicion/adminbackend/mint/create", methods=["POST"])
+@app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
     data = request.json
@@ -131,7 +131,7 @@ def admin_mint_create():
     return jsonify(res.json())
 
 
-@app.route("/CriptoBendicion/adminbackend/mint/commit", methods=["POST"])
+@app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
 @require_admin
 def admin_mint_commit():
     res = requests.post(f"{BC_API}/commit")

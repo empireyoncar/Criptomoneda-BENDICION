@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y \
 # ============================================================
 WORKDIR /app
 
+ENV PYTHONPATH="/app"
 # ============================================================
 # COPIAR ARCHIVOS DEL BACKEND
 # Copiamos TODO el contenido de la carpeta backend al contenedor

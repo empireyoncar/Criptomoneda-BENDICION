@@ -152,6 +152,6 @@ services:
   # Permite que usuarios_api, usuarios_web, wallet_api y wallet_web
   # se comuniquen entre sí sin problemas
   # ============================================================
-    networks:
+  networks:
     bendicion_net:
         driver: bridge

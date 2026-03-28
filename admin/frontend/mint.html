@@ -128,7 +128,7 @@
             return;
         }
 
-        const res = await fetch("http://192.168.1.178:5010/CriptoBendicion/admin_api/mint/create", {
+        const res = await fetch("http://192.168.1.178:5011/CriptoBendicion/admin_api/mint/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ address, amount })
@@ -139,7 +139,7 @@
     }
 
     async function crearBloque() {
-        const res = await fetch("http://192.168.1.178:5010/CriptoBendicion/admin_api/mint/commit", {
+        const res = await fetch("http://192.168.1.178:5011/CriptoBendicion/admin_api/mint/commit", {
             method: "POST"
         });
 

@@ -109,8 +109,8 @@ services:
     restart: always
     networks:
       - bendicion_net
-      
-# ============================================================
+ 
+  # ============================================================
   # ADMIN (API)
   # Puerto: 5010
   # Maneja permisos, panel de administración, gestión de usuarios
@@ -128,6 +128,7 @@ services:
     networks:
       - bendicion_net
 
+
   # ============================================================
   # ADMIN (WEB)
   # Puerto: 5011
@@ -141,6 +142,7 @@ services:
     volumes:
       - ./admin/backend/admin_webserver.py:/app/admin_webserver.py
       - ./admin/frontend:/app/frontend
+      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net
@@ -150,6 +152,6 @@ services:
   # Permite que usuarios_api, usuarios_web, wallet_api y wallet_web
   # se comuniquen entre sí sin problemas
   # ============================================================
-networks:
+    networks:
     bendicion_net:
         driver: bridge

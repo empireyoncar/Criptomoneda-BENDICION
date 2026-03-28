@@ -1,4 +1,4 @@
-  name: criptobendicion
+name: criptobendicion
 
 services:
 
@@ -142,10 +142,11 @@ services:
     volumes:
       - ./admin/backend/admin_webserver.py:/app/admin_webserver.py
       - ./admin/frontend:/app/frontend
+      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net
-      
+
   # ============================================================
   # RED COMPARTIDA ENTRE TODOS LOS SERVICIOS
   # Permite que usuarios_api, usuarios_web, wallet_api y wallet_web

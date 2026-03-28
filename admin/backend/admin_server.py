@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, session, redirect
 from flask_cors import CORS
-from admin_manager import load_db, save_db, is_admin, login_user
+from usuarios.backend.database import load_db, save_db, is_admin, login_user
 from functools import wraps
 import requests
 import json
@@ -10,7 +10,7 @@ app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
 # URL de la blockchain real
-BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/admin_api/mint/create"
+BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain"
 
 
 # ============================================================
@@ -116,7 +116,7 @@ def admin_mint_page():
     return render_template("mint.html")
 
 
-@app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
+@app.route("/CriptoBendicion/adminbackend/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
     data = request.json
@@ -131,7 +131,7 @@ def admin_mint_create():
     return jsonify(res.json())
 
 
-@app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
+@app.route("/CriptoBendicion/adminbackend/mint/commit", methods=["POST"])
 @require_admin
 def admin_mint_commit():
     res = requests.post(f"{BC_API}/commit")

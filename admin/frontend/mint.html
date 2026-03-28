@@ -128,7 +128,7 @@
             return;
         }
 
-        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/admin_api/mint/create", {
+        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/adminbackend/mint/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ address, amount })
@@ -139,7 +139,7 @@
     }
 
     async function crearBloque() {
-        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/admin_api/mint/commit", {
+        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/adminbackend/mint/commit", {
             method: "POST"
         });
 

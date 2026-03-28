@@ -4,7 +4,7 @@ from jinja2 import FileSystemLoader, ChoiceLoader
 from functools import wraps
 
 # Importar funciones reales del backend
-from usuarios.backend.database import login_user, is_admin
+from admin_manager import login_user, is_admin
 
 app = Flask(__name__)
 app.secret_key = "clave-super-secreta-123"

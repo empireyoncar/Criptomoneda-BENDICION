@@ -140,7 +140,7 @@ def send_tx():
     return jsonify({"message": "Transacción añadida"})
 
 # ============================================================
-#   MINT (CREAR MONEDAS)
+#   MINT (CREAR MONEDAS) 
 # ============================================================
 @app.route("/mint", methods=["POST"])
 def mint():

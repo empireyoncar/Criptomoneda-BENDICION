@@ -145,6 +145,7 @@ services:
     restart: always
     networks:
       - bendicion_net
+      
   # ============================================================
   # RED COMPARTIDA ENTRE TODOS LOS SERVICIOS
   # Permite que usuarios_api, usuarios_web, wallet_api y wallet_web

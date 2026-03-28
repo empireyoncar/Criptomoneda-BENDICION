@@ -198,21 +198,6 @@
             color: var(--text-muted);
         }
 
-        /* Botón de modo claro/oscuro */
-        #themeToggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--primary);
-            color: var(--bg-box);
-            border: none;
-            padding: 10px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            z-index: 30;
-        }
-
         /* Alertas */
         .alert {
             padding: 12px;
@@ -253,7 +238,7 @@
 
     <div id="alertBox" class="alert"></div>
 
-    <form id="loginForm" action="/admin_login" method="POST">
+    <form id="loginForm" action="/admin" method="POST">
         <label>Email:</label>
         <input type="text" id="email" name="email" placeholder="admin@bendicion.com" required>
 
@@ -286,18 +271,7 @@
 
     setInterval(createParticle, 150);
 
-    /* ------------------------------
-       MODO CLARO / OSCURO
-    ------------------------------ */
-    const toggle = document.getElementById("themeToggle");
-
-    toggle.onclick = () => {
-        document.body.classList.toggle("light");
-
-        toggle.textContent = document.body.classList.contains("light")
-            ? "Modo Oscuro"
-            : "Modo Claro";
-    };
+    
 
     /* ------------------------------
        VALIDACIÓN VISUAL

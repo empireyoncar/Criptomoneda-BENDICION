@@ -62,29 +62,6 @@ def admin_transactions_by_address(address):
     return jsonify(res.json())
 
 # ============================================================
-#   MINT (usa blockchain real)
-# ============================================================
-@app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
-@require_admin
-def admin_mint_create():
-    data = request.json
-    address = data.get("address")
-    amount = data.get("amount")
-
-    res = requests.post(f"{BC_API}/mint", json={
-        "address": address,
-        "amount": amount
-    })
-
-    return jsonify(res.json())
-
-@app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
-@require_admin
-def admin_mint_commit():
-    res = requests.post(f"{BC_API}/commit")
-    return jsonify(res.json())
-
-# ============================================================
 #   INICIAR SERVIDOR
 # ============================================================
 if __name__ == "__main__":

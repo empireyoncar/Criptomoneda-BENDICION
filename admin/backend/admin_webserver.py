@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, session, redirect
+from flask import Flask, render_template, request, session, redirect, jsonify
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 from functools import wraps
+import requests
 
 # Importar funciones reales del backend
 from admin_manager import login_user, is_admin
@@ -9,6 +10,9 @@ from admin_manager import login_user, is_admin
 app = Flask(__name__)
 app.secret_key = "clave-super-secreta-123"
 CORS(app)
+
+# URL del blockchain API (ajusta si tu servicio tiene otro nombre)
+BC_API = "http://blockchain_api:5004"
 
 # ============================================================
 #   PROTECCIÓN DE RUTAS
@@ -65,6 +69,30 @@ def admin_dashboard():
 @require_admin
 def admin_mint_page():
     return render_template("mint.html")
+
+# ============================================================
+#   ENDPOINTS PUENTE PARA MINT (5011 → 5004)
+# ============================================================
+@app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
+@require_admin
+def admin_mint_create():
+    data = request.json
+    address = data.get("address")
+    amount = data.get("amount")
+
+    res = requests.post(f"{BC_API}/mint", json={
+        "address": address,
+        "amount": amount
+    })
+
+    return jsonify(res.json())
+
+
+@app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
+@require_admin
+def admin_mint_commit():
+    res = requests.post(f"{BC_API}/commit")
+    return jsonify(res.json())
 
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)

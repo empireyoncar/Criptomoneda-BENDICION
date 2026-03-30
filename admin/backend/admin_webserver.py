@@ -85,7 +85,14 @@ def admin_mint_create():
         "amount": amount
     })
 
-    return jsonify(res.json())
+    # Protección contra respuestas no JSON
+    try:
+        return jsonify(res.json()), res.status_code
+    except:
+        return jsonify({
+            "error": "Respuesta no válida del servidor blockchain",
+            "raw": res.text
+        }), 500
 
 
 @app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])

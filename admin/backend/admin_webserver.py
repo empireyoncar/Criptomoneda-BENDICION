@@ -12,7 +12,7 @@ app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
 # URL del blockchain API (ajusta si tu servicio tiene otro nombre)
-BC_API = "http://172.21.0.2:5004"
+BC_API = "http://blockchain_api:5004"
 
 # ============================================================
 #   PROTECCIÓN DE RUTAS

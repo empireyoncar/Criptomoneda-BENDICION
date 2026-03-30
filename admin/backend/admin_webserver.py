@@ -76,32 +76,55 @@ def admin_mint_page():
 @app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
-    # Aceptar tanto JSON como form-data
+    # Aceptar JSON o form-data
     data = request.get_json(silent=True) or request.form
 
     address = data.get("address")
     amount = data.get("amount")
 
+    # Validación mínima antes de enviar al blockchain
+    if not address or not amount:
+        return jsonify({"error": "Faltan parámetros"}), 400
+
+    # Enviar al blockchain
     res = requests.post(f"{BC_API}/mint", json={
         "address": address,
         "amount": amount
     })
 
+    # Intentar parsear JSON del blockchain
     try:
-        return jsonify(res.json()), res.status_code
-    except:
+        blockchain_json = res.json()
+    except ValueError:
+        # Blockchain devolvió HTML → error de host o error interno
         return jsonify({
-            "error": "Respuesta no válida del servidor blockchain",
+            "error": "Blockchain devolvió una respuesta no válida",
             "raw": res.text
         }), 500
+
+    # Devolver al frontend exactamente lo que blockchain respondió
+    return jsonify(blockchain_json), res.status_code
+
 
 
 @app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
 @require_admin
 def admin_mint_commit():
+    # Enviar petición al blockchain
     res = requests.post(f"{BC_API}/commit")
-    return jsonify(res.json())
 
+    # Intentar parsear JSON
+    try:
+        blockchain_json = res.json()
+    except ValueError:
+        # Blockchain devolvió HTML → error interno o de host
+        return jsonify({
+            "error": "Blockchain devolvió una respuesta no válida",
+            "raw": res.text
+        }), 500
+
+    # Devolver al frontend exactamente lo que blockchain respondió
+    return 
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)
 # ============================================================

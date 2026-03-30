@@ -11,7 +11,7 @@ app = Flask(__name__)
 app.secret_key = "clave-super-secreta-123"
 CORS(app)
 
-# URL del blockchain API (ajusta si tu servicio tiene otro nombre)
+# URL del blockchain API
 BC_API = "http://blockchain_api:5004"
 
 # ============================================================
@@ -105,39 +105,22 @@ def admin_mint_create():
 
     return jsonify(blockchain_json), res.status_code
 
-    # Intentar parsear JSON del blockchain
-    try:
-        blockchain_json = res.json()
-    except ValueError:
-        # Blockchain devolvió HTML → error de host o error interno
-        return jsonify({
-            "error": "Blockchain devolvió una respuesta no válida",
-            "raw": res.text
-        }), 500
-
-    # Devolver al frontend exactamente lo que blockchain respondió
-    return jsonify(blockchain_json), res.status_code
-
-
 
 @app.route("/CriptoBendicion/admin_api/mint/commit", methods=["POST"])
 @require_admin
 def admin_mint_commit():
-    # Enviar petición al blockchain
     res = requests.post(f"{BC_API}/commit")
 
-    # Intentar parsear JSON
     try:
         blockchain_json = res.json()
     except ValueError:
-        # Blockchain devolvió HTML → error interno o de host
         return jsonify({
             "error": "Blockchain devolvió una respuesta no válida",
             "raw": res.text
         }), 500
 
-    # Devolver al frontend exactamente lo que blockchain respondió
-    return 
+    return jsonify(blockchain_json), res.status_code
+
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)
 # ============================================================

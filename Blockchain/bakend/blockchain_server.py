@@ -9,6 +9,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Permitir hosts internos de Docker
+app.config["SERVER_NAME"] = "blockchain_api:5004"
+app.config["TRUSTED_HOSTS"] = ["*", "blockchain_api:5004", "localhost", "127.0.0.1"]
 
 # Instancia única de la blockchain
 blockchain = Blockchain()

@@ -81,20 +81,25 @@ def admin_mint_create():
     address = data.get("address")
     amount = data.get("amount")
 
-    if not address or amount is None:
+    # Validación estricta
+    if not address or amount is None or str(amount).strip() == "":
         return jsonify({"error": "Faltan parámetros"}), 400
 
     # Convertir amount a número
     try:
         amount = float(amount)
+        if amount <= 0:
+            return jsonify({"error": "Cantidad inválida"}), 400
     except:
         return jsonify({"error": "Cantidad inválida"}), 400
 
+    # Enviar al blockchain
     res = requests.post(f"{BC_API}/mint", json={
         "address": address,
         "amount": amount
     })
 
+    # Intentar parsear JSON
     try:
         blockchain_json = res.json()
     except ValueError:

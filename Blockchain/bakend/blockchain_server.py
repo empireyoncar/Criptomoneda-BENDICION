@@ -10,7 +10,6 @@ app.config["SERVER_NAME"] = None
 CORS(app)
 
 # Permitir hosts internos de Docker
-app.config["SERVER_NAME"] = "blockchain_api:5004"
 
 # Instancia única de la blockchain
 blockchain = Blockchain()

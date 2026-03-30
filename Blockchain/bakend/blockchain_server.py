@@ -146,9 +146,21 @@ def send_tx():
 # ============================================================
 @app.route("/mint", methods=["POST"])
 def mint():
+    # LOG 1 — Ver datos crudos que llegan desde admin
+    print("BLOCKCHAIN RAW BODY:", request.data)
+
+    # LOG 2 — Ver JSON interpretado por Flask
+    print("BLOCKCHAIN JSON PARSED:", request.json)
+
     data = request.json
+    if not data:
+        return jsonify({"error": "JSON inválido o vacío"}), 400
+
     address = data.get("address")
     amount = data.get("amount")
+
+    # LOG 3 — Ver parámetros individuales
+    print("BLOCKCHAIN PARAMS:", {"address": address, "amount": amount})
 
     if not address or amount is None:
         return jsonify({"error": "Faltan parámetros"}), 400
@@ -161,17 +173,28 @@ def mint():
     # Transacción especial del sistema
     ok = blockchain.add_transaction("SYSTEM", address, amount)
 
+    # LOG 4 — Resultado de add_transaction
+    print("BLOCKCHAIN add_transaction OK?:", ok)
+
     if not ok:
         return jsonify({"error": "No se pudo crear la transacción"}), 400
 
     return jsonify({"message": "Transacción de mint creada correctamente"})
+
 
 # ============================================================
 #   CREAR BLOQUE
 # ============================================================
 @app.route("/commit", methods=["POST"])
 def commit_block():
+    # LOG 5 — Ver estado antes del commit
+    print("BLOCKCHAIN COMMIT — pending:", blockchain.pending_transactions)
+
     block = blockchain.commit_pending_transactions()
+
+    # LOG 6 — Resultado del commit
+    print("BLOCKCHAIN COMMIT RESULT:", block)
+
     if block is None:
         return jsonify({"error": "No hay transacciones pendientes"}), 400
 
@@ -179,7 +202,6 @@ def commit_block():
         "message": "Bloque creado",
         "index": block.index
     })
-
 
 # ============================================================
 #   INICIAR SERVIDOR

@@ -123,6 +123,9 @@
         const address = document.getElementById("address").value.trim();
         const amountRaw = document.getElementById("amount").value.trim();
 
+        // LOG 1 — Ver qué envía el HTML
+        console.log("HTML ENVÍA:", { address, amountRaw });
+
         // Validación estricta
         if (!address) {
             alert("La dirección no puede estar vacía.");
@@ -148,6 +151,9 @@
             body: JSON.stringify({ address, amount })
         });
 
+        // LOG 2 — Ver respuesta cruda del admin
+        console.log("ADMIN RESPONDE RAW:", res);
+
         let data;
         try {
             data = await res.json();
@@ -155,6 +161,9 @@
             mostrarResultado({ error: "Respuesta inválida del servidor." });
             return;
         }
+
+        // LOG 3 — Ver JSON que devuelve el admin
+        console.log("ADMIN RESPONDE JSON:", data);
 
         mostrarResultado(data);
     }
@@ -164,6 +173,9 @@
             method: "POST"
         });
 
+        // LOG 4 — Respuesta cruda del admin en commit
+        console.log("ADMIN COMMIT RAW:", res);
+
         let data;
         try {
             data = await res.json();
@@ -171,6 +183,9 @@
             mostrarResultado({ error: "Respuesta inválida del servidor." });
             return;
         }
+
+        // LOG 5 — JSON del admin en commit
+        console.log("ADMIN COMMIT JSON:", data);
 
         mostrarResultado(data);
     }
@@ -188,6 +203,7 @@
         }
     }
 </script>
+
 
 
 </body>

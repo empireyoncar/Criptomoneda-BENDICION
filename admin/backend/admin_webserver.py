@@ -76,10 +76,14 @@ def admin_mint_page():
 @app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
+    # LOG 1 — Ver datos crudos que llegan desde el HTML
+    print("ADMIN RAW BODY:", request.data)
+
+    # Intentar parsear JSON o form-data
     data = request.get_json(silent=True) or request.form
 
-    # Debug opcional (puede ayudarte a ver qué llega desde mint.html)
-    print("ADMIN /mint/create RECIBE:", data)
+    # LOG 2 — Ver JSON interpretado por Flask
+    print("ADMIN JSON PARSED:", data)
 
     address = data.get("address")
     amount_raw = data.get("amount")
@@ -99,11 +103,18 @@ def admin_mint_create():
     except:
         return jsonify({"error": "Cantidad inválida"}), 400
 
+    # LOG 3 — Ver qué se enviará al blockchain
+    print("ADMIN → BLOCKCHAIN:", {"address": address, "amount": amount})
+
     # Enviar al blockchain
     res = requests.post(f"{BC_API}/mint", json={
         "address": address,
         "amount": amount
     })
+
+    # LOG 4 — Ver respuesta cruda del blockchain
+    print("BLOCKCHAIN RAW RESPONSE:", res.text)
+    print("BLOCKCHAIN STATUS:", res.status_code)
 
     # Intentar parsear JSON
     try:
@@ -122,8 +133,9 @@ def admin_mint_create():
 def admin_mint_commit():
     res = requests.post(f"{BC_API}/commit")
 
-    # Debug opcional
-    print("ADMIN /mint/commit STATUS:", res.status_code)
+    # LOG 5 — Ver respuesta cruda del blockchain en commit
+    print("BLOCKCHAIN COMMIT RAW:", res.text)
+    print("BLOCKCHAIN COMMIT STATUS:", res.status_code)
 
     try:
         blockchain_json = res.json()
@@ -134,7 +146,6 @@ def admin_mint_commit():
         }), 500
 
     return jsonify(blockchain_json), res.status_code
-
 
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)

@@ -6,7 +6,6 @@ from ecdsa import VerifyingKey, SECP256k1
 import json
 
 app = Flask(__name__)
-app.config["SERVER_NAME"] = None
 CORS(app)
 
 # Permitir hosts internos de Docker

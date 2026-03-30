@@ -76,7 +76,9 @@ def admin_mint_page():
 @app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
-    data = request.json
+    # Aceptar tanto JSON como form-data
+    data = request.get_json(silent=True) or request.form
+
     address = data.get("address")
     amount = data.get("amount")
 
@@ -85,7 +87,6 @@ def admin_mint_create():
         "amount": amount
     })
 
-    # Protección contra respuestas no JSON
     try:
         return jsonify(res.json()), res.status_code
     except:

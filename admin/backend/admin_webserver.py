@@ -76,21 +76,34 @@ def admin_mint_page():
 @app.route("/CriptoBendicion/admin_api/mint/create", methods=["POST"])
 @require_admin
 def admin_mint_create():
-    # Aceptar JSON o form-data
     data = request.get_json(silent=True) or request.form
 
     address = data.get("address")
     amount = data.get("amount")
 
-    # Validación mínima antes de enviar al blockchain
-    if not address or not amount:
+    if not address or amount is None:
         return jsonify({"error": "Faltan parámetros"}), 400
 
-    # Enviar al blockchain
+    # Convertir amount a número
+    try:
+        amount = float(amount)
+    except:
+        return jsonify({"error": "Cantidad inválida"}), 400
+
     res = requests.post(f"{BC_API}/mint", json={
         "address": address,
         "amount": amount
     })
+
+    try:
+        blockchain_json = res.json()
+    except ValueError:
+        return jsonify({
+            "error": "Blockchain devolvió una respuesta no válida",
+            "raw": res.text
+        }), 500
+
+    return jsonify(blockchain_json), res.status_code
 
     # Intentar parsear JSON del blockchain
     try:

@@ -78,18 +78,24 @@ def admin_mint_page():
 def admin_mint_create():
     data = request.get_json(silent=True) or request.form
 
+    # Debug opcional (puede ayudarte a ver qué llega desde mint.html)
+    print("ADMIN /mint/create RECIBE:", data)
+
     address = data.get("address")
-    amount = data.get("amount")
+    amount_raw = data.get("amount")
 
     # Validación estricta
-    if not address or amount is None or str(amount).strip() == "":
-        return jsonify({"error": "Faltan parámetros"}), 400
+    if not address or address.strip() == "":
+        return jsonify({"error": "La dirección no puede estar vacía"}), 400
+
+    if amount_raw is None or str(amount_raw).strip() == "":
+        return jsonify({"error": "La cantidad no puede estar vacía"}), 400
 
     # Convertir amount a número
     try:
-        amount = float(amount)
+        amount = float(amount_raw)
         if amount <= 0:
-            return jsonify({"error": "Cantidad inválida"}), 400
+            return jsonify({"error": "La cantidad debe ser mayor que 0"}), 400
     except:
         return jsonify({"error": "Cantidad inválida"}), 400
 
@@ -116,6 +122,9 @@ def admin_mint_create():
 def admin_mint_commit():
     res = requests.post(f"{BC_API}/commit")
 
+    # Debug opcional
+    print("ADMIN /mint/commit STATUS:", res.status_code)
+
     try:
         blockchain_json = res.json()
     except ValueError:
@@ -125,6 +134,7 @@ def admin_mint_commit():
         }), 500
 
     return jsonify(blockchain_json), res.status_code
+
 
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)

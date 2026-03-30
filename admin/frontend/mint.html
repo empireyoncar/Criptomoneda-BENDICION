@@ -121,29 +121,57 @@
 <script>
     async function mint() {
         const address = document.getElementById("address").value.trim();
-        const amount = document.getElementById("amount").value.trim();
+        const amountRaw = document.getElementById("amount").value.trim();
 
-        if (!address || !amount) {
-            alert("Completa todos los campos.");
+        // Validación estricta
+        if (!address) {
+            alert("La dirección no puede estar vacía.");
             return;
         }
 
-        const res = await fetch("http://192.168.1.178:5011/CriptoBendicion/admin_api/mint/create", {
+        if (!amountRaw || isNaN(amountRaw)) {
+            alert("La cantidad debe ser un número válido.");
+            return;
+        }
+
+        const amount = Number(amountRaw);
+
+        if (amount <= 0) {
+            alert("La cantidad debe ser mayor que 0.");
+            return;
+        }
+
+        // Enviar al admin (ruta relativa, correcta en Docker)
+        const res = await fetch("/CriptoBendicion/admin_api/mint/create", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ address, amount })
         });
 
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            mostrarResultado({ error: "Respuesta inválida del servidor." });
+            return;
+        }
+
         mostrarResultado(data);
     }
 
     async function crearBloque() {
-        const res = await fetch("http://192.168.1.178:5011/CriptoBendicion/admin_api/mint/commit", {
+        const res = await fetch("/CriptoBendicion/admin_api/mint/commit", {
             method: "POST"
         });
 
-        const data = await res.json();
+        let data;
+        try {
+            data = await res.json();
+        } catch {
+            mostrarResultado({ error: "Respuesta inválida del servidor." });
+            return;
+        }
+
         mostrarResultado(data);
     }
 
@@ -160,6 +188,7 @@
         }
     }
 </script>
+
 
 </body>
 </html>

@@ -27,6 +27,19 @@ def login_api():
 
     return jsonify({"error": "Credenciales incorrectas"}), 401
 
+#usuarios total
+
+@app.get("/users/count")
+def get_users_count():
+    from database import load_db
+    db = load_db()
+    return jsonify({"count": len(db["users"])})
+
+@app.get("/users")
+def get_users():
+    from database import load_db
+    db = load_db()
+    return jsonify(db["users"])
 
 # -----------------------------
 # API REGISTER (POST)

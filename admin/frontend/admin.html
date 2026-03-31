@@ -232,7 +232,9 @@
   document.getElementById("btnLoadDashboard").onclick = async () => {
     try {
       // Usuarios → admin (se quedan igual)
-      const users = await (await fetch(`/CriptoBendicion/admin_api/users`)).json();
+      const userCount = await (await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/login/users/count")).json();
+      document.getElementById("statUsers").textContent = userCount.count;
+
 
       // Transacciones → blockchain
       const txs = await (await fetch(`${API}/transactions`)).json();
@@ -249,10 +251,10 @@
     }
   };
   // -------------------------
-  // USUARIOS
-  // -------------------------
-  document.getElementById("btnUsers").onclick = async () => {
-    const res = await fetch(`/CriptoBendicion/admin_api/users`);
+// USUARIOS (versión funcional)
+// -------------------------
+document.getElementById("btnUsers").onclick = async () => {
+    const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/login/users");
     const users = await res.json();
 
     const table = document.getElementById("usersTable");
@@ -262,7 +264,10 @@
     const search = document.getElementById("searchUser").value.toLowerCase();
 
     users
-      .filter(u => u.fullname.toLowerCase().includes(search) || u.email.toLowerCase().includes(search))
+      .filter(u =>
+        u.fullname.toLowerCase().includes(search) ||
+        u.email.toLowerCase().includes(search)
+      )
       .forEach(u => {
         const row = `
           <tr>
@@ -278,7 +283,7 @@
       });
 
     table.style.display = "table";
-  };
+};
 
   // -------------------------
   // TRANSACCIONES

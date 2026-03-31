@@ -241,7 +241,6 @@
       // Transacciones → blockchain
       const stats = await (await fetch(`${API}/stats`)).json();
       document.getElementById("statTx").textContent = stats.total_transactions;
-      document.getElementById("statBlocks").textContent = stats.blocks;
       // Bloques → blockchain
       const blocks = await (await fetch(`${API}/stats`)).json();
       document.getElementById("statBlocks").textContent = stats.blocks;

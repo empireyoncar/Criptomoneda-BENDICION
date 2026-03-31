@@ -204,6 +204,24 @@ def commit_block():
         "index": block.index
     })
 
+@app.get("/stats")
+def get_stats():
+    confirmed = 0
+    for block in blockchain.chain:
+        confirmed += len(block.transactions)
+
+    pending = len(blockchain.pending_transactions)
+    blocks = len(blockchain.chain)
+    wallets = len(blockchain.wallets)
+
+    return jsonify({
+        "confirmed_transactions": confirmed,
+        "pending_transactions": pending,
+        "total_transactions": confirmed + pending,
+        "blocks": blocks,
+        "wallets": wallets
+    })
+
 # ============================================================
 #   INICIAR SERVIDOR
 # ============================================================

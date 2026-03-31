@@ -94,6 +94,17 @@
       background: #2b3139;
     }
 
+    .stat-box {
+      display: inline-block;
+      width: 30%;
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
     .stat-number {
       font-size: 32px;
       font-weight: bold;
@@ -124,6 +135,17 @@
         <div class="stat-number" id="statUsers">0</div>
         <div class="stat-label">Usuarios Registrados</div>
       </div>
+
+      <div class="stat-box">
+        <div class="stat-number" id="statTx">0</div>
+        <div class="stat-label">Transacciones Totales</div>
+      </div>
+
+      <div class="stat-box">
+        <div class="stat-number" id="statBlocks">0</div>
+        <div class="stat-label">Bloques en la Blockchain</div>
+      </div>
+    </div>
 
     <button id="btnLoadDashboard">Actualizar Dashboard</button>
   </section>

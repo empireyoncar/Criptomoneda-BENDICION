@@ -247,10 +247,10 @@
     const chain = await (await fetch(`${API}/chain`)).json();
     const totalTx = chain.reduce((acc, b) => acc + b.transactions.length, 0);
     document.getElementById("statTx").textContent = totalTx;
-    
-      // Bloques → blockchain
-      const blocks = await (await fetch(`${API}/stats`)).json();
-      document.getElementById("statBlocks").textContent = stats.blocks;
+
+      // Bloques totales
+    const totalBlocks = chain.length;
+    document.getElementById("statBlocks").textContent = totalBlocks;
 
     } catch (err) {
       alert("Error cargando dashboard.");

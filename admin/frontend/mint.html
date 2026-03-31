@@ -119,14 +119,15 @@
 </div>
 
 <script>
+    const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
+
+    /* 🟩 CREAR TRANSACCIÓN DE MINT DIRECTO AL BLOCKCHAIN */
     async function mint() {
         const address = document.getElementById("address").value.trim();
         const amountRaw = document.getElementById("amount").value.trim();
 
-        // LOG 1 — Ver qué envía el HTML
         console.log("HTML ENVÍA:", { address, amountRaw });
 
-        // Validación estricta
         if (!address) {
             alert("La dirección no puede estar vacía.");
             return;
@@ -137,59 +138,54 @@
             return;
         }
 
-        const amount = Number(amountRaw);
+        const payload = {
+            address: address,
+            amount: Number(amountRaw)
+        };
 
-        if (amount <= 0) {
-            alert("La cantidad debe ser mayor que 0.");
-            return;
-        }
-
-        // Enviar al admin (ruta relativa, correcta en Docker)
-        const res = await fetch("/CriptoBendicion/admin_api/mint/create", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ address, amount })
-        });
-
-        // LOG 2 — Ver respuesta cruda del admin
-        console.log("ADMIN RESPONDE RAW:", res);
-
-        let data;
         try {
-            data = await res.json();
-        } catch {
-            mostrarResultado({ error: "Respuesta inválida del servidor." });
-            return;
+            const res = await fetch(`${API}/mint`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            console.log("BLOCKCHAIN RESPONDE:", data);
+
+            if (!res.ok) {
+                mostrarResultado({ error: data.error || "No se pudo crear el mint." });
+                return;
+            }
+
+            mostrarResultado({ message: "Mint creado correctamente." });
+
+        } catch (err) {
+            mostrarResultado({ error: "Error al comunicar con blockchain." });
         }
-
-        // LOG 3 — Ver JSON que devuelve el admin
-        console.log("ADMIN RESPONDE JSON:", data);
-
-        mostrarResultado(data);
     }
 
+    /* 🟩 CREAR BLOQUE DIRECTO AL BLOCKCHAIN */
     async function crearBloque() {
-        const res = await fetch("/CriptoBendicion/admin_api/mint/commit", {
-            method: "POST"
-        });
-
-        // LOG 4 — Respuesta cruda del admin en commit
-        console.log("ADMIN COMMIT RAW:", res);
-
-        let data;
         try {
-            data = await res.json();
-        } catch {
-            mostrarResultado({ error: "Respuesta inválida del servidor." });
-            return;
+            const res = await fetch(`${API}/commit`, { method: "POST" });
+            const data = await res.json();
+
+            console.log("BLOCKCHAIN COMMIT:", data);
+
+            if (!res.ok) {
+                mostrarResultado({ error: data.error || "No se pudo crear el bloque." });
+                return;
+            }
+
+            mostrarResultado({ message: "Bloque creado correctamente." });
+
+        } catch (err) {
+            mostrarResultado({ error: "Error al comunicar con blockchain." });
         }
-
-        // LOG 5 — JSON del admin en commit
-        console.log("ADMIN COMMIT JSON:", data);
-
-        mostrarResultado(data);
     }
 
+    /* 🟩 MOSTRAR RESULTADO */
     function mostrarResultado(data) {
         const box = document.getElementById("resultBox");
         box.style.display = "block";
@@ -199,12 +195,10 @@
             box.textContent = "Error: " + data.error;
         } else {
             box.style.color = "#0ecb81";
-            box.textContent = "Éxito: " + (data.message || JSON.stringify(data));
+            box.textContent = "Éxito: " + data.message;
         }
     }
 </script>
-
-
 
 </body>
 </html>

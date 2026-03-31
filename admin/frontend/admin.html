@@ -94,17 +94,6 @@
       background: #2b3139;
     }
 
-    .stat-box {
-      display: inline-block;
-      width: 30%;
-      background: #181a20;
-      padding: 20px;
-      border-radius: 8px;
-      margin: 10px;
-      text-align: center;
-      box-shadow: 0 0 10px rgba(240,185,11,0.1);
-    }
-
     .stat-number {
       font-size: 32px;
       font-weight: bold;
@@ -135,17 +124,6 @@
         <div class="stat-number" id="statUsers">0</div>
         <div class="stat-label">Usuarios Registrados</div>
       </div>
-
-      <div class="stat-box">
-        <div class="stat-number" id="statTx">0</div>
-        <div class="stat-label">Transacciones Totales</div>
-      </div>
-
-      <div class="stat-box">
-        <div class="stat-number" id="statBlocks">0</div>
-        <div class="stat-label">Bloques en la Blockchain</div>
-      </div>
-    </div>
 
     <button id="btnLoadDashboard">Actualizar Dashboard</button>
   </section>
@@ -297,66 +275,6 @@
   table.style.display = "table";
 };
 
-   // -------------------------
-  // TRANSACCIONES
-  // -------------------------
-  document.getElementById("btnTx").onclick = async () => {
-    const res = await fetch(`/CriptoBendicion/admin_api/transactions`);
-    const txs = await res.json();
-    renderTxTable(txs);
-  };
-
-  document.getElementById("btnTxAddress").onclick = async () => {
-    const address = document.getElementById("txAddress").value;
-    const res = await fetch(`/CriptoBendicion/admin_api/transactions/${address}`);
-    const txs = await res.json();
-    renderTxTable(txs);
-  };
-
-  function renderTxTable(txs) {
-    const table = document.getElementById("txTable");
-    const tbody = table.querySelector("tbody");
-    tbody.innerHTML = "";
-
-    txs.forEach(tx => {
-      const row = `
-        <tr>
-          <td>${tx.from}</td>
-          <td>${tx.to}</td>
-          <td>${tx.amount}</td>
-        </tr>
-      `;
-      tbody.innerHTML += row;
-    });
-
-    table.style.display = "table";
-  }
-
-  // -------------------------
-  // BLOQUES
-  // -------------------------
-  document.getElementById("btnBlocks").onclick = async () => {
-    const res = await fetch(`/CriptoBendicion/admin_api/blocks`);
-    const blocks = await res.json();
-
-    const table = document.getElementById("blocksTable");
-    const tbody = table.querySelector("tbody");
-    tbody.innerHTML = "";
-
-    blocks.forEach(b => {
-      const row = `
-        <tr>
-          <td>${b.index}</td>
-          <td>${b.timestamp}</td>
-          <td>${b.transactions.length}</td>
-          <td>${b.hash}</td>
-        </tr>
-      `;
-      tbody.innerHTML += row;
-    });
-
-    table.style.display = "table";
-  };
 </script>
 
 </body>

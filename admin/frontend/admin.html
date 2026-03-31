@@ -159,15 +159,20 @@
 
     <table id="usersTable" style="display:none;">
       <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>País</th>
-          <th>Wallet</th>
-          <th>KYC</th>
-        </tr>
-      </thead>
+  <tr>
+    <th>ID</th>
+    <th>Nombre</th>
+    <th>Fecha Nac.</th>
+    <th>País</th>
+    <th>Dirección</th>
+    <th>Teléfono</th>
+    <th>Email</th>
+    <th>Password (hash)</th>
+    <th>Rol</th>
+    <th>Wallet</th>
+    <th>KYC</th>
+  </tr>
+</thead>
       <tbody></tbody>
     </table>
   </section>
@@ -238,9 +243,11 @@
        const userCount = await (await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/usuarios/users/count")).json();
     document.getElementById("statUsers").textContent = userCount.count;
 
-      // Transacciones → blockchain
-      const stats = await (await fetch(`${API}/stats`)).json();
-      document.getElementById("statTx").textContent = stats.total_transactions;
+      // Transacciones → blockchain (usando la fórmula REAL)
+    const chain = await (await fetch(`${API}/chain`)).json();
+    const totalTx = chain.reduce((acc, b) => acc + b.transactions.length, 0);
+    document.getElementById("statTx").textContent = totalTx;
+    
       // Bloques → blockchain
       const blocks = await (await fetch(`${API}/stats`)).json();
       document.getElementById("statBlocks").textContent = stats.blocks;

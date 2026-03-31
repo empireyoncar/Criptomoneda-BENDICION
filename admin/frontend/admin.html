@@ -227,21 +227,27 @@
 </div>
 
 <script>
-  const adminId = "{{ session['user_id'] }}";
+   const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
-  // -------------------------
-  // DASHBOARD
-  // -------------------------
   document.getElementById("btnLoadDashboard").onclick = async () => {
-    const users = await (await fetch(`/CriptoBendicion/admin_api/users`)).json();
-    const txs = await (await fetch(`/CriptoBendicion/admin_api/transactions`)).json();
-    const blocks = await (await fetch(`/CriptoBendicion/admin_api/blocks`)).json();
+    try {
+      // Usuarios → admin (se quedan igual)
+      const users = await (await fetch(`/CriptoBendicion/admin_api/users`)).json();
 
-    document.getElementById("statUsers").textContent = users.length;
-    document.getElementById("statTx").textContent = txs.length;
-    document.getElementById("statBlocks").textContent = blocks.length;
+      // Transacciones → blockchain
+      const txs = await (await fetch(`${API}/transactions`)).json();
+
+      // Bloques → blockchain
+      const blocks = await (await fetch(`${API}/chain`)).json();
+
+      document.getElementById("statUsers").textContent = users.length;
+      document.getElementById("statTx").textContent = txs.length;
+      document.getElementById("statBlocks").textContent = blocks.length;
+
+    } catch (err) {
+      alert("Error cargando dashboard.");
+    }
   };
-
   // -------------------------
   // USUARIOS
   // -------------------------

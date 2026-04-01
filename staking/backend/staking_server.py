@@ -1,10 +1,14 @@
 from flask import Flask, request, jsonify
+
+# Funciones principales
 from staking_manager import stake_tokens
 from staking_dashboard import (
     get_balance, get_stakes, get_history,
     get_rewards, release_stake, cancel_stake_api
 )
-from staking_recompensa import cron_job
+
+# Motor de recompensas
+from staking_recompensa import cron_job, get_total_staked
 
 app = Flask(__name__)
 
@@ -18,7 +22,7 @@ def home():
 
 
 # ---------------------------------------------------------
-#   CREAR NUEVO STAKE
+#   CREAR NUEVO STAKE (ruta original)
 # ---------------------------------------------------------
 @app.post("/stake")
 def api_stake():
@@ -33,6 +37,24 @@ def api_stake():
 
     result = stake_tokens(user_id, amount, days)
     return jsonify(result)
+
+
+# ---------------------------------------------------------
+#   ALIAS COMPATIBLE CON TU FRONTEND
+#   /Staking/stake → llama a /stake
+# ---------------------------------------------------------
+@app.post("/Staking/stake")
+def api_stake_alias():
+    return api_stake()
+
+
+# ---------------------------------------------------------
+#   TOTAL STAKEADO GLOBAL
+# ---------------------------------------------------------
+@app.get("/Staking/total")
+def api_total_staked():
+    total = get_total_staked()
+    return jsonify({"total_staked": total})
 
 
 # ---------------------------------------------------------
@@ -74,18 +96,12 @@ def api_cancel(stake_id):
 @app.get("/cron")
 def api_cron():
     """
-    Este endpoint puede ser llamado por:
-    - un cron real del servidor
-    - UptimeRobot
-    - Cron-job.org
-    - Tu propio script
+    Ejecuta:
+    - Pago de recompensas diarias
+    - Liberación de stakes completados
     """
     result = cron_job()
     return jsonify(result)
-def get_total_staked():
-    staking = load_staking()
-    total = sum(float(s["amount"]) for s in staking["stakes"] if s["status"] == "locked")
-    return total
 
 
 # ---------------------------------------------------------

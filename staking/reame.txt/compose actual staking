@@ -1,0 +1,223 @@
+name: criptobendicion
+
+services:
+
+  # ============================================================
+  # BACKEND DE USUARIOS (API)
+  # Puerto: 5001
+  # ============================================================
+  usuarios_api:
+    build: ./usuarios/backend
+    command: python login_server.py
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # FRONTEND DE USUARIOS (WEB)
+  # Puerto: 5000
+  # ============================================================
+  usuarios_web:
+    build: ./usuarios/backend
+    command: python usuarios_webserver.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./usuarios/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # BACKEND DE WALLET (API)
+  # Puerto: 5002
+  # ============================================================
+  wallet_api:
+    build: ./wallet/backend
+    command: python wallet_server.py
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./wallet/backend/wallet_server.py:/app/wallet_server.py
+      - ./wallet/backend/wallet.py:/app/wallet.py
+      - ./wallet/backend/wallet_manager.py:/app/wallet_manager.py
+      - ./wallet/backend/wallets.json:/app/wallets.json
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # FRONTEND DE WALLET (WEB)
+  # Puerto: 5003
+  # ============================================================
+  wallet_web:
+    build: ./wallet/backend
+    command: python wallet_webserver.py
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./wallet/backend/wallet_webserver.py:/app/wallet_webserver.py
+      - ./wallet/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # BLOCKCHAIN (API)
+  # Puerto: 5004
+  # ============================================================
+  blockchain_api:
+    build: ./Blockchain/bakend
+    command: python blockchain_server.py
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./Blockchain/bakend/blockchain_server.py:/app/blockchain_server.py
+      - ./Blockchain/bakend/blockchain.py:/app/blockchain.py
+      - ./Blockchain/bakend/blockchain_blocks.py:/app/blockchain_blocks.py
+      - ./Blockchain/bakend/archive:/app/archive
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # BLOCKCHAIN (WEB)
+  # Puerto: 5005
+  # ============================================================
+  blockchain_web:
+    build: ./Blockchain/bakend
+    command: python blockchain_webserver.py
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./Blockchain/bakend/blockchain_webserver.py:/app/blockchain_webserver.py
+      - ./Blockchain/frontend:/app/frontend
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # ADMIN (API)
+  # Puerto: 5010
+  # ============================================================
+  admin_api:
+    build: ./admin/backend
+    command: python admin_server.py
+    ports:
+      - "5010:5010"
+    volumes:
+      - ./admin/backend/admin_server.py:/app/admin_server.py
+      - ./admin/backend/admin_manager.py:/app/admin_manager.py
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # ADMIN (WEB)
+  # Puerto: 5011
+  # ============================================================
+  admin_web:
+    build: ./admin/backend
+    command: python admin_webserver.py
+    ports:
+      - "5011:5011"
+    volumes:
+      - ./admin/backend/admin_webserver.py:/app/admin_webserver.py
+      - ./admin/frontend:/app/frontend
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # DON (API)
+  # Puerto: 5008
+  # ============================================================
+  don_api:
+    build: ./token/backend
+    command: python don_server.py
+    ports:
+      - "5008:5008"
+    volumes:
+      - ./token/backend/don_server.py:/app/don_server.py
+      - ./token/backend/don.py:/app/don.py
+      - ./token/backend/don_value.py:/app/don_value.py
+      - ./token/backend/don_ledger.json:/app/don_ledger.json
+      - ./token/backend/don_value.json:/app/don_value.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # DON (WEB)
+  # Puerto: 5009
+  # ============================================================
+  don_web:
+    build: ./token/backend
+    command: python don_webserver.py
+    ports:
+      - "5009:5009"
+    volumes:
+      - ./token/backend/don_webserver.py:/app/don_webserver.py
+      - ./token/backend/don.py:/app/don.py
+      - ./token/backend/don_value.py:/app/don_value.py
+      - ./token/backend/don_ledger.json:/app/don_ledger.json
+      - ./token/frontend:/app/token/frontend
+    restart: always
+    networks:
+      - bendicion_net
+  # ============================================================
+  # STAKING (API)
+  # Puerto: 5006
+  # ============================================================
+  staking_api:
+    build: ./staking/backend
+    command: python staking_server.py
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./staking/backend/staking_server.py:/app/staking_server.py
+      - ./staking/backend/staking_manager.py:/app/staking_manager.py
+      - ./staking/backend/staking_dashboard.py:/app/staking_dashboard.py
+      - ./staking/backend/staking_recompensa.py:/app/staking_recompensa.py
+      - ./staking/backend/staking_payout.py:/app/staking_payout.py
+      - ./staking/backend/staking_data.py:/app/staking_data.py
+      - ./staking/backend/staking.json:/app/staking.json
+      - ./staking/backend/staking_history.json:/app/staking_history.json
+    restart: always
+    networks:
+      - bendicion_net
+    depends_on:
+      - don_api
+      - wallet_api
+
+  # ============================================================
+  # STAKING (WEB)
+  # Puerto: 5007
+  # ============================================================
+  staking_web:
+    build: ./staking/backend
+    command: python staking_webserver.py
+    ports:
+      - "5007:5007"
+    volumes:
+      - ./staking/backend/staking_webserver.py:/app/staking_webserver.py
+      - ./staking/frontend:/app/staking/frontend
+    restart: always
+    networks:
+      - bendicion_net
+    depends_on:
+      - staking_api
+      
+# ============================================================
+# RED COMPARTIDA
+# ============================================================
+networks:
+  bendicion_net:
+    driver: bridge

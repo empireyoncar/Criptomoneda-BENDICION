@@ -1,12 +1,14 @@
 from flask import jsonify
-from wallet_manager import load_wallets
-from staking import load_staking, load_history
-from staking_recompensa import release_finished_stakes, cancel_stake
+
+# IMPORTS CORRECTOS SEGÚN TU ESTRUCTURA REAL
+from wallet.backend.wallet_manager import load_wallets
+from staking.backend.staking_data import load_staking, load_history
+from staking.backend.staking_recompensa import release_finished_stakes, cancel_stake
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   OBTENER BALANCE DEL USUARIO
-# ---------------------------------------------------------
+# ============================================================
 def get_balance(user_id):
     wallets = load_wallets()
 
@@ -23,9 +25,9 @@ def get_balance(user_id):
     })
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   OBTENER STAKES ACTIVOS DEL USUARIO
-# ---------------------------------------------------------
+# ============================================================
 def get_stakes(user_id):
     staking = load_staking()
 
@@ -37,9 +39,9 @@ def get_stakes(user_id):
     })
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   OBTENER HISTORIAL DEL USUARIO
-# ---------------------------------------------------------
+# ============================================================
 def get_history(user_id):
     history = load_history()
 
@@ -51,9 +53,9 @@ def get_history(user_id):
     })
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   OBTENER RECOMPENSAS ACUMULADAS
-# ---------------------------------------------------------
+# ============================================================
 def get_rewards(user_id):
     staking = load_staking()
 
@@ -69,9 +71,9 @@ def get_rewards(user_id):
     })
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   LIBERAR STAKE MANUALMENTE
-# ---------------------------------------------------------
+# ============================================================
 def release_stake(stake_id):
     """
     Llama a release_finished_stakes() para procesar automáticamente,
@@ -81,9 +83,9 @@ def release_stake(stake_id):
     return jsonify({"success": True, "message": "Stake liberado si estaba listo"})
 
 
-# ---------------------------------------------------------
+# ============================================================
 #   CANCELAR STAKE (RETIRO ANTICIPADO)
-# ---------------------------------------------------------
+# ============================================================
 def cancel_stake_api(stake_id):
     result = cancel_stake(stake_id)
 

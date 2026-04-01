@@ -1,6 +1,8 @@
 import uuid
 from datetime import datetime, timedelta
-from staking import load_staking, save_staking, move_to_history
+
+# IMPORTS CORRECTOS SEGÚN TU ESTRUCTURA REAL
+from staking.backend.staking_data import load_staking, save_staking, move_to_history
 
 
 # ---------------------------------------------------------
@@ -23,13 +25,11 @@ def get_total_don_reward(days, amount):
     }
 
     base_reward = reward_table.get(days, 0)
-
-    # Recompensa proporcional al monto
     return (amount / 1000) * base_reward
 
 
 # ---------------------------------------------------------
-#   CALCULAR RECOMPENSA DIARIA (DON / días)
+#   CALCULAR RECOMPENSA DIARIA
 # ---------------------------------------------------------
 def calculate_daily_reward(total_reward, days):
     return round(total_reward / days, 8)
@@ -49,20 +49,20 @@ def get_total_staked():
 # ---------------------------------------------------------
 def generar_stake_completo(user_id, amount, days):
 
-    # 🔥 1. Verificar límite global de 10.000 BEND
+    # 1. Verificar límite global
     total_actual = get_total_staked()
     if total_actual + amount > 10000:
         return {"error": "Límite global de 10.000 BENDICIÓN en staking alcanzado"}
 
-    # 🔥 2. Fechas
+    # 2. Fechas
     start = datetime.utcnow()
     end = start + timedelta(days=days)
 
-    # 🔥 3. Recompensas
+    # 3. Recompensas
     total_reward = get_total_don_reward(days, amount)
     reward_daily = calculate_daily_reward(total_reward, days)
 
-    # 🔥 4. Crear stake
+    # 4. Crear stake
     stake = {
         "stake_id": generate_stake_id(),
         "user_id": user_id,
@@ -93,7 +93,6 @@ def process_daily_rewards():
 
         last = datetime.fromisoformat(stake["last_reward_date"])
 
-        # Si ya pasó 1 día, pagar recompensa
         if (now - last).days >= 1:
             stake["reward_acumulada"] += stake["reward_daily"]
             stake["last_reward_date"] = now.isoformat()
@@ -122,7 +121,7 @@ def release_finished_stakes():
 
 
 # ---------------------------------------------------------
-#   CANCELAR STAKE (RETIRO ANTICIPADO)
+#   CANCELAR STAKE
 # ---------------------------------------------------------
 def cancel_stake(stake_id):
     staking = load_staking()
@@ -131,26 +130,19 @@ def cancel_stake(stake_id):
     if not stake:
         return {"error": "Stake no encontrado"}
 
-    # Penalización: perder recompensas
     stake["reward_acumulada"] = 0.0
     stake["status"] = "cancelled"
 
     move_to_history(stake_id, reason="cancelled")
-
     save_staking(staking)
+
     return {"success": True}
 
 
 # ---------------------------------------------------------
-#   CRON JOB AUTOMÁTICO
+#   CRON JOB
 # ---------------------------------------------------------
 def cron_job():
-    """
-    Esta función debe ejecutarse cada X minutos.
-    - Paga recompensas diarias
-    - Libera stakes completados
-    """
     process_daily_rewards()
     release_finished_stakes()
-
     return {"cron": "ok"}

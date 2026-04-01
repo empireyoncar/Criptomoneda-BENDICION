@@ -144,7 +144,7 @@
     <div class="wallet-info">
         <div><b>Wallet:</b> <span id="walletAddress"></span></div>
         <div><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
-        <div><b>Recompensas:</b> <span id="walletRewards"></span> BEND</div>
+        <div><b>Recompensas:</b> <span id="walletRewards"></span> DON</div>
     </div>
 </div>
 
@@ -161,7 +161,7 @@
                     <th>Monto</th>
                     <th>APR</th>
                     <th>Progreso</th>
-                    <th>Recompensa</th>
+                    <th>Recompensa Acumulada</th>
                     <th>Acción</th>
                 </tr>
             </thead>
@@ -177,9 +177,9 @@
                 <tr>
                     <th>Monto</th>
                     <th>APR</th>
-                    <th>Recompensa</th>
+                    <th>Recompensa Total</th>
                     <th>Estado</th>
-                    <th>Fecha</th>
+                    <th>Fecha Final</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -190,7 +190,156 @@
 
 <div id="toast"></div>
 
-<script src="staking_dashboard.js"></script>
+<script>
+/* -------------------------
+   TOAST
+-------------------------- */
+function showToast(msg, type="ok") {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.className = type === "ok" ? "toast-ok" : "toast-err";
+    toast.style.display = "block";
+    setTimeout(() => toast.style.display = "none", 3000);
+}
+
+/* -------------------------
+   VALIDAR LOGIN + WALLET
+-------------------------- */
+async function validateUser() {
+    const userId = localStorage.getItem("user_id");
+
+    if (!userId) {
+        alert("Debes iniciar sesión.");
+        window.location.href = "login.html";
+        return null;
+    }
+
+    try {
+        const res = await fetch(`https://empireyoncar.duckdns.org/wallet/user/${userId}`);
+        const data = await res.json();
+
+        if (data.error) {
+            alert("No tienes wallet asociada.");
+            window.location.href = "wallet.html";
+            return null;
+        }
+
+        document.getElementById("walletAddress").textContent = data.address;
+        return { userId, address: data.address };
+
+    } catch (err) {
+        alert("Error al validar usuario.");
+        return null;
+    }
+}
+
+/* -------------------------
+   CARGAR SALDO Y RECOMPENSAS
+-------------------------- */
+async function loadWalletInfo(address, userId) {
+    const res1 = await fetch(`https://empireyoncar.duckdns.org/wallet/${address}`);
+    const w = await res1.json();
+    document.getElementById("walletBalance").textContent = parseFloat(w.balance).toFixed(2);
+
+    const res2 = await fetch(`https://empireyoncar.duckdns.org/don/balance/${userId}`);
+    const d = await res2.json();
+    document.getElementById("walletRewards").textContent = parseFloat(d.balance).toFixed(4);
+}
+
+/* -------------------------
+   CARGAR STAKES ACTIVOS
+-------------------------- */
+async function loadActiveStakes(userId) {
+    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/user/${userId}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#activeStakesTable tbody");
+    tbody.innerHTML = "";
+
+    data.stakes.forEach(stake => {
+        const start = new Date(stake.start_date);
+        const end = new Date(stake.end_date);
+        const now = new Date();
+
+        const progress = Math.min(100, ((now - start) / (end - start)) * 100);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${stake.amount}</td>
+            <td>${stake.days} días</td>
+            <td>
+                <div class="progress-bar">
+                    <div class="progress" style="width:${progress}%"></div>
+                </div>
+            </td>
+            <td>${stake.reward_acumulada.toFixed(4)} DON</td>
+            <td>
+                <button class="btn-cancel" onclick="cancelStake('${stake.stake_id}')">Cancelar</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* -------------------------
+   CARGAR HISTORIAL
+-------------------------- */
+async function loadHistory(userId) {
+    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/history/${userId}`);
+    const data = await res.json();
+
+    const tbody = document.querySelector("#historyTable tbody");
+    tbody.innerHTML = "";
+
+    data.history.forEach(h => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${h.amount}</td>
+            <td>${h.days} días</td>
+            <td>${h.total_reward.toFixed(4)} DON</td>
+            <td>${h.status}</td>
+            <td>${new Date(h.end_date).toLocaleDateString()}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+/* -------------------------
+   CANCELAR STAKE
+-------------------------- */
+async function cancelStake(stakeId) {
+    const userId = localStorage.getItem("user_id");
+
+    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/cancel/${stakeId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId })
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+        showToast(data.error, "err");
+    } else {
+        showToast("Stake cancelado correctamente", "ok");
+        initDashboard();
+    }
+}
+
+/* -------------------------
+   INICIALIZAR DASHBOARD
+-------------------------- */
+async function initDashboard() {
+    const user = await validateUser();
+    if (!user) return;
+
+    await loadWalletInfo(user.address, user.userId);
+    await loadActiveStakes(user.userId);
+    await loadHistory(user.userId);
+}
+
+initDashboard();
+</script>
 
 </body>
 </html>

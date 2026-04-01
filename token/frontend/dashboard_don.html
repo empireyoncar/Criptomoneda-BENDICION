@@ -144,7 +144,8 @@
 
     <button id="btnLoadDashboard">Actualizar Dashboard</button>
     <button id="btnGoPanel">Ir al Panel del Usuario DON</button>
-
+        <!-- NUEVO BOTÓN -->
+    <button id="btnGoHome">Ir a Home</button>
   </section>
 
   <!-- ÚLTIMAS OPERACIONES -->
@@ -189,6 +190,9 @@
     document.getElementById("btnLoadDashboard").onclick = () => {
         loadDonValue();
         // Aquí puedes agregar tus otras funciones de carga (supply, logs, etc.)
+    };
+    document.getElementById("btnGoHome").onclick = () => {
+    window.location.href = "/CriptoBendicion/home.html";
     };
 
     // Cargar automáticamente al abrir la página

@@ -26,12 +26,20 @@ def don_dashboard():
 def don_panel():
     return render_template("panel_don.html")
 
-# ============================================================
-# 3. Panel Administrador DON
-# ============================================================
 @app.route("/don/admin")
 def don_admin():
+    user_id = request.cookies.get("user_id")
+
+    # Si no hay login → fuera
+    if not user_id:
+        return redirect("/CriptoBendicion/login")
+
+    # Solo el admin REAL puede entrar
+    if user_id != "001":
+        return "Acceso denegado", 403
+
     return render_template("admin_don.html")
+
 
 # ============================================================
 # Servidor

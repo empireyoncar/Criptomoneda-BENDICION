@@ -190,7 +190,14 @@
       Ir a Mint
     </button>
   </section>
-  
+  <!-- ADMIN DON -->
+  <section class="box">
+    <h2>Panel Administrador del Token DON</h2>
+    <p>Accede al panel exclusivo para administrar el token DON.</p>
+
+    <button id="btnGoAdminDON">Ir al Admin DON</button>
+  </section>
+
 </div>
 
 <script>
@@ -258,6 +265,9 @@
 
   table.style.display = "table";
 };
+  document.getElementById("btnGoAdminDON").onclick = () => {
+      window.location.href = "/CriptoBendicion/don/admin";
+  };
 
 </script>
 

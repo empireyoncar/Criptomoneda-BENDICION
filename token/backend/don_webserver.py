@@ -26,7 +26,7 @@ def don_dashboard():
 def don_panel():
     return render_template("panel_don.html")
 
-@app.route("/CriptoBendicion/don/admin")
+@app.route("http://192.168.1.178:5009/don/admin")
 def don_admin():
     user_id = request.cookies.get("user_id")
 

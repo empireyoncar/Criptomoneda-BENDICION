@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 

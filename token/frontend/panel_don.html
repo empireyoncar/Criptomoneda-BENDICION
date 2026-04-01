@@ -124,7 +124,22 @@
 
 <header>Panel del Usuario – Token DON</header>
 
+<!-- 🔥 BOTÓN PARA VOLVER AL DASHBOARD -->
+<div style="padding: 20px; text-align: center;">
+  <button id="btnGoDashboard">Volver al Dashboard DON</button>
+</div>
+
 <div class="container">
+
+  <!-- VALOR DE DON -->
+  <section class="box">
+    <h2>Valor Actual de DON</h2>
+
+    <div class="stat-box">
+      <div class="stat-number" id="donValue">0</div>
+      <div class="stat-label">Valor de 1 DON (en BENDICIÓN)</div>
+    </div>
+  </section>
 
   <!-- BALANCE -->
   <section class="box">
@@ -172,6 +187,28 @@
   </section>
 
 </div>
+
+<!-- 🔥 SCRIPTS -->
+<script>
+  // Navegación
+  document.getElementById("btnGoDashboard").onclick = () => {
+      window.location.href = "/CriptoBendicion/don/dashboard";
+  };
+
+  // Cargar valor de DON
+  async function loadDonValue() {
+      try {
+          let res = await fetch("/CriptoBendicion/don_api/price");
+          let data = await res.json();
+          document.getElementById("donValue").textContent = data.don_value;
+      } catch (err) {
+          document.getElementById("donValue").textContent = "Error";
+      }
+  }
+
+  // Cargar automáticamente al abrir
+  loadDonValue();
+</script>
 
 </body>
 </html>

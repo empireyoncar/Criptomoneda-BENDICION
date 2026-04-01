@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import don  # tu backend del token
+from don_value import get_don_value, set_don_value
 
 app = Flask(__name__)
 CORS(app)
@@ -51,6 +52,20 @@ def burn():
     ok = don.burn(data["user_id"], data["amount"])
     return jsonify({"success": ok})
 
+@app.route("/price", methods=["GET"])
+def price():
+    return jsonify({"don_value": get_don_value()})
+
+@app.route("/price/update", methods=["POST"])
+def update_price():
+    data = request.json
+    new_value = float(data.get("don_value", 0))
+
+    if new_value <= 0:
+        return jsonify({"error": "Valor inválido"}), 400
+
+    set_don_value(new_value)
+    return jsonify({"status": "ok", "new_value": new_value})
 
 # ============================
 #   SERVIDOR

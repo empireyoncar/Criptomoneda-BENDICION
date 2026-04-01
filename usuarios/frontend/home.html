@@ -100,7 +100,16 @@
     </div>
 
     <div class="grid">
+        <!-- NUEVA SECCIÓN: Token DON -->
+        <section class="card">
+            <h2>Token DON</h2>
+            <p>Accede al panel del ecosistema DON: dashboard, balance y operaciones internas.</p>
 
+            <button id="btnGoDON" class="btn btn-secondary">
+                Ir al Panel DON
+            </button>
+        </section>
+        
         <!-- Verificación KYC -->
         <section class="card">
             <h2>Verificación KYC</h2>
@@ -201,6 +210,10 @@
         window.location.href = "/staking.html";
     };
     
+    document.getElementById("btnGoDON").onclick = () => {
+        window.location.href = "/CriptoBendicion/don/dashboard";
+    };
+
 </script>
 
 </body>

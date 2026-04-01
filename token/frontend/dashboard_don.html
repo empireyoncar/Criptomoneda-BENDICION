@@ -134,9 +134,17 @@
         <div class="stat-number" id="burned">0</div>
         <div class="stat-label">DON Quemados</div>
       </div>
+
+      <!-- NUEVO: VALOR DE DON -->
+      <div class="stat-box">
+        <div class="stat-number" id="donValue">0</div>
+        <div class="stat-label">Valor de 1 DON (en BENDICIÓN)</div>
+      </div>
     </div>
 
     <button id="btnLoadDashboard">Actualizar Dashboard</button>
+    <button id="btnGoPanel">Ir al Panel del Usuario DON</button>
+
   </section>
 
   <!-- ÚLTIMAS OPERACIONES -->
@@ -159,6 +167,33 @@
   </section>
 
 </div>
+
+<script>
+    // Navegación al panel
+    document.getElementById("btnGoPanel").onclick = () => {
+        window.location.href = "/CriptoBendicion/don/panel";
+    };
+
+    // Cargar valor de DON
+    async function loadDonValue() {
+        try {
+            let res = await fetch("/CriptoBendicion/don_api/price");
+            let data = await res.json();
+            document.getElementById("donValue").textContent = data.don_value;
+        } catch (err) {
+            document.getElementById("donValue").textContent = "Error";
+        }
+    }
+
+    // Cargar dashboard completo
+    document.getElementById("btnLoadDashboard").onclick = () => {
+        loadDonValue();
+        // Aquí puedes agregar tus otras funciones de carga (supply, logs, etc.)
+    };
+
+    // Cargar automáticamente al abrir la página
+    loadDonValue();
+</script>
 
 </body>
 </html>

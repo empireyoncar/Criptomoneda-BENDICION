@@ -36,7 +36,6 @@
             color: #f0b90b;
         }
 
-        /* HEADER WALLET */
         .wallet-box {
             background: #0e1117;
             padding: 12px;
@@ -103,7 +102,6 @@
             cursor: not-allowed;
         }
 
-        /* Toast */
         #toast {
             position: fixed;
             bottom: 25px;
@@ -133,7 +131,18 @@
 
     <h2>Staking Bendición</h2>
 
-    <!-- WALLET HEADER -->
+    <!-- STAKING GLOBAL -->
+    <div class="wallet-box">
+        <div class="wallet-line">
+            <b>Staking Global:</b> <span id="globalStake">Cargando...</span>
+        </div>
+
+        <div style="background:#0e1117; border-radius:6px; height:10px; margin-top:5px;">
+            <div id="stakeProgress" style="height:10px; width:0%; background:#f0b90b; border-radius:6px;"></div>
+        </div>
+    </div>
+
+    <!-- WALLET -->
     <div class="wallet-box">
         <div class="wallet-line"><b>Wallet:</b> <span id="walletAddress"></span></div>
         <div class="wallet-line"><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
@@ -144,9 +153,11 @@
 
     <label>Tiempo</label>
     <select id="days">
-        <option value="30" data-apr="5">30 días — 5% APR</option>
-        <option value="60" data-apr="12">60 días — 12% APR</option>
-        <option value="90" data-apr="20">90 días — 20% APR</option>
+        <option value="30" data-don="6.6">30 días — Recompensa: 6.6 DON</option>
+        <option value="60" data-don="15">60 días — Recompensa: 15 DON</option>
+        <option value="90" data-don="25">90 días — Recompensa: 25 DON</option>
+        <option value="180" data-don="55">180 días — Recompensa: 55 DON</option>
+        <option value="365" data-don="120">365 días — Recompensa: 120 DON</option>
     </select>
 
     <div id="rewardBox">
@@ -154,12 +165,12 @@
     </div>
 
     <button id="btnStake">Iniciar Staking</button>
-<!-- Navegación -->
-        <section class="card">
-            <h2>Navegación</h2>
-             <p>ir panel principal</p>
-            <button id="btnGohome" class="btn btn-primary">Volver a Home</button>
-        </section>
+
+    <section class="card">
+        <h2>Navegación</h2>
+        <p>ir panel principal</p>
+        <button id="btnGohome" class="btn btn-primary">Volver a Home</button>
+    </section>
 
 </div>
 
@@ -179,9 +190,37 @@ const walletAddressEl = document.getElementById("walletAddress");
 const walletBalanceEl = document.getElementById("walletBalance");
 
 /* -------------------------
-   MOSTRAR WALLET Y SALDO
+   CARGAR STAKING GLOBAL
 -------------------------- */
+async function loadGlobalStake() {
+    try {
+        const res = await fetch("https://empireyoncar.duckdns.org/Staking/total");
+        const data = await res.json();
 
+        const total = parseFloat(data.total_staked);
+        const max = 10000;
+
+        document.getElementById("globalStake").innerText =
+            `${total} / ${max} BEND stakeadas`;
+
+        const percent = Math.min((total / max) * 100, 100);
+        document.getElementById("stakeProgress").style.width = percent + "%";
+
+        if (total >= max) {
+            btn.disabled = true;
+            btn.innerText = "Límite alcanzado";
+        }
+
+    } catch (e) {
+        document.getElementById("globalStake").innerText = "Error al cargar";
+    }
+}
+
+loadGlobalStake();
+
+/* -------------------------
+   WALLET
+-------------------------- */
 function shortenAddress(addr) {
     return addr.slice(0, 6) + "..." + addr.slice(-4);
 }
@@ -199,22 +238,21 @@ loadWalletInfo();
 /* -------------------------
    CÁLCULO DE RECOMPENSA
 -------------------------- */
-
 function calcReward() {
     const amount = parseFloat(amountInput.value);
     const days = parseInt(daysSelect.value);
-    const apr = parseFloat(daysSelect.selectedOptions[0].dataset.apr);
+    const donReward = parseFloat(daysSelect.selectedOptions[0].dataset.don);
 
     if (!amount || amount <= 0) {
         rewardBox.style.display = "none";
         return;
     }
 
-    const reward = amount * (apr / 100) * (days / 365);
+    const reward = (amount / 1000) * donReward;
 
     rewardText.innerHTML = `
-        <b>Recompensa estimada:</b> ${reward.toFixed(4)} BEND<br>
-        <small>APR: ${apr}% — Duración: ${days} días</small>
+        <b>Recompensa estimada:</b> ${reward.toFixed(4)} DON<br>
+        <small>Duración: ${days} días — Recompensa base: ${donReward} DON por cada 1000 BEND</small>
     `;
 
     rewardBox.style.display = "block";
@@ -226,13 +264,22 @@ daysSelect.onchange = calcReward;
 /* -------------------------
    ENVIAR STAKE
 -------------------------- */
-
 btn.onclick = async () => {
-    const amount = amountInput.value;
+    const amount = parseFloat(amountInput.value);
     const days = daysSelect.value;
 
     if (!amount || amount <= 0) {
         showToast("Ingresa un monto válido", "err");
+        return;
+    }
+
+    // Validar límite global antes de enviar
+    const resLimit = await fetch("https://empireyoncar.duckdns.org/Staking/total");
+    const dataLimit = await resLimit.json();
+    const totalActual = parseFloat(dataLimit.total_staked);
+
+    if (totalActual + amount > 10000) {
+        showToast("Límite global de 10.000 BENDICIÓN alcanzado", "err");
         return;
     }
 
@@ -257,11 +304,11 @@ btn.onclick = async () => {
         } else {
             showToast("Staking creado correctamente", "ok");
 
-            // Actualizar saldo local
             let balance = parseFloat(localStorage.getItem("wallet_balance"));
             balance -= parseFloat(amount);
             localStorage.setItem("wallet_balance", balance.toFixed(2));
             loadWalletInfo();
+            loadGlobalStake();
         }
 
     } catch (e) {
@@ -275,7 +322,6 @@ btn.onclick = async () => {
 /* -------------------------
    TOAST
 -------------------------- */
-
 function showToast(text, type) {
     toast.innerText = text;
     toast.className = type === "ok" ? "toast-ok" : "toast-err";
@@ -285,11 +331,10 @@ function showToast(text, type) {
         toast.style.display = "none";
     }, 3000);
 }
-// Navegación
-    document.getElementById("btnGohome").onclick = () => {
-        window.location.href = "home.html";
-    };
 
+document.getElementById("btnGohome").onclick = () => {
+    window.location.href = "home.html";
+};
 </script>
 
 </body>

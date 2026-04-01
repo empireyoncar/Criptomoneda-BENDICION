@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin DON – BENDICIÓN</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0e11;
+      color: #eaecef;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #181a20;
+      color: #f0b90b;
+      padding: 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      border-bottom: 2px solid #f0b90b;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #f0b90b;
+      border-left: 4px solid #f0b90b;
+      padding-left: 10px;
+    }
+
+    .box {
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    input {
+      padding: 12px;
+      width: 100%;
+      background: #0b0e11;
+      border: 1px solid #2b3139;
+      color: #eaecef;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #f0b90b;
+      color: #181a20;
+      border: none;
+      padding: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: bold;
+      width: 100%;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #c99700;
+    }
+
+    .stat-box {
+      display: inline-block;
+      width: 30%;
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 10px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f0b90b;
+    }
+
+    .stat-label {
+      font-size: 16px;
+      color: #eaecef;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #0b0e11;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #2b3139;
+      text-align: left;
+    }
+
+    th {
+      background: #181a20;
+      color: #f0b90b;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #2b3139;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>Panel Administrador – Token DON</header>
+
+<div class="container">
+
+  <!-- SUPPLY -->
+  <section class="box">
+    <h2>Estado del Token DON</h2>
+
+    <div class="stat-box">
+      <div class="stat-number" id="totalSupply">0</div>
+      <div class="stat-label">Supply Total</div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-number" id="circulacion">0</div>
+      <div class="stat-label">DON en Circulación</div>
+    </div>
+
+    <div class="stat-box">
+      <div class="stat-number" id="burned">0</div>
+      <div class="stat-label">DON Quemados</div>
+    </div>
+
+    <button id="btnLoadSupply">Actualizar Datos</button>
+  </section>
+
+  <!-- MINT -->
+  <section class="box">
+    <h2>Generar DON (Mint)</h2>
+
+    <input type="text" id="mintUser" placeholder="ID del usuario">
+    <input type="number" id="mintAmount" placeholder="Cantidad a generar">
+    <button id="btnMint">Generar DON</button>
+  </section>
+
+  <!-- RESTAR -->
+  <section class="box">
+    <h2>Restar DON (Corrección Manual)</h2>
+
+    <input type="text" id="subUser" placeholder="ID del usuario">
+    <input type="number" id="subAmount" placeholder="Cantidad a restar">
+    <button id="btnSubtract">Restar DON</button>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="box">
+    <h2>Historial Global de Movimientos</h2>
+
+    <table id="logsTable">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Usuario</th>
+          <th>Cantidad</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="4">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+</body>
+</html>

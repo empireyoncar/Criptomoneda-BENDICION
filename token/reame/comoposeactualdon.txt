@@ -1,0 +1,26 @@
+don_api:
+    build: ./token/backend
+    command: python don_server.py
+    ports:
+      - "5008:5008"
+    volumes:
+      - ./token/backend/don_server.py:/app/don_server.py
+      - ./token/backend/don.py:/app/don.py
+      - ./token/backend/don_ledger.json:/app/don_ledger.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  don_web:
+    build: ./token/backend
+    command: python don_webserver.py
+    ports:
+      - "5009:5009"
+    volumes:
+      - ./token/backend/don_webserver.py:/app/don_webserver.py
+      - ./token/backend/don.py:/app/don.py
+      - ./token/backend/don_ledger.json:/app/don_ledger.json
+      - ./token/frontend:/app/token/frontend
+    restart: always
+    networks:
+      - bendicion_net

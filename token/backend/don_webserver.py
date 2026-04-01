@@ -1,0 +1,40 @@
+from flask import Flask, render_template
+from flask_cors import CORS
+from jinja2 import FileSystemLoader, ChoiceLoader
+
+app = Flask(__name__)
+CORS(app)
+
+# ============================================================
+# Cargar plantillas desde token/frontend
+# ============================================================
+app.jinja_loader = ChoiceLoader([
+    FileSystemLoader("/app/token/frontend")
+])
+
+# ============================================================
+# 1. Dashboard DON
+# ============================================================
+@app.route("/don/dashboard")
+def don_dashboard():
+    return render_template("dashboard_don.html")
+
+# ============================================================
+# 2. Panel del Usuario DON
+# ============================================================
+@app.route("/don/panel")
+def don_panel():
+    return render_template("panel_don.html")
+
+# ============================================================
+# 3. Panel Administrador DON
+# ============================================================
+@app.route("/don/admin")
+def don_admin():
+    return render_template("admin_don.html")
+
+# ============================================================
+# Servidor
+# ============================================================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5009, debug=True)

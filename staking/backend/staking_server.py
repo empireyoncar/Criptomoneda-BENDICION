@@ -82,10 +82,14 @@ def api_cron():
     """
     result = cron_job()
     return jsonify(result)
+def get_total_staked():
+    staking = load_staking()
+    total = sum(float(s["amount"]) for s in staking["stakes"] if s["status"] == "locked")
+    return total
 
 
 # ---------------------------------------------------------
 #   INICIAR SERVIDOR
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=6666)
+    app.run(host="0.0.0.0", port=5006)

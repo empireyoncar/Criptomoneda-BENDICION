@@ -1,7 +1,6 @@
 import uuid
 from datetime import datetime, timedelta
 from staking import load_staking, save_staking, move_to_history
-from staking import load_history, save_history
 
 
 # ---------------------------------------------------------
@@ -12,41 +11,64 @@ def generate_stake_id():
 
 
 # ---------------------------------------------------------
-#   CALCULAR APR SEGÚN DÍAS
+#   TABLA DE RECOMPENSAS FIJAS EN DON
 # ---------------------------------------------------------
-def get_apr(days):
-    if days == 30:
-        return 5
-    elif days == 60:
-        return 12
-    elif days == 90:
-        return 20
-    return 5  # default
+def get_total_don_reward(days, amount):
+    reward_table = {
+        30: 6.6,
+        60: 15,
+        90: 25,
+        180: 55,
+        365: 120
+    }
+
+    base_reward = reward_table.get(days, 0)
+
+    # Recompensa proporcional al monto
+    return (amount / 1000) * base_reward
 
 
 # ---------------------------------------------------------
-#   CALCULAR RECOMPENSA DIARIA
+#   CALCULAR RECOMPENSA DIARIA (DON / días)
 # ---------------------------------------------------------
-def calculate_daily_reward(amount, apr):
-    return round(amount * (apr / 100) / 365, 8)
+def calculate_daily_reward(total_reward, days):
+    return round(total_reward / days, 8)
+
+
+# ---------------------------------------------------------
+#   TOTAL GLOBAL STAKEADO
+# ---------------------------------------------------------
+def get_total_staked():
+    staking = load_staking()
+    total = sum(float(s["amount"]) for s in staking["stakes"] if s["status"] == "locked")
+    return total
 
 
 # ---------------------------------------------------------
 #   GENERAR STAKE COMPLETO
 # ---------------------------------------------------------
 def generar_stake_completo(user_id, amount, days):
-    apr = get_apr(days)
+
+    # 🔥 1. Verificar límite global de 10.000 BEND
+    total_actual = get_total_staked()
+    if total_actual + amount > 10000:
+        return {"error": "Límite global de 10.000 BENDICIÓN en staking alcanzado"}
+
+    # 🔥 2. Fechas
     start = datetime.utcnow()
     end = start + timedelta(days=days)
 
-    reward_daily = calculate_daily_reward(amount, apr)
+    # 🔥 3. Recompensas
+    total_reward = get_total_don_reward(days, amount)
+    reward_daily = calculate_daily_reward(total_reward, days)
 
+    # 🔥 4. Crear stake
     stake = {
         "stake_id": generate_stake_id(),
         "user_id": user_id,
         "amount": amount,
         "days": days,
-        "apr": apr,
+        "total_reward": total_reward,
         "reward_daily": reward_daily,
         "reward_acumulada": 0.0,
         "start_date": start.isoformat(),

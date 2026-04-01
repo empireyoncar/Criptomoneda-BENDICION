@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Usuario – Token DON</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0e11;
+      color: #eaecef;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #181a20;
+      color: #f0b90b;
+      padding: 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: bold;
+      border-bottom: 2px solid #f0b90b;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    h2 {
+      margin-top: 40px;
+      color: #f0b90b;
+      border-left: 4px solid #f0b90b;
+      padding-left: 10px;
+    }
+
+    .box {
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    .stat-box {
+      background: #181a20;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 10px 0;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: bold;
+      color: #f0b90b;
+    }
+
+    .stat-label {
+      font-size: 16px;
+      color: #eaecef;
+    }
+
+    input {
+      padding: 12px;
+      width: 100%;
+      background: #0b0e11;
+      border: 1px solid #2b3139;
+      color: #eaecef;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #f0b90b;
+      color: #181a20;
+      border: none;
+      padding: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+      font-weight: bold;
+      width: 100%;
+      font-size: 16px;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #c99700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: #0b0e11;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #2b3139;
+      text-align: left;
+    }
+
+    th {
+      background: #181a20;
+      color: #f0b90b;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #2b3139;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>Panel del Usuario – Token DON</header>
+
+<div class="container">
+
+  <!-- BALANCE -->
+  <section class="box">
+    <h2>Mi Balance DON</h2>
+
+    <div class="stat-box">
+      <div class="stat-number" id="balance">0</div>
+      <div class="stat-label">DON Disponibles</div>
+    </div>
+  </section>
+
+  <!-- TRANSFERIR -->
+  <section class="box">
+    <h2>Transferir DON</h2>
+
+    <input type="text" id="toUser" placeholder="Usuario destino">
+    <input type="number" id="amount" placeholder="Cantidad a enviar">
+    <button id="btnTransfer">Enviar DON</button>
+  </section>
+
+  <!-- QUEMAR -->
+  <section class="box">
+    <h2>Quemar DON</h2>
+
+    <input type="number" id="burnAmount" placeholder="Cantidad a quemar">
+    <button id="btnBurn">Quemar DON</button>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section class="box">
+    <h2>Historial de Movimientos</h2>
+
+    <table id="logsTable">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Cantidad</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3">Cargando...</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+
+</body>
+</html>

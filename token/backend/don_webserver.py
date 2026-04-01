@@ -26,20 +26,15 @@ def don_dashboard():
 def don_panel():
     return render_template("panel_don.html")
 
-@app.route("http://192.168.1.178:5009/don/admin")
+@app.route("/don/admin")
 def don_admin():
-    user_id = request.cookies.get("user_id")
+    client_ip = request.remote_addr
 
-    # Si no hay login → fuera
-    if not user_id:
-        return redirect("/CriptoBendicion/login")
-
-    # Solo el admin REAL puede entrar
-    if user_id != "001":
-        return "Acceso denegado", 403
+    # Solo permitir acceso desde la red interna 192.168.x.x
+    if not client_ip.startswith("192.168."):
+        return "Acceso permitido solo desde la red interna", 403
 
     return render_template("admin_don.html")
-
 
 # ============================================================
 # Servidor

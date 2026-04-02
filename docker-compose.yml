@@ -172,49 +172,7 @@ services:
     restart: always
     networks:
       - bendicion_net
-  # ============================================================
-  # STAKING (API)
-  # Puerto: 5006
-  # ============================================================
-  staking_api:
-    build: ./staking/backend
-    command: python staking_server.py
-    ports:
-      - "5006:5006"
-    volumes:
-      - ./staking/backend/staking_server.py:/app/staking_server.py
-      - ./staking/backend/staking_manager.py:/app/staking_manager.py
-      - ./staking/backend/staking_dashboard.py:/app/staking_dashboard.py
-      - ./staking/backend/staking_recompensa.py:/app/staking_recompensa.py
-      - ./staking/backend/staking_payout.py:/app/staking_payout.py
-      - ./staking/backend/staking_data.py:/app/staking_data.py
-      - ./staking/backend/staking.json:/app/staking.json
-      - ./staking/backend/staking_history.json:/app/staking_history.json
-    restart: always
-    networks:
-      - bendicion_net
-    depends_on:
-      - don_api
-      - wallet_api
 
-  # ============================================================
-  # STAKING (WEB)
-  # Puerto: 5007
-  # ============================================================
-  staking_web:
-    build: ./staking/backend
-    command: python staking_webserver.py
-    ports:
-      - "5007:5007"
-    volumes:
-      - ./staking/backend/staking_webserver.py:/app/staking_webserver.py
-      - ./staking/frontend:/app/staking/frontend
-    restart: always
-    networks:
-      - bendicion_net
-    depends_on:
-      - staking_api
-      
 # ============================================================
 # RED COMPARTIDA
 # ============================================================

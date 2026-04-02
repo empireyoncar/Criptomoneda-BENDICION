@@ -190,6 +190,17 @@ const walletAddressEl = document.getElementById("walletAddress");
 const walletBalanceEl = document.getElementById("walletBalance");
 
 /* -------------------------
+   TOAST
+-------------------------- */
+function showToast(msg, type="ok") {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.className = type === "ok" ? "toast-ok" : "toast-err";
+    toast.style.display = "block";
+    setTimeout(() => toast.style.display = "none", 3000);
+}
+
+/* -------------------------
    CARGAR STAKING GLOBAL
 -------------------------- */
 async function loadGlobalStake() {
@@ -219,32 +230,21 @@ async function loadGlobalStake() {
 loadGlobalStake();
 
 /* -------------------------
-   CARGAR WALLET + SALDO REAL
+   CARGAR WALLET + SALDO
 -------------------------- */
 async function loadWalletInfo() {
     const user_id = localStorage.getItem("user_id");
-
-    if (!user_id) {
-        walletAddressEl.innerText = "No autenticado";
-        walletBalanceEl.innerText = "0.00";
-        return;
-    }
+    if (!user_id) return;
 
     try {
-        // 1. Obtener la wallet del usuario (ruta correcta)
         const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${user_id}`);
         const dataWallet = await resWallet.json();
 
-        if (!dataWallet.wallet) {
-            walletAddressEl.innerText = "No asignada";
-            walletBalanceEl.innerText = "0.00";
-            return;
-        }
+        if (!dataWallet.wallet) return;
 
         const address = dataWallet.wallet.address;
-        walletAddressEl.innerText = shortenAddress(address);
+        walletAddressEl.innerText = address;
 
-        // 2. Obtener saldo real (ruta correcta)
         const resBalance = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
         const dataBalance = await resBalance.json();
 
@@ -255,44 +255,8 @@ async function loadWalletInfo() {
         walletBalanceEl.innerText = "0.00";
     }
 }
+
 loadWalletInfo();
-
-/* -------------------------
-   VALIDAR LOGIN + WALLET
--------------------------- */
-async function validateUserAndWallet() {
-    const userId = localStorage.getItem("user_id");
-
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "login.html";
-        return;
-    }
-
-    try {
-        // Ruta correcta
-        const res = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
-        const data = await res.json();
-
-        if (!data.wallet) {
-            alert("No tienes wallet asociada. Contacta soporte.");
-            return;
-        }
-
-        const address = data.wallet.address;
-
-        const addressEl = document.getElementById("address");
-        if (addressEl) addressEl.textContent = address;
-
-        window.userWalletAddress = address;
-
-    } catch (err) {
-        alert("Error al validar la wallet.");
-        console.error(err);
-    }
-}
-
-validateUserAndWallet();
 
 /* -------------------------
    CÁLCULO DE RECOMPENSA
@@ -332,7 +296,6 @@ btn.onclick = async () => {
         return;
     }
 
-    // Validar límite global antes de enviar
     const resLimit = await fetch("https://empireyoncar.duckdns.org/Staking/total");
     const dataLimit = await resLimit.json();
     const totalActual = parseFloat(dataLimit.total_staked);
@@ -346,7 +309,7 @@ btn.onclick = async () => {
     btn.innerText = "Procesando...";
 
     try {
-        const res = await fetch(API, {
+        const res = await fetch("https://empireyoncar.duckdns.org/Staking/stake", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -362,7 +325,6 @@ btn.onclick = async () => {
             showToast(data.error, "err");
         } else {
             showToast("Staking creado correctamente", "ok");
-            
             loadWalletInfo();
             loadGlobalStake();
         }
@@ -376,21 +338,12 @@ btn.onclick = async () => {
 };
 
 /* -------------------------
-   TOAST
+   NAVEGACIÓN
 -------------------------- */
-function showToast(text, type) {
-    toast.innerText = text;
-    toast.className = type === "ok" ? "toast-ok" : "toast-err";
-    toast.style.display = "block";
-
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 3000);
-}
-
 document.getElementById("btnGohome").onclick = () => {
     window.location.href = "/CriptoBendicion/home";
 };
+
 </script>
 
 </body>

@@ -235,30 +235,63 @@ async function loadGlobalStake() {
 
 loadGlobalStake();
 
+/* -------------------------
+   CARGAR WALLET (BOTÓN)
+-------------------------- */
 document.getElementById("btnLoadWallet").onclick = async () => {
     try {
         const res = await fetch(`${API_WALLET}/user_wallet/${userId}`);
         const data = await res.json();
 
-        if (!data.wallet) {
+        // Si el backend devuelve error
+        if (data.error || !data.wallet) {
             walletAddressEl.innerText = "Sin wallet";
             walletBalanceEl.innerText = "0.00";
-            alert("No tienes wallet asociada. Crea una desde la página de Wallet.");
+            alert("No tienes wallet asociada. Ve a la página de Wallet para crear una.");
             return;
         }
 
-        // ✔ AQUÍ ESTABA EL ERROR
-        const address = data.wallet.address;  
+        // Si wallet_api devuelve un string
+        let address = null;
+
+        if (typeof data.wallet === "string") {
+            address = data.wallet;
+        }
+
+        // Si wallet_api devuelve un objeto
+        else if (typeof data.wallet === "object" && data.wallet.address) {
+            address = data.wallet.address;
+
+            // Guardar claves si existen
+            if (data.wallet.public_key) {
+                localStorage.setItem("public_key", data.wallet.public_key);
+            }
+            if (data.wallet.private_key) {
+                localStorage.setItem("private_key", data.wallet.private_key);
+            }
+        }
+
+        // Si sigue sin haber address → error real
+        if (!address) {
+            walletAddressEl.innerText = "Error";
+            walletBalanceEl.innerText = "0.00";
+            alert("Error: el servidor no devolvió una dirección válida.");
+            return;
+        }
+
+        // Mostrar address
         walletAddressEl.innerText = address;
-
-        // ✔ Guardar igual que en wallet.html
         localStorage.setItem("address", address);
-        localStorage.setItem("public_key", data.wallet.public_key);
-        localStorage.setItem("private_key", data.wallet.private_key);
 
-        // ✔ Obtener balance desde blockchain (igual que envíos)
+        // Obtener saldo desde blockchain
         const res2 = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
         const walletInfo = await res2.json();
+
+        if (!walletInfo || typeof walletInfo.balance === "undefined") {
+            walletBalanceEl.innerText = "0.00";
+            alert("No se pudo obtener el balance.");
+            return;
+        }
 
         walletBalanceEl.innerText = parseFloat(walletInfo.balance).toFixed(2);
 

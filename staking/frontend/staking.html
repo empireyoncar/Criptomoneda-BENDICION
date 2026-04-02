@@ -142,10 +142,11 @@
         </div>
     </div>
 
-    <!-- WALLET -->
+        <!-- WALLET -->
     <div class="wallet-box">
         <div class="wallet-line"><b>Wallet:</b> <span id="walletAddress"></span></div>
         <div class="wallet-line"><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
+        <div class="wallet-line"><b>ID Usuario:</b> <span id="userId"></span></div>
     </div>
 
     <label>Monto a stakear</label>
@@ -188,6 +189,18 @@ const toast = document.getElementById("toast");
 
 const walletAddressEl = document.getElementById("walletAddress");
 const walletBalanceEl = document.getElementById("walletBalance");
+const userIdEl = document.getElementById("userId");
+
+/* -------------------------
+   SEGURIDAD: EXIGIR LOGIN
+-------------------------- */
+let userId = localStorage.getItem("user_id");
+if (!userId) {
+    alert("Debes iniciar sesión primero.");
+    window.location.href = "login.html";
+} else {
+    userIdEl.textContent = userId;
+}
 
 /* -------------------------
    TOAST
@@ -233,14 +246,15 @@ loadGlobalStake();
    CARGAR WALLET + SALDO
 -------------------------- */
 async function loadWalletInfo() {
-    const user_id = localStorage.getItem("user_id");
-    if (!user_id) return;
-
     try {
-        const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${user_id}`);
+        const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
         const dataWallet = await resWallet.json();
 
-        if (!dataWallet.wallet) return;
+        if (!dataWallet.wallet) {
+            walletAddressEl.innerText = "Sin wallet";
+            walletBalanceEl.innerText = "0.00";
+            return;
+        }
 
         const address = dataWallet.wallet.address;
         walletAddressEl.innerText = address;
@@ -313,7 +327,7 @@ btn.onclick = async () => {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
-                user_id: localStorage.getItem("user_id"),
+                user_id: userId,
                 amount,
                 days
             })
@@ -343,7 +357,6 @@ btn.onclick = async () => {
 document.getElementById("btnGohome").onclick = () => {
     window.location.href = "/CriptoBendicion/home";
 };
-
 </script>
 
 </body>

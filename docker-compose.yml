@@ -177,7 +177,7 @@ services:
   # Puerto: 5006
   # ============================================================
   staking_api:
-    build: ./staking
+    build: ./staking/backend
     command: python backend/staking_server.py
     ports:
       - "5006:5006"
@@ -202,7 +202,7 @@ services:
   # Puerto: 5007
   # ============================================================
   staking_web:
-    build: ./staking
+    build: ./staking/backend
     command: python backend/staking_webserver.py
     ports:
       - "5007:5007"

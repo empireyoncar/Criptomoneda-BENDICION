@@ -243,10 +243,11 @@ async function loadGlobalStake() {
 loadGlobalStake();
 
 /* -------------------------
-   CARGAR WALLET + SALDO
+   CARGAR WALLET + SALDO (AUTOMÁTICO)
 -------------------------- */
 async function loadWalletInfo() {
     try {
+        // 1. Obtener wallet del usuario
         const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
         const dataWallet = await resWallet.json();
 
@@ -256,9 +257,11 @@ async function loadWalletInfo() {
             return;
         }
 
-        const address = dataWallet.wallet.address;
+        // IMPORTANTE: aquí tu backend devuelve la wallet como STRING, no como objeto
+        const address = dataWallet.wallet;  
         walletAddressEl.innerText = address;
 
+        // 2. Obtener balance real
         const resBalance = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
         const dataBalance = await resBalance.json();
 
@@ -270,7 +273,9 @@ async function loadWalletInfo() {
     }
 }
 
+// Ejecutar automáticamente al cargar
 loadWalletInfo();
+
 
 /* -------------------------
    CÁLCULO DE RECOMPENSA

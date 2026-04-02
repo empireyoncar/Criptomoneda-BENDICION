@@ -203,41 +203,35 @@ function showToast(msg, type="ok") {
 }
 
 /* -------------------------
-   VALIDAR LOGIN + WALLET
+   LOGIN + WALLET
 -------------------------- */
-async function validateUser() {
-    const userId = localStorage.getItem("user_id");
+function getUserId() {
+    return localStorage.getItem("user_id");
+}
 
-    if (!userId) {
-        alert("Debes iniciar sesión.");
-        window.location.href = "login.html";
-        return null;
-    }
+async function getUserWallet(userId) {
+    const res = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
+    const data = await res.json();
+    return data.wallet; 
+}
 
-    try {
-        const res = await fetch(`https://empireyoncar.duckdns.org/wallet/user/${userId}`);
-        const data = await res.json();
+async function initUser() {
+    const userId = getUserId();
+    if (!userId) return null;
 
-        if (data.error) {
-            alert("No tienes wallet asociada.");
-            window.location.href = "wallet.html";
-            return null;
-        }
+    const wallet = await getUserWallet(userId);
+    if (!wallet) return null;
 
-        document.getElementById("walletAddress").textContent = data.address;
-        return { userId, address: data.address };
+    document.getElementById("walletAddress").textContent = wallet.address;
 
-    } catch (err) {
-        alert("Error al validar usuario.");
-        return null;
-    }
+    return { userId, address: wallet.address };
 }
 
 /* -------------------------
-   CARGAR SALDO Y RECOMPENSAS
+   SALDO + RECOMPENSAS
 -------------------------- */
 async function loadWalletInfo(address, userId) {
-    const res1 = await fetch(`https://empireyoncar.duckdns.org/wallet/${address}`);
+    const res1 = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
     const w = await res1.json();
     document.getElementById("walletBalance").textContent = parseFloat(w.balance).toFixed(2);
 
@@ -247,7 +241,7 @@ async function loadWalletInfo(address, userId) {
 }
 
 /* -------------------------
-   CARGAR STAKES ACTIVOS
+   STAKES ACTIVOS
 -------------------------- */
 async function loadActiveStakes(userId) {
     const res = await fetch(`https://empireyoncar.duckdns.org/Staking/user/${userId}`);
@@ -260,7 +254,6 @@ async function loadActiveStakes(userId) {
         const start = new Date(stake.start_date);
         const end = new Date(stake.end_date);
         const now = new Date();
-
         const progress = Math.min(100, ((now - start) / (end - start)) * 100);
 
         const tr = document.createElement("tr");
@@ -282,7 +275,7 @@ async function loadActiveStakes(userId) {
 }
 
 /* -------------------------
-   CARGAR HISTORIAL
+   HISTORIAL
 -------------------------- */
 async function loadHistory(userId) {
     const res = await fetch(`https://empireyoncar.duckdns.org/Staking/history/${userId}`);
@@ -308,7 +301,7 @@ async function loadHistory(userId) {
    CANCELAR STAKE
 -------------------------- */
 async function cancelStake(stakeId) {
-    const userId = localStorage.getItem("user_id");
+    const userId = getUserId();
 
     const res = await fetch(`https://empireyoncar.duckdns.org/Staking/cancel/${stakeId}`, {
         method: "POST",
@@ -330,7 +323,7 @@ async function cancelStake(stakeId) {
    INICIALIZAR DASHBOARD
 -------------------------- */
 async function initDashboard() {
-    const user = await validateUser();
+    const user = await initUser();
     if (!user) return;
 
     await loadWalletInfo(user.address, user.userId);

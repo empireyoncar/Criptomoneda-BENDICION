@@ -231,21 +231,21 @@ async function loadWalletInfo() {
     }
 
     try {
-        // 1. Obtener la wallet del usuario
-        const resWallet = await fetch(`https://empireyoncar.duckdns.org/wallet/user/${user_id}`);
+        // 1. Obtener la wallet del usuario (ruta correcta)
+        const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${user_id}`);
         const dataWallet = await resWallet.json();
 
-        if (dataWallet.error) {
+        if (!dataWallet.wallet) {
             walletAddressEl.innerText = "No asignada";
             walletBalanceEl.innerText = "0.00";
             return;
         }
 
-        const address = dataWallet.address;
+        const address = dataWallet.wallet.address;
         walletAddressEl.innerText = shortenAddress(address);
 
-        // 2. Obtener saldo real desde blockchain
-        const resBalance = await fetch(`https://empireyoncar.duckdns.org/wallet/${address}`);
+        // 2. Obtener saldo real (ruta correcta)
+        const resBalance = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
         const dataBalance = await resBalance.json();
 
         walletBalanceEl.innerText = parseFloat(dataBalance.balance).toFixed(2);
@@ -255,42 +255,36 @@ async function loadWalletInfo() {
         walletBalanceEl.innerText = "0.00";
     }
 }
-
 loadWalletInfo();
 
 /* -------------------------
-   SEGURIDAD: VALIDAR LOGIN + WALLET
+   VALIDAR LOGIN + WALLET
 -------------------------- */
 async function validateUserAndWallet() {
     const userId = localStorage.getItem("user_id");
 
-    // 1. Validar login
     if (!userId) {
         alert("Debes iniciar sesión primero.");
         window.location.href = "login.html";
         return;
     }
 
-    // Mostrar user_id en pantalla si lo necesitas
-    const userIdEl = document.getElementById("userId");
-    if (userIdEl) userIdEl.textContent = userId;
-
-    // 2. Obtener wallet desde el backend
     try {
-        const res = await fetch(`https://empireyoncar.duckdns.org/wallet/user/${userId}`);
+        // Ruta correcta
+        const res = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
         const data = await res.json();
 
-        if (data.error) {
+        if (!data.wallet) {
             alert("No tienes wallet asociada. Contacta soporte.");
             return;
         }
 
-        // Mostrar address en pantalla
-        const addressEl = document.getElementById("address");
-        if (addressEl) addressEl.textContent = data.address;
+        const address = data.wallet.address;
 
-        // Guardar address en memoria temporal (NO localStorage)
-        window.userWalletAddress = data.address;
+        const addressEl = document.getElementById("address");
+        if (addressEl) addressEl.textContent = address;
+
+        window.userWalletAddress = address;
 
     } catch (err) {
         alert("Error al validar la wallet.");

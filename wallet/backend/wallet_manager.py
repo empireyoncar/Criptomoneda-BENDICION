@@ -32,14 +32,7 @@ def create_wallet_for_user(user_id):
     wallet = generate_wallet()
 
     # Guardar en wallets.json
-    import requests
-
-def load_wallets():
-    try:
-        response = requests.get("http://wallet_api:5002/get_wallets")
-        return response.json()
-    except:
-        return {}
+    wallets = load_wallets()
     wallets["wallets"].append({
         "user_id": user_id,
         "private_key": wallet["private_key"],

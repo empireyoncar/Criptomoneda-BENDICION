@@ -181,8 +181,8 @@
 <div id="toast"></div>
 
 <script>
-const API = "https://empireyoncar.duckdns.org/Staking/stake";
-const API_WALLET = "https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api";
+const API_STAKE = "https://empireyoncar.duckdns.org/Staking/stake";
+const API_BLOCKCHAIN = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
 const amountInput = document.getElementById("amount");
 const daysSelect = document.getElementById("days");
@@ -204,16 +204,6 @@ if (!userId) {
     window.location.href = "login.html";
 } else {
     userIdEl.textContent = userId;
-}
-
-/* -------------------------
-   TOAST
--------------------------- */
-function showToast(msg, type="ok") {
-    toast.textContent = msg;
-    toast.className = type === "ok" ? "toast-ok" : "toast-err";
-    toast.style.display = "block";
-    setTimeout(() => toast.style.display = "none", 3000);
 }
 
 /* -------------------------
@@ -249,34 +239,33 @@ loadGlobalStake();
    CARGAR WALLET (BOTÓN)
 -------------------------- */
 document.getElementById("btnLoadWallet").onclick = async () => {
+    const address = localStorage.getItem("address");
+
+    if (!address) {
+        alert("No tienes wallet configurada. Ve a la página de Wallet.");
+        return;
+    }
+
+    // Mostrar address
+    walletAddressEl.textContent = address;
+
+    // Obtener balance desde blockchain (igual que envíos)
     try {
-        const res = await fetch(`${API_WALLET}/user_wallet/${userId}`);
+        const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
         const data = await res.json();
 
-        if (!data.wallet) {
-            walletAddressEl.innerText = "Sin wallet";
-            walletBalanceEl.innerText = "0.00";
-            alert("No tienes wallet asociada. Crea una desde la página de Wallet.");
+        if (!data || typeof data.balance === "undefined") {
+            walletBalanceEl.textContent = "0.00";
+            alert("No se pudo obtener el balance.");
             return;
         }
 
-        const address = data.wallet.address;
-        walletAddressEl.innerText = address;
-
-        const res2 = await fetch(`${API_WALLET}/wallet_info/${address}`);
-        const walletInfo = await res2.json();
-
-        walletBalanceEl.innerText = parseFloat(walletInfo.balance).toFixed(2);
-
-        localStorage.setItem("address", address);
-        localStorage.setItem("public_key", data.wallet.public_key);
-        localStorage.setItem("private_key", data.wallet.private_key);
-
+        walletBalanceEl.textContent = parseFloat(data.balance).toFixed(2);
         alert("Wallet cargada correctamente.");
 
     } catch (err) {
         console.error(err);
-        alert("Error al cargar la wallet.");
+        alert("Error al obtener el balance.");
     }
 };
 
@@ -331,7 +320,7 @@ btn.onclick = async () => {
     btn.innerText = "Procesando...";
 
     try {
-        const res = await fetch("https://empireyoncar.duckdns.org/Staking/stake", {
+        const res = await fetch(API_STAKE, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({

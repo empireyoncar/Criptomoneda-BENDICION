@@ -40,7 +40,7 @@ def staking_page():
 
 @app.route("/staking/dashboard")
 def staking_dashboard_page():
-    return render_template("staking_dashboard.html")
+    return render_template("/CriptoBendicion/staking_dashboard.html")
 
 
 # ============================================================

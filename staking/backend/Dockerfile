@@ -1,21 +1,32 @@
 FROM python:3.10-slim
 
-# Carpeta de trabajo
+# -----------------------------
+#   WORKDIR
+# -----------------------------
 WORKDIR /app
 
-# Copiar SOLO el módulo staking
-COPY . /app/staking/backend
+# -----------------------------
+#   DEPENDENCIAS
+# -----------------------------
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copiar módulos necesarios del proyecto principal
-COPY ../../token /app/token
-COPY ../../wallet /app/wallet
+# -----------------------------
+#   COPIAR TODO EL MÓDULO
+# -----------------------------
+COPY backend /app/backend
+COPY frontend /app/frontend
 
-# Instalar dependencias del módulo staking
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Crear carpeta DB
+RUN mkdir -p /app/db
 
-# Exponer puerto del servidor de staking
+# -----------------------------
+#   EXPONER PUERTOS
+# -----------------------------
 EXPOSE 5006
+EXPOSE 5007
 
-# Ejecutar el servidor principal de staking
-CMD ["python", "/app/staking/backend/staking_server.py"]
+# -----------------------------
+#   ENTRYPOINT: API + WEB
+# -----------------------------
+CMD ["sh", "-c", "python backend/staking_server.py & python backend/staking_webserver.py"]

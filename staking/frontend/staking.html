@@ -247,7 +247,8 @@ loadGlobalStake();
 -------------------------- */
 async function loadWalletInfo() {
     try {
-        const resWallet = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
+        // 1. Obtener wallet del usuario desde la API correcta
+        const resWallet = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api/user_wallet/${userId}`);
         const dataWallet = await resWallet.json();
 
         if (!dataWallet.wallet) {
@@ -256,12 +257,12 @@ async function loadWalletInfo() {
             return;
         }
 
-        // AQUÍ ESTABA EL PROBLEMA
-        const address = dataWallet.wallet.address;  // ✔️ correcto
+        // 2. Aquí sí existe .address
+        const address = dataWallet.wallet.address;
         walletAddressEl.innerText = address;
 
-        // Obtener balance real
-        const resBalance = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
+        // 3. Obtener balance real
+        const resBalance = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api/wallet_info/${address}`);
         const dataBalance = await resBalance.json();
 
         walletBalanceEl.innerText = parseFloat(dataBalance.balance).toFixed(2);

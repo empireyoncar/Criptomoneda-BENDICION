@@ -29,14 +29,7 @@ def get_user_wallet(user_id):
 # ============================================================
 @app.get("/wallet_info/<address>")
 def wallet_info(address):
-    import requests
-
-def load_wallets():
-    try:
-        response = requests.get("http://wallet_api:5002/get_wallets")
-        return response.json()
-    except:
-        return {}
+    wallets = load_wallets()
 
     for w in wallets["wallets"]:
         if w["address"] == address:

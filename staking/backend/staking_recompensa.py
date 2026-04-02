@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 
 # IMPORTS CORRECTOS SEGÚN TU ESTRUCTURA REAL
-from backend.staking_data import load_staking, save_staking, move_to_history
+from staking_data import load_staking, save_staking, move_to_history
 
 
 # ---------------------------------------------------------

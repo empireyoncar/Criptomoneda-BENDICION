@@ -1,25 +1,43 @@
 # staking_manager.py
-from wallet.backend.wallet_manager import load_wallets
-from Blockchain.bakend.blockchain import Blockchain
-from staking.backend.staking_data import load_staking, save_staking
-from staking.backend.staking_recompensa import generar_stake_completo
+import requests
+from staking_data import load_staking, save_staking
+from staking_recompensa import generar_stake_completo
+
+# ============================================================
+#   FUNCIONES PARA COMUNICARSE CON WALLET
+# ============================================================
+def load_wallets():
+    try:
+        r = requests.get("http://wallet_api:5002/get_wallets")
+        return r.json()
+    except:
+        return {"wallets": []}
+
+# ============================================================
+#   FUNCIONES PARA COMUNICARSE CON BLOCKCHAIN
+# ============================================================
+def get_balance(address):
+    r = requests.get(f"http://blockchain_api:5004/get_balance/{address}")
+    return r.json().get("balance", 0)
+
+def get_locked(address):
+    r = requests.get(f"http://blockchain_api:5004/get_locked/{address}")
+    return r.json().get("locked", 0)
+
+def lock_balance(address, amount):
+    r = requests.post("http://blockchain_api:5004/lock_balance", json={
+        "address": address,
+        "amount": amount
+    })
+    return r.json().get("success", False)
 
 # ============================================================
 #   VALIDAR USUARIO + WALLET + SALDO REAL
 # ============================================================
 def get_user_staking_info(user_id):
-    """
-    Devuelve al frontend:
-    - wallet del usuario
-    - saldo real en blockchain
-    - saldo bloqueado
-    - saldo disponible
-    """
-
     if not user_id:
         return {"error": "Usuario no autenticado"}
 
-    # Buscar wallet asociada al usuario
     wallets = load_wallets()
     wallet = next((w for w in wallets["wallets"] if w["user_id"] == user_id), None)
 
@@ -28,10 +46,8 @@ def get_user_staking_info(user_id):
 
     address = wallet["address"]
 
-    # Obtener saldo real desde la blockchain
-    bc = Blockchain()
-    balance = bc.get_balance(address)
-    locked = bc._get_locked_balance(address)
+    balance = get_balance(address)
+    locked = get_locked(address)
     available = balance - locked
 
     return {
@@ -42,26 +58,16 @@ def get_user_staking_info(user_id):
         "available": available
     }
 
-
 # ============================================================
-#   CREAR STAKE (RESTA SALDO + BLOQUEA SALDO)
+#   CREAR STAKE
 # ============================================================
 def create_stake(user_id, amount, days):
-    """
-    - Valida saldo real en blockchain
-    - Bloquea BEND para staking
-    - Resta saldo real (commit)
-    - Genera stake completo
-    - Guarda stake en staking.json
-    """
-
     try:
         amount = float(amount)
         days = int(days)
     except:
         return {"error": "Parámetros inválidos"}
 
-    # Obtener wallet del usuario
     wallets = load_wallets()
     wallet = next((w for w in wallets["wallets"] if w["user_id"] == user_id), None)
 
@@ -70,32 +76,23 @@ def create_stake(user_id, amount, days):
 
     address = wallet["address"]
 
-    # 1. Validar saldo real
-    bc = Blockchain()
-    balance = bc.get_balance(address)
-    locked = bc._get_locked_balance(address)
+    balance = get_balance(address)
+    locked = get_locked(address)
     available = balance - locked
 
     if available < amount:
         return {"error": "Saldo insuficiente"}
 
-    # 2. Bloquear saldo (transacción pendiente)
-    ok = bc.add_transaction(address, "STAKING_LOCK", amount)
-    if not ok:
+    # Bloquear saldo en blockchain
+    if not lock_balance(address, amount):
         return {"error": "No se pudo bloquear el saldo"}
 
-    # 3. Confirmar transacción (resta saldo real)
-    bc.commit_pending_transactions()
-
-    # 4. Generar stake completo
+    # Generar stake completo
     stake_data = generar_stake_completo(user_id, amount, days)
 
-    # 5. Guardar stake en staking.json
+    # Guardar stake
     staking = load_staking()
     staking["stakes"].append(stake_data)
     save_staking(staking)
 
-    return {
-        "success": True,
-        "stake": stake_data
-    }
+    return {"success": True, "stake": stake_data}

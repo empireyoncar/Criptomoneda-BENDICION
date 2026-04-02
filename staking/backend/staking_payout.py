@@ -1,12 +1,24 @@
 # staking/backend/staking_payout.py
 
-from staking.backend.staking_data import load_staking, save_staking, move_to_history
-from wallet.backend.wallet_manager import load_wallets
 import requests
+from staking_data import load_staking, save_staking, move_to_history
 
-# URL del microservicio DON (nombre del servicio en docker-compose)
+# URL del microservicio DON
 DON_URL = "http://don_api:5008"
 
+# ============================================================
+#   FUNCIONES PARA COMUNICARSE CON WALLET
+# ============================================================
+def load_wallets():
+    try:
+        r = requests.get("http://wallet_api:5002/get_wallets")
+        return r.json()
+    except:
+        return {"wallets": []}
+
+# ============================================================
+#   FUNCIONES PARA COMUNICARSE CON DON
+# ============================================================
 def don_add(user_id, amount):
     """Llama al microservicio DON para crear tokens (mint)."""
     try:
@@ -17,7 +29,9 @@ def don_add(user_id, amount):
     except Exception as e:
         print(f"❌ Error llamando a DON: {e}")
 
-
+# ============================================================
+#   PROCESAR STAKES COMPLETADOS
+# ============================================================
 def pay_completed_stakes():
     """
     - Busca stakes completados

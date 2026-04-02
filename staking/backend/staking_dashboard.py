@@ -1,10 +1,19 @@
 from flask import jsonify
+import requests
 
 # IMPORTS CORRECTOS SEGÚN TU ESTRUCTURA REAL
-from wallet.backend.wallet_manager import load_wallets
-from staking.backend.staking_data import load_staking, load_history
-from staking.backend.staking_recompensa import release_finished_stakes, cancel_stake
+from staking_data import load_staking, load_history
+from staking_recompensa import release_finished_stakes, cancel_stake
 
+# ============================================================
+#   FUNCIONES PARA COMUNICARSE CON WALLET
+# ============================================================
+def load_wallets():
+    try:
+        r = requests.get("http://wallet_api:5002/get_wallets")
+        return r.json()
+    except:
+        return {"wallets": []}
 
 # ============================================================
 #   OBTENER BALANCE DEL USUARIO
@@ -24,7 +33,6 @@ def get_balance(user_id):
         "balance": balance
     })
 
-
 # ============================================================
 #   OBTENER STAKES ACTIVOS DEL USUARIO
 # ============================================================
@@ -38,7 +46,6 @@ def get_stakes(user_id):
         "stakes": stakes_user
     })
 
-
 # ============================================================
 #   OBTENER HISTORIAL DEL USUARIO
 # ============================================================
@@ -51,7 +58,6 @@ def get_history(user_id):
         "user_id": user_id,
         "history": history_user
     })
-
 
 # ============================================================
 #   OBTENER RECOMPENSAS ACUMULADAS
@@ -70,18 +76,12 @@ def get_rewards(user_id):
         "rewards": round(total_rewards, 8)
     })
 
-
 # ============================================================
 #   LIBERAR STAKE MANUALMENTE
 # ============================================================
 def release_stake(stake_id):
-    """
-    Llama a release_finished_stakes() para procesar automáticamente,
-    pero también permite liberar manualmente un stake si ya cumplió.
-    """
     release_finished_stakes()
     return jsonify({"success": True, "message": "Stake liberado si estaba listo"})
-
 
 # ============================================================
 #   CANCELAR STAKE (RETIRO ANTICIPADO)

@@ -235,37 +235,38 @@ async function loadGlobalStake() {
 
 loadGlobalStake();
 
-/* -------------------------
-   CARGAR WALLET (BOTÓN)
--------------------------- */
 document.getElementById("btnLoadWallet").onclick = async () => {
-    const address = localStorage.getItem("address");
-
-    if (!address) {
-        alert("No tienes wallet configurada. Ve a la página de Wallet.");
-        return;
-    }
-
-    // Mostrar address
-    walletAddressEl.textContent = address;
-
-    // Obtener balance desde blockchain (igual que envíos)
     try {
-        const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
+        const res = await fetch(`${API_WALLET}/user_wallet/${userId}`);
         const data = await res.json();
 
-        if (!data || typeof data.balance === "undefined") {
-            walletBalanceEl.textContent = "0.00";
-            alert("No se pudo obtener el balance.");
+        if (!data.wallet) {
+            walletAddressEl.innerText = "Sin wallet";
+            walletBalanceEl.innerText = "0.00";
+            alert("No tienes wallet asociada. Crea una desde la página de Wallet.");
             return;
         }
 
-        walletBalanceEl.textContent = parseFloat(data.balance).toFixed(2);
+        // ✔ AQUÍ ESTABA EL ERROR
+        const address = data.wallet.address;  
+        walletAddressEl.innerText = address;
+
+        // ✔ Guardar igual que en wallet.html
+        localStorage.setItem("address", address);
+        localStorage.setItem("public_key", data.wallet.public_key);
+        localStorage.setItem("private_key", data.wallet.private_key);
+
+        // ✔ Obtener balance desde blockchain (igual que envíos)
+        const res2 = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
+        const walletInfo = await res2.json();
+
+        walletBalanceEl.innerText = parseFloat(walletInfo.balance).toFixed(2);
+
         alert("Wallet cargada correctamente.");
 
     } catch (err) {
         console.error(err);
-        alert("Error al obtener el balance.");
+        alert("Error al cargar la wallet.");
     }
 };
 

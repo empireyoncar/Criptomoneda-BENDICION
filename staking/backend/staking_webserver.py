@@ -34,11 +34,11 @@ app.register_blueprint(staking_api)
 # ============================================================
 # Rutas HTML
 # ============================================================
-@app.route("/CriptoBendicion/staking/panelstaking")
+@app.route("/staking/panelstaking")
 def staking_page():
     return render_template("staking.html")
 
-@app.route("/CriptoBendicion/staking/dashboard")
+@app.route("/staking/dashboard")
 def staking_dashboard_page():
     return render_template("staking_dashboard.html")
 

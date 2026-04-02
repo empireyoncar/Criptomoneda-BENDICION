@@ -1,32 +1,17 @@
 FROM python:3.10-slim
 
-# -----------------------------
-#   WORKDIR
-# -----------------------------
 WORKDIR /app
 
-# -----------------------------
-#   DEPENDENCIAS
-# -----------------------------
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copiar TODO el backend staking dentro del contenedor
+COPY . /app/staking
 
-# -----------------------------
-#   COPIAR TODO EL MÓDULO
-# -----------------------------
-COPY backend /app/backend
-COPY frontend /app/frontend
+# Instalar dependencias
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Crear carpeta DB
-RUN mkdir -p /app/db
-
-# -----------------------------
-#   EXPONER PUERTOS
-# -----------------------------
+# Exponer puertos
 EXPOSE 5006
 EXPOSE 5007
 
-# -----------------------------
-#   ENTRYPOINT: API + WEB
-# -----------------------------
-CMD ["sh", "-c", "python backend/staking_server.py & python backend/staking_webserver.py"]
+# Comando por defecto (API + WEB)
+CMD ["sh", "-c", "python /app/staking/staking_server.py & python /app/staking/staking_webserver.py"]

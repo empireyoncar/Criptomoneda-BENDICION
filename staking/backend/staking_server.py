@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
 # Funciones principales
-from staking_manager import stake_tokens
+from staking_manager import create_stake
 from staking_dashboard import (
     get_balance, get_stakes, get_history,
     get_rewards, release_stake, cancel_stake_api
@@ -35,7 +35,7 @@ def api_stake():
     if not user_id or not amount or not days:
         return jsonify({"error": "Faltan parámetros"}), 400
 
-    result = stake_tokens(user_id, amount, days)
+    result = create_stake(user_id, amount, days)
     return jsonify(result)
 
 

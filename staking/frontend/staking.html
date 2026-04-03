@@ -148,10 +148,16 @@
         <p><strong>ID Usuario:</strong> <span id="userId"></span></p>
         <p>Address(wallet): <span id="address" class="mono"></span></p>
         <p><strong>Saldo:</strong> <span id="balance"></span> BEND</p>
-        <button id="btnGetBalance" class="btn btn-primary">Ver saldo</button>
+        <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
         <button id="btnLoadWallet" class="btn btn-primary">Cargar Wallet</button>
     </section>
-    
+    <!-- Balance -->
+        <section class="card">
+            <h2>Balance</h2>
+            <p>Consulta cuántas monedas BENDICIÓN tienes actualmente en tu wallet.</p>
+            <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
+            <p><strong>Balance:</strong> <span id="balance"></span></p>
+        </section>
     <label>Monto a stakear</label>
     <input type="number" id="amount" placeholder="Ej: 100">
 
@@ -250,7 +256,7 @@ loadGlobalStake();
 // Ver balance
     document.getElementById("btnGetBalance").onclick = async () => {
         try {
-            const res = await fetch(`${API}/wallet/${address}`);
+            const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
             const data = await res.json();
             document.getElementById("balance").textContent =
                 data && typeof data.balance !== "undefined" ? data.balance : "Error";

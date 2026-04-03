@@ -110,6 +110,36 @@ def load_db():
     with open(DB_FILE, "r") as f:
         return json.load(f)
 
+# -----------------------------
+# OBTENER USUARIO POR ID
+# -----------------------------
+def get_user_by_id(user_id):
+    db = load_db()
+    for u in db["users"]:
+        if u["id"] == user_id:
+            return u
+    return None
+
+
+# -----------------------------
+# VERIFICAR SI USUARIO EXISTE
+# -----------------------------
+def user_exists(user_id):
+    return get_user_by_id(user_id) is not None
+
+
+# -----------------------------
+# OBTENER DATOS COMPLETOS DEL USUARIO
+# -----------------------------
+def get_user_data(user_id):
+    user = get_user_by_id(user_id)
+    if not user:
+        return None
+
+    # No devolvemos password por seguridad
+    safe_user = user.copy()
+    safe_user.pop("password", None)
+    return safe_user
 
 # -----------------------------
 # OBTENER WALLET DEL USUARIO

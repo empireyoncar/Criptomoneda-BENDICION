@@ -62,6 +62,33 @@ def register_api():
         return jsonify({"error": "El email ya está registrado"}), 400
 
     return jsonify({"user_id": user_id})
+from database import get_user_data, get_user_by_id
+
+#  API 1 — Obtener usuario por ID
+@app.get("/user/<user_id>")
+def api_get_user(user_id):
+    user = get_user_data(user_id)
+    if not user:
+        return jsonify({"exists": False, "error": "Usuario no encontrado"}), 404
+    return jsonify({"exists": True, "user": user})
+from database import get_user_wallet
+
+#API 2 — Obtener wallet del usuario
+
+@app.get("/wallet/user/<user_id>")
+def api_get_user_wallet(user_id):
+    wallet = get_user_wallet(user_id)
+    if not wallet:
+        return jsonify({"wallet": None, "error": "El usuario no tiene wallet asociada"}), 404
+    return jsonify({"wallet": wallet})
+
+# API 3 — Verificar si el usuario existe
+from database import user_exists
+
+@app.get("/user/<user_id>/exists")
+def api_user_exists(user_id):
+    exists = user_exists(user_id)
+    return jsonify({"exists": exists})
 
 # -----------------------------
 # INICIAR SERVIDOR LOGIN

@@ -190,6 +190,8 @@ services:
       - ./staking/backend/staking_data.py:/app/backend/staking_data.py
       - ./staking/backend/staking.json:/app/db/staking.json
       - ./staking/backend/staking_history.json:/app/db/staking_history.json
+      - ./staking/backend/stakingcompletados_history.json:/app/db/stakingcompletados_history.json
+      - ./staking/backend/staking_payout.json:/app/db/staking_payout.json
     restart: always
     networks:
       - bendicion_net

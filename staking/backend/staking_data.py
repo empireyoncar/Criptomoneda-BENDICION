@@ -1,70 +1,97 @@
 import json
 import os
-from datetime import datetime
 
-STAKING_FILE = "staking.json"
-HISTORY_FILE = "staking_history.json"
+# Ruta base dentro del contenedor Docker
+BASE_PATH = "/app"
+
+FILES = {
+    "activos": os.path.join(BASE_PATH, "stakingactivos.json"),
+    "completados": os.path.join(BASE_PATH, "stakingcompletados_history.json"),
+    "cancelados": os.path.join(BASE_PATH, "stakingcancelados_history.json")
+}
+
+# ---------------------------------------------------------
+# ASEGURAR QUE LOS ARCHIVOS EXISTEN
+# ---------------------------------------------------------
+for f in FILES.values():
+    if not os.path.exists(f):
+        with open(f, "w") as fp:
+            json.dump([], fp)
 
 
 # ---------------------------------------------------------
-#   Cargar archivo staking.json (stakes activos)
+# FUNCIONES BASE
 # ---------------------------------------------------------
-def load_staking():
-    if not os.path.exists(STAKING_FILE):
-        return {"stakes": []}
-
-    with open(STAKING_FILE, "r") as f:
+def load_file(name):
+    """Carga un archivo JSON de staking."""
+    with open(FILES[name], "r") as f:
         return json.load(f)
 
 
-# ---------------------------------------------------------
-#   Guardar archivo staking.json
-# ---------------------------------------------------------
-def save_staking(data):
-    with open(STAKING_FILE, "w") as f:
+def save_file(name, data):
+    """Guarda un archivo JSON de staking."""
+    with open(FILES[name], "w") as f:
         json.dump(data, f, indent=4)
 
 
 # ---------------------------------------------------------
-#   Cargar historial (stakes terminados/cancelados)
+# AGREGAR NUEVO STAKING
 # ---------------------------------------------------------
-def load_history():
-    if not os.path.exists(HISTORY_FILE):
-        return {"history": []}
-
-    with open(HISTORY_FILE, "r") as f:
-        return json.load(f)
+def add_staking(stake):
+    activos = load_file("activos")
+    activos.append(stake)
+    save_file("activos", activos)
 
 
 # ---------------------------------------------------------
-#   Guardar historial
+# MOVER A COMPLETADOS
 # ---------------------------------------------------------
-def save_history(data):
-    with open(HISTORY_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+def move_to_completed(stake_id):
+    activos = load_file("activos")
+    completados = load_file("completados")
+
+    for s in activos:
+        if s["stake_id"] == stake_id:
+            activos.remove(s)
+            completados.append(s)
+            save_file("activos", activos)
+            save_file("completados", completados)
+            return True
+
+    return False
 
 
 # ---------------------------------------------------------
-#   Mover stake al historial
+# MOVER A CANCELADOS
 # ---------------------------------------------------------
-def move_to_history(stake_id, reason="completed"):
-    staking = load_staking()
-    history = load_history()
+def move_to_cancelled(stake_id):
+    activos = load_file("activos")
+    cancelados = load_file("cancelados")
 
-    stake = next((s for s in staking["stakes"] if s["stake_id"] == stake_id), None)
-    if not stake:
-        return False
+    for s in activos:
+        if s["stake_id"] == stake_id:
+            activos.remove(s)
+            cancelados.append(s)
+            save_file("activos", activos)
+            save_file("cancelados", cancelados)
+            return True
 
-    # Actualizar estado y fecha final
-    stake["status"] = reason
-    stake["finalized_at"] = datetime.utcnow().isoformat()
+    return False
 
-    # Guardar en historial
-    history["history"].append(stake)
-    save_history(history)
 
-    # Eliminar de stakes activos
-    staking["stakes"] = [s for s in staking["stakes"] if s["stake_id"] != stake_id]
-    save_staking(staking)
+# ---------------------------------------------------------
+# OBTENER STAKING POR ID
+# ---------------------------------------------------------
+def get_stake(stake_id):
+    activos = load_file("activos")
+    for s in activos:
+        if s["stake_id"] == stake_id:
+            return s
+    return None
 
-    return True
+
+# ---------------------------------------------------------
+# LISTAR TODOS LOS STAKINGS ACTIVOS
+# ---------------------------------------------------------
+def list_activos():
+    return load_file("activos")

@@ -297,20 +297,13 @@ btn.onclick = async () => {
         return;
     }
 
-    const resLimit = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/total");
-    const dataLimit = await resLimit.json();
-    const totalActual = parseFloat(dataLimit.total_staked);
-
-    if (totalActual + amount > 10000) {
-        showToast("Límite global de 10.000 BENDICIÓN alcanzado", "err");
-        return;
-    }
-
     btn.disabled = true;
-    btn.innerText = "Procesando...";
+    btn.innerText = "Validando...";
 
+    // 1) VALIDAR
+    let resVal;
     try {
-        const res = await fetch(API_STAKE, {
+        resVal = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/validar", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -319,18 +312,49 @@ btn.onclick = async () => {
                 days
             })
         });
-
-        const data = await res.json();
-
-        if (data.error) {
-            showToast(data.error, "err");
-        } else {
-            showToast("Staking creado correctamente", "ok");
-            loadGlobalStake();
-        }
-
     } catch (e) {
-        showToast("Error de conexión con el servidor", "err");
+        showToast("Error al validar", "err");
+        btn.disabled = false;
+        btn.innerText = "Iniciar Staking";
+        return;
+    }
+
+    const dataVal = await resVal.json();
+    if (dataVal.error) {
+        showToast(dataVal.error, "err");
+        btn.disabled = false;
+        btn.innerText = "Iniciar Staking";
+        return;
+    }
+
+    // 2) CREAR STAKING
+    btn.innerText = "Creando...";
+
+    let resCreate;
+    try {
+        resCreate = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/create", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({
+                user_id: userId,
+                amount,
+                days
+            })
+        });
+    } catch (e) {
+        showToast("Error al crear staking", "err");
+        btn.disabled = false;
+        btn.innerText = "Iniciar Staking";
+        return;
+    }
+
+    const dataCreate = await resCreate.json();
+
+    if (dataCreate.error) {
+        showToast(dataCreate.error, "err");
+    } else {
+        showToast("Staking creado correctamente", "ok");
+        loadGlobalStake();
     }
 
     btn.disabled = false;

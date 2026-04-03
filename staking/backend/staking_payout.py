@@ -1,76 +1,67 @@
-# staking/backend/staking_payout.py
-
+import json
 import requests
-from staking_data import load_staking, save_staking, move_to_history
+import os
 
-# URL del microservicio DON
-DON_URL = "http://don_api:5008"
+HISTORY_FILE = "/app/db/stakingcompletados_history.json"
+PAYOUT_FILE = "/app/db/staking_payout.json"
+DON_API_URL = "http://don_api:5008/don/add"
 
-# ============================================================
-#   FUNCIONES PARA COMUNICARSE CON WALLET
-# ============================================================
-def load_wallets():
-    try:
-        r = requests.get("http://wallet_api:5002/get_wallets")
-        return r.json()
-    except:
-        return {"wallets": []}
 
-# ============================================================
-#   FUNCIONES PARA COMUNICARSE CON DON
-# ============================================================
-def don_add(user_id, amount):
-    """Llama al microservicio DON para crear tokens (mint)."""
-    try:
-        requests.post(f"{DON_URL}/don/add", json={
+def load_json(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, "r") as f:
+        try:
+            return json.load(f)
+        except:
+            return []
+
+
+def save_json(path, data):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+def process_payouts():
+    history = load_json(HISTORY_FILE)
+    payouts = load_json(PAYOUT_FILE)
+
+    # evitar pagos duplicados
+    pagados = {p["staking_id"] for p in payouts}
+
+    nuevos_pagos = []
+
+    for item in history:
+        staking_id = item.get("staking_id")
+        if staking_id in pagados:
+            continue
+
+        user_id = item.get("user_id")
+        reward = item.get("reward")
+
+        if not user_id or reward is None:
+            continue
+
+        # pagar DON
+        try:
+            requests.post(DON_API_URL, json={
+                "user_id": user_id,
+                "amount": reward
+            })
+        except:
+            continue
+
+        # registrar pago
+        nuevos_pagos.append({
+            "staking_id": staking_id,
             "user_id": user_id,
-            "amount": amount
+            "amount": reward
         })
-    except Exception as e:
-        print(f"❌ Error llamando a DON: {e}")
 
-# ============================================================
-#   PROCESAR STAKES COMPLETADOS
-# ============================================================
-def pay_completed_stakes():
-    """
-    - Busca stakes completados
-    - Crea DON como recompensa (vía API DON)
-    - Mueve stake al historial
-    """
+    if nuevos_pagos:
+        payouts.extend(nuevos_pagos)
+        save_json(PAYOUT_FILE, payouts)
 
-    staking = load_staking()
-    wallets = load_wallets()
 
-    pagados = 0
-
-    for stake in staking["stakes"]:
-        if stake["status"] != "completed":
-            continue
-
-        user_id = stake["user_id"]
-        reward = float(stake["reward_acumulada"])
-
-        # Verificar que el usuario tiene wallet
-        wallet = next((w for w in wallets["wallets"] if w["user_id"] == user_id), None)
-        if wallet is None:
-            print(f"⚠ No se encontró wallet para user_id {user_id}")
-            continue
-
-        # Crear DON (mint) vía API DON
-        don_add(user_id, reward)
-
-        # Marcar stake como pagado
-        stake["status"] = "paid"
-
-        # Mover al historial
-        move_to_history(stake["stake_id"], reason="reward_paid")
-
-        pagados += 1
-
-    save_staking(staking)
-
-    return {
-        "status": "ok",
-        "pagados": pagados
-    }
+if __name__ == "__main__":
+    process_payouts()

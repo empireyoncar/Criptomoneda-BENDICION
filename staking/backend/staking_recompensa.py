@@ -1,148 +1,145 @@
-import uuid
-from datetime import datetime, timedelta
+import time
+import json
+import os
+from staking_data import load_file, save_file, move_to_completed
 
-# IMPORTS CORRECTOS SEGÚN TU ESTRUCTURA REAL
-from staking_data import load_staking, save_staking, move_to_history
+BASE_PATH = "/app"
 
+# Archivos principales
+RECOMPENSA_LOG = os.path.join(BASE_PATH, "staking_recompensa.json")
+ACTIVOS_FILE = os.path.join(BASE_PATH, "stakingactivos.json")
 
-# ---------------------------------------------------------
-#   GENERAR ID ÚNICO
-# ---------------------------------------------------------
-def generate_stake_id():
-    return str(uuid.uuid4())
-
-
-# ---------------------------------------------------------
-#   TABLA DE RECOMPENSAS FIJAS EN DON
-# ---------------------------------------------------------
-def get_total_don_reward(days, amount):
-    reward_table = {
-        30: 6.6,
-        60: 15,
-        90: 25,
-        180: 55,
-        365: 120
-    }
-
-    base_reward = reward_table.get(days, 0)
-    return (amount / 1000) * base_reward
+# Límites recomendados
+MAX_RECOMPENSA_MB = 5 * 1024 * 1024     # 5 MB
+MAX_STAKING_ACTIVOS = 5000              # 5000 staking por archivo
 
 
 # ---------------------------------------------------------
-#   CALCULAR RECOMPENSA DIARIA
+# ROTACIÓN DE ARCHIVOS
 # ---------------------------------------------------------
-def calculate_daily_reward(total_reward, days):
-    return round(total_reward / days, 8)
+
+def rotar_archivo_recompensa():
+    """Rota staking_recompensa.json cuando supera 5 MB."""
+    if not os.path.exists(RECOMPENSA_LOG):
+        return
+
+    if os.path.getsize(RECOMPENSA_LOG) < MAX_RECOMPENSA_MB:
+        return
+
+    # Buscar siguiente número disponible
+    i = 1
+    while True:
+        nuevo = os.path.join(BASE_PATH, f"staking_recompensa_{i}.json")
+        if not os.path.exists(nuevo):
+            os.rename(RECOMPENSA_LOG, nuevo)
+            break
+        i += 1
+
+    # Crear archivo nuevo vacío
+    with open(RECOMPENSA_LOG, "w") as f:
+        json.dump([], f)
 
 
-# ---------------------------------------------------------
-#   TOTAL GLOBAL STAKEADO
-# ---------------------------------------------------------
-def get_total_staked():
-    staking = load_staking()
-    total = sum(float(s["amount"]) for s in staking["stakes"] if s["status"] == "locked")
-    return total
+def rotar_archivo_activos():
+    """Rota stakingactivos.json cuando supera 5000 staking."""
+    activos = load_file("activos")
 
+    if len(activos) < MAX_STAKING_ACTIVOS:
+        return
 
-# ---------------------------------------------------------
-#   GENERAR STAKE COMPLETO
-# ---------------------------------------------------------
-def generar_stake_completo(user_id, amount, days):
+    # Buscar siguiente número disponible
+    i = 1
+    while True:
+        nuevo = os.path.join(BASE_PATH, f"stakingactivos_{i}.json")
+        if not os.path.exists(nuevo):
+            with open(nuevo, "w") as f:
+                json.dump(activos, f, indent=4)
+            break
+        i += 1
 
-    # 1. Verificar límite global
-    total_actual = get_total_staked()
-    if total_actual + amount > 10000:
-        return {"error": "Límite global de 10.000 BENDICIÓN en staking alcanzado"}
-
-    # 2. Fechas
-    start = datetime.utcnow()
-    end = start + timedelta(days=days)
-
-    # 3. Recompensas
-    total_reward = get_total_don_reward(days, amount)
-    reward_daily = calculate_daily_reward(total_reward, days)
-
-    # 4. Crear stake
-    stake = {
-        "stake_id": generate_stake_id(),
-        "user_id": user_id,
-        "amount": amount,
-        "days": days,
-        "total_reward": total_reward,
-        "reward_daily": reward_daily,
-        "reward_acumulada": 0.0,
-        "start_date": start.isoformat(),
-        "end_date": end.isoformat(),
-        "last_reward_date": start.isoformat(),
-        "status": "locked"
-    }
-
-    return stake
+    # Vaciar archivo principal
+    with open(ACTIVOS_FILE, "w") as f:
+        json.dump([], f)
 
 
 # ---------------------------------------------------------
-#   PROCESAR RECOMPENSAS DIARIAS
+# LOG GLOBAL DE RECOMPENSAS
 # ---------------------------------------------------------
-def process_daily_rewards():
-    staking = load_staking()
-    now = datetime.utcnow()
 
-    for stake in staking["stakes"]:
-        if stake["status"] != "locked":
+def log_recompensa(entry):
+    """Guarda un registro global de recompensas diarias."""
+
+    # Rotar si es necesario
+    rotar_archivo_recompensa()
+
+    # Cargar archivo actual
+    with open(RECOMPENSA_LOG, "r") as f:
+        data = json.load(f)
+
+    data.append(entry)
+
+    with open(RECOMPENSA_LOG, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+# ---------------------------------------------------------
+# PROCESAR RECOMPENSAS DIARIAS
+# ---------------------------------------------------------
+
+def procesar_recompensas():
+    """
+    - Recorre todos los staking activos
+    - Genera recompensa diaria
+    - Actualiza reward_history
+    - Mueve a completados si terminó
+    - Rota archivos si es necesario
+    """
+    activos = load_file("activos")
+    ahora = int(time.time())
+    cambios = False
+
+    for stake in activos:
+        stake_id = stake["stake_id"]
+        days = stake["days"]
+        reward_total = stake["reward_total"]
+        reward_daily = reward_total / days
+
+        if "reward_history" not in stake:
+            stake["reward_history"] = []
+
+        # Si terminó → mover a completados
+        if ahora >= stake["end_timestamp"]:
+            move_to_completed(stake_id)
+            cambios = True
             continue
 
-        last = datetime.fromisoformat(stake["last_reward_date"])
-
-        if (now - last).days >= 1:
-            stake["reward_acumulada"] += stake["reward_daily"]
-            stake["last_reward_date"] = now.isoformat()
-
-    save_staking(staking)
-
-
-# ---------------------------------------------------------
-#   LIBERAR STAKES COMPLETADOS
-# ---------------------------------------------------------
-def release_finished_stakes():
-    staking = load_staking()
-    now = datetime.utcnow()
-
-    for stake in staking["stakes"]:
-        if stake["status"] != "locked":
+        # Ver si ya pasó 1 día
+        last_calc = stake.get("last_reward_calc", stake["timestamp"])
+        if ahora - last_calc < 24 * 3600:
             continue
 
-        end = datetime.fromisoformat(stake["end_date"])
+        # Registrar recompensa diaria
+        stake["reward_history"].append({
+            "timestamp": ahora,
+            "reward": reward_daily
+        })
 
-        if now >= end:
-            stake["status"] = "completed"
-            move_to_history(stake["stake_id"], reason="completed")
+        stake["reward_accumulated"] = stake.get("reward_accumulated", 0) + reward_daily
+        stake["last_reward_calc"] = ahora
 
-    save_staking(staking)
+        # Log global
+        log_recompensa({
+            "stake_id": stake_id,
+            "timestamp": ahora,
+            "reward": reward_daily
+        })
 
+        cambios = True
 
-# ---------------------------------------------------------
-#   CANCELAR STAKE
-# ---------------------------------------------------------
-def cancel_stake(stake_id):
-    staking = load_staking()
+    if cambios:
+        save_file("activos", activos)
 
-    stake = next((s for s in staking["stakes"] if s["stake_id"] == stake_id), None)
-    if not stake:
-        return {"error": "Stake no encontrado"}
+    # Rotar archivo de staking activos si es necesario
+    rotar_archivo_activos()
 
-    stake["reward_acumulada"] = 0.0
-    stake["status"] = "cancelled"
-
-    move_to_history(stake_id, reason="cancelled")
-    save_staking(staking)
-
-    return {"success": True}
-
-
-# ---------------------------------------------------------
-#   CRON JOB
-# ---------------------------------------------------------
-def cron_job():
-    process_daily_rewards()
-    release_finished_stakes()
-    return {"cron": "ok"}
+    return {"status": "ok", "updated": cambios}

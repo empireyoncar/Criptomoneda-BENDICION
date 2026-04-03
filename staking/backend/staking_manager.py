@@ -1,6 +1,6 @@
 # staking_manager.py
 import requests
-from staking_data import load_staking, save_staking
+from staking_data import load_file, save_file
 from staking_recompensa import generar_stake_completo
 
 # ============================================================
@@ -91,8 +91,8 @@ def create_stake(user_id, amount, days):
     stake_data = generar_stake_completo(user_id, amount, days)
 
     # Guardar stake
-    staking = load_staking()
+    staking = load_file()
     staking["stakes"].append(stake_data)
-    save_staking(staking)
+    save_file(staking)
 
     return {"success": True, "stake": stake_data}

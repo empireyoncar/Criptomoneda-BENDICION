@@ -3,18 +3,11 @@ from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
 # Importar función del backend de staking
-from staking_recompensa import get_total_staked
 
 # ============================================================
 # Blueprint API Staking
 # ============================================================
 staking_api = Blueprint("staking_api", __name__)
-
-@staking_api.route("/Staking/total", methods=["GET"])
-def staking_total():
-    total = get_total_staked()
-    return jsonify({"total_staked": total})
-
 
 # ============================================================
 # Servidor principal

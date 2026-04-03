@@ -297,7 +297,7 @@ btn.onclick = async () => {
         return;
     }
 
-    const resLimit = await fetch("https://empireyoncar.duckdns.org/Staking/total");
+    const resLimit = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/total");
     const dataLimit = await resLimit.json();
     const totalActual = parseFloat(dataLimit.total_staked);
 

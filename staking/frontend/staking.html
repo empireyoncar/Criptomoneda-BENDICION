@@ -148,16 +148,10 @@
         <p><strong>ID Usuario:</strong> <span id="userId"></span></p>
         <p>Address(wallet): <span id="address" class="mono"></span></p>
         <p><strong>Saldo:</strong> <span id="balance"></span> BEND</p>
-        <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
         <button id="btnLoadWallet" class="btn btn-primary">Cargar Wallet</button>
+        <button id="btnGetBalance" class="btn btn-primary">Ver Saldo</button>
     </section>
-    <!-- Balance -->
-        <section class="card">
-            <h2>Balance</h2>
-            <p>Consulta cuántas monedas BENDICIÓN tienes actualmente en tu wallet.</p>
-            <button id="btnGetBalance" class="btn btn-primary">Ver balance</button>
-            <p><strong>Balance:</strong> <span id="balance"></span></p>
-        </section>
+
     <label>Monto a stakear</label>
     <input type="number" id="amount" placeholder="Ej: 100">
 
@@ -187,7 +181,7 @@
 <div id="toast"></div>
 
 <script>
-const API_STAKE = "https://empireyoncar.duckdns.org/Staking/stake";
+const API_STAKE = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/stake";
 const API_BLOCKCHAIN = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
 const amountInput = document.getElementById("amount");
@@ -229,7 +223,7 @@ if (!userId) {
 -------------------------- */
 async function loadGlobalStake() {
     try {
-        const res = await fetch("https://empireyoncar.duckdns.org/Staking/total");
+        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/total");
         const data = await res.json();
 
         const total = parseFloat(data.total_staked);

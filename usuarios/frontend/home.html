@@ -97,6 +97,9 @@
         <h1>Panel Principal</h1>
         <p>ID de usuario: <span id="userId"></span></p>
         <p class="label-inline">Selecciona una acción para continuar.</p>
+
+        <!-- 🔥 BOTÓN DE LOGOUT AÑADIDO AQUÍ -->
+        <button id="logoutBtn" class="logout-button">Cerrar sesión</button>
     </div>
 
     <div class="grid">
@@ -159,7 +162,8 @@
                 Ver mi Wallet
             </button>
         </section>
-        <!-- NUEVA SECCIÓN: Mi Wallet -->
+
+        <!-- NUEVA SECCIÓN: Stake -->
         <section class="card">
             <h2>Stake</h2>
             <p>Todo lo que tengo que ver con Staking</p>
@@ -171,6 +175,24 @@
 
     </div>
 </div>
+
+<!-- 🔥 ESTILO DEL BOTÓN DE LOGOUT -->
+<style>
+.logout-button {
+    background: #e63946;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    float: right;
+    margin-top: -40px;
+}
+.logout-button:hover {
+    background: #d62828;
+}
+</style>
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
@@ -185,6 +207,13 @@
     } else {
         document.getElementById("userId").textContent = userId;
     }
+
+    // 🔥 LOGOUT: limpiar todo y volver al login
+    document.getElementById("logoutBtn").onclick = () => {
+        localStorage.clear();
+        window.location.href = "login.html";
+    };
+
     // Navegación esta en la carpeta de templates_KYC
     document.getElementById("btnKYC").onclick = () => {
         window.location.href = "../templates_KYC/kyc.html";
@@ -201,7 +230,7 @@
     document.getElementById("btnGoP2P").onclick = () => {
         window.location.href = "p2p.html";
     };
-    // wallet proxima construccion
+
     document.getElementById("btnGoWallet").onclick = () => {
         window.location.href = "/CriptoBendicion/wallet";
     };
@@ -213,7 +242,6 @@
     document.getElementById("btnGoDON").onclick = () => {
         window.location.href = "/CriptoBendicion/don/dashboard";
     };
-
 </script>
 
 </body>

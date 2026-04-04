@@ -1,11 +1,10 @@
 import json
 import os
 from threading import Lock
+from don_history import log_transaction   # ← INTEGRACIÓN
 
 # ============================================================
 # Archivo donde se guardan los balances y el supply
-# Se monta desde docker-compose:
-# ./token/backend/don_ledger.json:/app/don_ledger.json
 # ============================================================
 DON_FILE = "/app/don_ledger.json"
 
@@ -67,6 +66,9 @@ def add(user_id: str, amount: float) -> None:
 
         _save(data)
 
+        # HISTORIAL
+        log_transaction("mint", None, user_id, amount)
+
 
 def subtract(user_id: str, amount: float) -> bool:
     """Restar DON al usuario (pago/uso)."""
@@ -84,6 +86,10 @@ def subtract(user_id: str, amount: float) -> bool:
 
         users[user_id] = current - amount
         _save(data)
+
+        # HISTORIAL
+        log_transaction("subtract", user_id, None, amount)
+
         return True
 
 
@@ -105,6 +111,10 @@ def transfer(from_user: str, to_user: str, amount: float) -> bool:
         users[to_user] = float(users.get(to_user, 0.0)) + amount
 
         _save(data)
+
+        # HISTORIAL
+        log_transaction("transfer", from_user, to_user, amount)
+
         return True
 
 
@@ -126,4 +136,8 @@ def burn(user_id: str, amount: float) -> bool:
         data["total_supply"] = float(data.get("total_supply", 0.0)) - amount
 
         _save(data)
+
+        # HISTORIAL
+        log_transaction("burn", user_id, None, amount)
+
         return True

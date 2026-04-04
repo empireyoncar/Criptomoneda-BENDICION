@@ -60,4 +60,10 @@ def procesar_recompensas():
 
 
 if __name__ == "__main__":
-    procesar_recompensas()
+    while True:
+        print("Ejecutando proceso de recompensas...")
+        procesar_recompensas()
+        print("Proceso completado. Próxima ejecución en 12 horas.")
+        
+        time.sleep(43200)  # 12 horas = 2 veces al día
+

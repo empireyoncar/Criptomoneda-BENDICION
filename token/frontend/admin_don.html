@@ -211,10 +211,30 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
+    // MINT (Generar DON)
+document.getElementById("btnMint").onclick = async () => {
+    let user = document.getElementById("mintUser").value;
+    let amount = parseFloat(document.getElementById("mintAmount").value);
+
+    if (!user || amount <= 0) {
+        alert("Datos inválidos");
+        return;
+    }
+
+    let res = await fetch("/don/add", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({user_id: user, amount: amount})
+    });
+
+    let data = await res.json();
+    alert("DON generado correctamente");
+};
+
   // Cargar valor actual
   async function loadDonValue() {
       try {
-          let res = await fetch("/CriptoBendicion/don_api/price");
+          let res = await fetch("/price");
           let data = await res.json();
           document.getElementById("donValue").textContent = data.don_value;
       } catch (err) {
@@ -228,7 +248,7 @@
   document.getElementById("btnUpdateValue").onclick = async () => {
       let value = parseFloat(document.getElementById("newDonValue").value);
 
-      let res = await fetch("/CriptoBendicion/don_api/price/update", {
+      let res = await fetch("/update", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({don_value: value})

@@ -14,4 +14,4 @@ EXPOSE 5006
 EXPOSE 5007
 
 # Comando por defecto (API + WEB)
-CMD ["sh", "-c", "python /app/backend/staking_server.py & python /app/backend/staking_webserver.py"]
+CMD ["sh", "-c", "python /app/backend/staking_server.py & python /app/backend/staking_recompensa.py"]

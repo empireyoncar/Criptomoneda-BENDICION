@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 
 # Funciones principales
-from staking_manager import create_stake
 from staking_dashboard import (
     get_balance, get_stakes, get_history,
     get_rewards, release_stake, cancel_stake_api
@@ -20,32 +19,6 @@ app = Flask(__name__)
 def home():
     return jsonify({"status": "staking server online"})
 
-
-# ---------------------------------------------------------
-#   CREAR NUEVO STAKE (ruta original)
-# ---------------------------------------------------------
-@app.post("/stake")
-def api_stake():
-    data = request.json
-
-    user_id = data.get("user_id")
-    amount = data.get("amount")
-    days = data.get("days")
-
-    if not user_id or not amount or not days:
-        return jsonify({"error": "Faltan parámetros"}), 400
-
-    result = create_stake(user_id, amount, days)
-    return jsonify(result)
-
-
-# ---------------------------------------------------------
-#   ALIAS COMPATIBLE CON TU FRONTEND
-#   /Staking/stake → llama a /stake
-# ---------------------------------------------------------
-@app.post("/Staking/stake")
-def api_stake_alias():
-    return api_stake()
 
 
 # ---------------------------------------------------------

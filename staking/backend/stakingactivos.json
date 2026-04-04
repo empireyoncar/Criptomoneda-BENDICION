@@ -1,1 +1,14 @@
-[]
+[
+    {
+        "stake_id": "test-finalizado-001",
+        "user_id": "001",
+        "wallet": "bc1caf7ddb9d0f14e32e5806582efc561fa554661e5ac96235c52634b3b48c80",
+        "amount_bend": 100.0,
+        "days": 30,
+        "reward_don": 0.66,
+        "reward_claimed": false,
+        "timestamp": 1000,
+        "end_timestamp": 1000,
+        "status": "active"
+    }
+]

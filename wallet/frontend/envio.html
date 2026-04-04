@@ -313,57 +313,68 @@
         }
     };
 
-    // ============================================================
-    //  ENVIAR TRANSACCIÓN FIRMADA (NUEVO)
-    // ============================================================
-    document.getElementById("btnSend").onclick = async () => {
-        const toAddress = document.getElementById("toAddress").value.trim();
-        const amount = parseFloat(document.getElementById("amount").value);
+   // ============================================================
+//  ENVIAR TRANSACCIÓN FIRMADA (CORREGIDA PARA BACKEND SEGURO)
+// ============================================================
+document.getElementById("btnSend").onclick = async () => {
+    const toAddress = document.getElementById("toAddress").value.trim();
+    const amount = parseFloat(document.getElementById("amount").value);
 
-        if (!toAddress || !amount || amount <= 0) {
-            showAlert("Completa los campos con un monto válido.", "error");
-            return;
+    if (!toAddress || !amount || amount <= 0) {
+        showAlert("Completa los campos con un monto válido.", "error");
+        return;
+    }
+
+    // 1. Generar address = SHA256(public_key)
+    const address = CryptoJS.SHA256(publicKey).toString();
+
+    // 2. Crear transacción ordenada
+    const tx = { from: address, to: toAddress, amount };
+
+    try {
+        // 3. Firmar transacción con ECDSA secp256k1
+        const ec = new elliptic.ec("secp256k1");
+        const key = ec.keyFromPrivate(privateKey, "hex");
+
+        // JSON EXACTO como Python: sort_keys=True
+        const txString = JSON.stringify(tx, Object.keys(tx).sort());
+
+        // Hash EXACTO como Python: SHA256(bytes)
+        const encoder = new TextEncoder();
+        const txBytes = encoder.encode(txString);
+        const txWordArray = CryptoJS.lib.WordArray.create(txBytes);
+        const txHash = CryptoJS.SHA256(txWordArray).toString();
+
+        // Firma DER HEX
+        const signature = key.sign(txHash);
+        const signatureHex = signature.toDER("hex");
+
+        // 4. Enviar al backend
+        const res = await fetch(`${API}/send_tx`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                tx: tx,
+                public_key: publicKey,
+                signature: signatureHex
+            })
+        });
+
+        const data = await res.json();
+        document.getElementById("sendResult").textContent = JSON.stringify(data, null, 2);
+
+        if (!data.error) {
+            showAlert("Transacción enviada con éxito.", "success");
+        } else {
+            showAlert(data.error, "error");
         }
 
-        // 1. Crear transacción
-        const tx = { from: address, to: toAddress, amount };
+    } catch (err) {
+        console.error(err);
+        showAlert("Error al firmar o enviar la transacción.", "error");
+    }
+};
 
-        try {
-            // 2. Firmar transacción con ECDSA
-            const ec = new elliptic.ec("secp256k1");
-            const key = ec.keyFromPrivate(privateKey, "hex");
-
-            const txString = JSON.stringify(tx, Object.keys(tx).sort());
-            const txHash = CryptoJS.SHA256(txString).toString();
-
-            const signature = key.sign(txHash);
-            const signatureHex = signature.toDER("hex");
-
-            // 3. Enviar al nodo blockchain
-            const res = await fetch(`${API}/send_tx`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    tx: tx,
-                    public_key: "0",
-                    signature: "0"
-                })
-            });
-
-            const data = await res.json();
-            document.getElementById("sendResult").textContent = JSON.stringify(data, null, 2);
-
-            if (!data.error) {
-                showAlert("Transacción enviada con éxito.", "success");
-            } else {
-                showAlert(data.error, "error");
-            }
-
-        } catch (err) {
-            console.error(err);
-            showAlert("Error al firmar o enviar la transacción.", "error");
-        }
-    };
 
     // Crear bloque
     document.getElementById("btnCommit").onclick = async () => {

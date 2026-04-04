@@ -146,10 +146,12 @@ services:
       - "5008:5008"
     volumes:
       - ./token/backend/don_server.py:/app/don_server.py
+      - ./token/backend/don_history.py:/app/don_history.py
       - ./token/backend/don.py:/app/don.py
       - ./token/backend/don_value.py:/app/don_value.py
       - ./token/backend/don_ledger.json:/app/don_ledger.json
       - ./token/backend/don_value.json:/app/don_value.json
+      - ./token/backend/don_history:/app/don_history     # ← NECESARIO
     restart: always
     networks:
       - bendicion_net

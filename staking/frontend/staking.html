@@ -249,6 +249,8 @@ daysSelect.onchange = calcReward;
 
 // boton de crear staking
 
+const API_STAKING = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api";
+
 document.getElementById("btnStake").onclick = async () => {
     const amount = parseFloat(document.getElementById("amount").value);
     const days = parseInt(document.getElementById("days").value);
@@ -268,7 +270,7 @@ document.getElementById("btnStake").onclick = async () => {
     };
 
     try {
-        const res = await fetch("/Staking/create", {
+        const res = await fetch(`${API_STAKING}/Staking/create`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)

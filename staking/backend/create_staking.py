@@ -5,7 +5,9 @@ import time
 from staking_data import add_staking
 
 BLOCKCHAIN_SERVER = "http://blockchain_api:5004"
-STAKING_POOL = "STAKING_POOL"
+
+# Wallet del administrador donde se guardan los tokens stakeados
+ADMIN_WALLET = "bc1caf7ddb9d0f14e32e5806582efc561fa554661e5ac96235c52634b3b48c80"
 
 # Tabla de recompensas según días
 REWARD_TABLE = {
@@ -17,10 +19,15 @@ REWARD_TABLE = {
 }
 
 
-def bloquear_tokens(wallet_address, amount):
+def restar_bendicion(wallet_address, amount):
+    """
+    Resta criptomoneda Bendición (BEND) del usuario
+    enviándola a la wallet del administrador.
+    """
+
     tx = {
         "from": wallet_address,
-        "to": STAKING_POOL,
+        "to": ADMIN_WALLET,
         "amount": amount
     }
 
@@ -34,34 +41,38 @@ def bloquear_tokens(wallet_address, amount):
     )
 
     if res.status_code != 200:
-        raise Exception("Error al bloquear tokens en blockchain")
+        raise Exception("Error al transferir Bendición en la blockchain")
 
     return True
 
 
-def confirmar_bloqueo():
+def confirmar_transaccion():
+    """
+    Confirma la transacción en la blockchain.
+    """
     res = requests.post(f"{BLOCKCHAIN_SERVER}/commit")
 
     if res.status_code != 200:
-        raise Exception("Error al confirmar el bloqueo en blockchain")
+        raise Exception("Error al confirmar la transacción en blockchain")
 
     return True
 
 
 def crear_staking(user_id, wallet_address, amount, days):
     """
-    1. Bloquea tokens
-    2. Confirma bloqueo
-    3. Crea registro del staking con recompensa fija
+    1. Resta Bendición al usuario (envía al admin)
+    2. Confirma la transacción
+    3. Calcula recompensa DON
+    4. Crea registro del staking
     """
 
-    # 1. BLOQUEAR TOKENS
-    bloquear_tokens(wallet_address, amount)
+    # 1. RESTAR BENDICIÓN (BEND)
+    restar_bendicion(wallet_address, amount)
 
-    # 2. CONFIRMAR BLOQUEO
-    confirmar_bloqueo()
+    # 2. CONFIRMAR TRANSACCIÓN
+    confirmar_transaccion()
 
-    # 3. CALCULAR RECOMPENSA TOTAL
+    # 3. CALCULAR RECOMPENSA DON
     don_base = REWARD_TABLE.get(int(days), 0)
     reward_total = (amount / 1000) * don_base
 
@@ -74,9 +85,9 @@ def crear_staking(user_id, wallet_address, amount, days):
         "stake_id": stake_id,
         "user_id": user_id,
         "wallet": wallet_address,
-        "amount": amount,
+        "amount_bend": amount,
         "days": int(days),
-        "reward_total": reward_total,
+        "reward_don": reward_total,
         "reward_claimed": False,
         "timestamp": timestamp,
         "end_timestamp": end_timestamp,
@@ -88,6 +99,6 @@ def crear_staking(user_id, wallet_address, amount, days):
     return {
         "status": "success",
         "stake_id": stake_id,
-        "reward_total": reward_total,
+        "reward_don": reward_total,
         "message": "Staking creado correctamente"
     }

@@ -221,7 +221,7 @@ document.getElementById("btnMint").onclick = async () => {
         return;
     }
 
-    let res = await fetch("/don/add", {
+    let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/add", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({user_id: user, amount: amount})
@@ -234,7 +234,7 @@ document.getElementById("btnMint").onclick = async () => {
   // Cargar valor actual
   async function loadDonValue() {
       try {
-          let res = await fetch("/price");
+          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/price");
           let data = await res.json();
           document.getElementById("donValue").textContent = data.don_value;
       } catch (err) {
@@ -248,7 +248,7 @@ document.getElementById("btnMint").onclick = async () => {
   document.getElementById("btnUpdateValue").onclick = async () => {
       let value = parseFloat(document.getElementById("newDonValue").value);
 
-      let res = await fetch("/update", {
+      let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/price/update", {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({don_value: value})

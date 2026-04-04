@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import subprocess
 
 # Importar el manejador de base de datos del staking
 import staking_data
@@ -46,7 +47,7 @@ def procesar_recompensas():
                 "wallet": stake["wallet"],
                 "reward_don": stake["reward_don"],
                 "timestamp": ahora,
-                "status": "pending"  # luego tu sistema de DON lo procesará
+                "status": "pending"  # staking_payout.py lo cambiará a "paid"
             }
 
             recompensas.append(recompensa)
@@ -58,6 +59,14 @@ def procesar_recompensas():
 
     print("Proceso de recompensas completado.")
 
+    # 🔥 EJECUTAR staking_payout.py AUTOMÁTICAMENTE
+    try:
+        print("Ejecutando staking_payout.py...")
+        subprocess.run(["python3", "/app/staking_payout.py"], check=True)
+        print("staking_payout.py ejecutado correctamente.")
+    except Exception as e:
+        print("Error ejecutando staking_payout.py:", e)
+
 
 if __name__ == "__main__":
     while True:
@@ -66,4 +75,3 @@ if __name__ == "__main__":
         print("Proceso completado. Próxima ejecución en 12 horas.")
         
         time.sleep(43200)  # 12 horas = 2 veces al día
-

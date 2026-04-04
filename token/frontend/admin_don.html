@@ -258,7 +258,21 @@ document.getElementById("btnMint").onclick = async () => {
       alert("Nuevo valor establecido: " + data.new_value);
       loadDonValue();
   };
+async function loadSupply() {
+    try {
+        let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/supply");
+        let data = await res.json();
 
+        document.getElementById("totalSupply").textContent = data.total_supply;
+        document.getElementById("circulacion").textContent = data.circulacion;
+        document.getElementById("burned").textContent = data.burned;
+    } catch (err) {
+        alert("Error al cargar el estado del token DON");
+    }
+}
+
+document.getElementById("btnLoadSupply").onclick = loadSupply;
+loadSupply();
   // Cargar automáticamente al abrir
   loadDonValue();
 </script>

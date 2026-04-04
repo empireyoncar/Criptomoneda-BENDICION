@@ -217,9 +217,35 @@
           document.getElementById("donValue").textContent = "Error";
       }
   }
+  // Cargar balance del usuario
+    async function loadBalance() {
+        try {
+            let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${userId}`);
+            let data = await res.json();
+            document.getElementById("balance").textContent = data.balance;
+        } catch (err) {
+            document.getElementById("balance").textContent = "Error";
+        }
+    }
+    // Transferir DON
+document.getElementById("btnTransfer").onclick = async () => {
+    let to = document.getElementById("toUser").value;
+    let amount = parseFloat(document.getElementById("amount").value);
+
+    let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/transfer", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({from_user: userId, to_user: to, amount: amount})
+    });
+
+    let data = await res.json();
+    alert("Transferencia realizada");
+    loadBalance(); // ← recargar balance
+};
 
   // Cargar automáticamente al abrir
   loadDonValue();
+  loadBalance();
 </script>
 
 </body>

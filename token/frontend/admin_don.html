@@ -125,7 +125,7 @@
 <body>
 
 <header>Panel Administrador – Token DON</header>
-<p>ID de usuario: <span id="userId"></span></p>
+<p>ID de usuario: <span id="user_id"></span></p>
 <div class="container">
 
   <!-- VALOR DE DON -->
@@ -211,8 +211,9 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
-    
-    // Cargar balance del usuario
+  window.onload = () => {
+    localStorage.setItem("user_id", "001");
+};    // Cargar balance del usuario
     async function loadBalance() {
         try {
             let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${userId}`);

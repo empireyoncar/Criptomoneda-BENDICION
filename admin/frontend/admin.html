@@ -123,9 +123,11 @@
 <header>Panel de Administración – BENDICIÓN</header>
 
 <div class="container">
-
+  
   <p><strong>Admin ID:</strong> {{ session['user_id'] }}</p>
-
+  <div style="text-align:center; margin-top:10px; color:#f0b90b;">
+  ID de usuario: <span id="userId"></span>
+</div>
   <!-- DASHBOARD -->
   <section class="box">
     <h2>Dashboard General</h2>
@@ -201,6 +203,13 @@
 </div>
 
 <script>
+  window.onload = () => {
+    localStorage.setItem("user_id", "001");
+};
+  window.onload = () => {
+    localStorage.setItem("userId", "001");
+};
+
    const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
   // -------------------------

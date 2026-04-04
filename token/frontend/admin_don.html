@@ -125,7 +125,9 @@
 <body>
 
 <header>Panel Administrador – Token DON</header>
-
+<div style="text-align:center; margin-top:10px; color:#f0b90b;">
+  ID de usuario: <span id="userId"></span>
+</div>
 <div class="container">
 
   <!-- VALOR DE DON -->
@@ -157,17 +159,7 @@
       <div class="stat-label">Supply Total</div>
     </div>
 
-    <div class="stat-box">
-      <div class="stat-number" id="circulacion">0</div>
-      <div class="stat-label">DON en Circulación</div>
-    </div>
-
-    <div class="stat-box">
-      <div class="stat-number" id="burned">0</div>
-      <div class="stat-label">DON Quemados</div>
-    </div>
-
-    <button id="btnLoadSupply">Actualizar Datos</button>
+        <button id="btnLoadSupply">Actualizar Datos</button>
   </section>
 
   <!-- MINT -->
@@ -186,6 +178,16 @@
     <input type="text" id="subUser" placeholder="ID del usuario">
     <input type="number" id="subAmount" placeholder="Cantidad a restar">
     <button id="btnSubtract">Restar DON</button>
+  </section>
+
+  <!-- BALANCE -->
+  <section class="box">
+    <h2>Mi Balance DON</h2>
+
+    <div class="stat-box">
+      <div class="stat-number" id="balance">0</div>
+      <div class="stat-label">DON Disponibles</div>
+    </div>
   </section>
 
   <!-- HISTORIAL -->
@@ -211,6 +213,26 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
+    // Mostrar ID del usuario
+    let userId = localStorage.getItem("user_id");
+    if (!userId) {
+        alert("Debes iniciar sesión primero.");
+        window.location.href = "/CriptoBendicion/login.html";
+    } else {
+        document.getElementById("userId").textContent = userId;
+    }
+
+    // Cargar balance del usuario
+    async function loadBalance() {
+        try {
+            let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${userId}`);
+            let data = await res.json();
+            document.getElementById("balance").textContent = data.balance;
+        } catch (err) {
+            document.getElementById("balance").textContent = "Error";
+        }
+    }
+
     // MINT (Generar DON)
 document.getElementById("btnMint").onclick = async () => {
     let user = document.getElementById("mintUser").value;
@@ -260,12 +282,10 @@ document.getElementById("btnMint").onclick = async () => {
   };
 async function loadSupply() {
     try {
-        let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/supply");
+        let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/total_supply");
         let data = await res.json();
 
         document.getElementById("totalSupply").textContent = data.total_supply;
-        document.getElementById("circulacion").textContent = data.circulacion;
-        document.getElementById("burned").textContent = data.burned;
     } catch (err) {
         alert("Error al cargar el estado del token DON");
     }

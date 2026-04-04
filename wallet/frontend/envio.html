@@ -325,14 +325,20 @@ document.getElementById("btnSend").onclick = async () => {
         return;
     }
 
-    // 1. Generar address = SHA256(public_key)
-    const address = CryptoJS.SHA256(publicKey).toString();
+    // 1. Asegurar clave pública sin prefijo 04
+    let cleanPublicKey = publicKey;
+    if (cleanPublicKey.startsWith("04")) {
+        cleanPublicKey = cleanPublicKey.slice(2);
+    }
 
-    // 2. Crear transacción ordenada
+    // 2. Generar address = SHA256(public_key_sin_04)
+    const address = CryptoJS.SHA256(cleanPublicKey).toString();
+
+    // 3. Crear transacción ordenada
     const tx = { from: address, to: toAddress, amount };
 
     try {
-        // 3. Firmar transacción con ECDSA secp256k1
+        // 4. Firmar transacción con ECDSA secp256k1
         const ec = new elliptic.ec("secp256k1");
         const key = ec.keyFromPrivate(privateKey, "hex");
 
@@ -349,13 +355,13 @@ document.getElementById("btnSend").onclick = async () => {
         const signature = key.sign(txHash);
         const signatureHex = signature.toDER("hex");
 
-        // 4. Enviar al backend
+        // 5. Enviar al backend
         const res = await fetch(`${API}/send_tx`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 tx: tx,
-                public_key: publicKey,
+                public_key: cleanPublicKey,
                 signature: signatureHex
             })
         });
@@ -374,6 +380,7 @@ document.getElementById("btnSend").onclick = async () => {
         showAlert("Error al firmar o enviar la transacción.", "error");
     }
 };
+
 
 
     // Crear bloque

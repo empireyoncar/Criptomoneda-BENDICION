@@ -182,16 +182,24 @@ services:
     ports:
       - "5006:5006"
     volumes:
+      # Python scripts
       - ./staking/backend/staking_server.py:/app/backend/staking_server.py
       - ./staking/backend/staking_manager.py:/app/backend/staking_manager.py
       - ./staking/backend/staking_dashboard.py:/app/backend/staking_dashboard.py
       - ./staking/backend/staking_recompensa.py:/app/backend/staking_recompensa.py
       - ./staking/backend/staking_payout.py:/app/backend/staking_payout.py
       - ./staking/backend/staking_data.py:/app/backend/staking_data.py
-      - ./staking/backend/staking.json:/app/db/staking.json
-      - ./staking/backend/staking_history.json:/app/db/staking_history.json
+      - ./staking/backend/create_staking.py:/app/backend/create_staking.py
+      - ./staking/backend/staking.py:/app/backend/staking.py
+      - ./staking/backend/validador_staking.py:/app/backend/validador_staking.py
+
+      # JSON databases
+      - ./staking/backend/stakingactivos.json:/app/db/stakingactivos.json
       - ./staking/backend/stakingcompletados_history.json:/app/db/stakingcompletados_history.json
+      - ./staking/backend/stakingcancelados_history.json:/app/db/stakingcancelados_history.json
+      - ./staking/backend/staking_recompensa.json:/app/db/staking_recompensa.json
       - ./staking/backend/staking_payout.json:/app/db/staking_payout.json
+
     restart: always
     networks:
       - bendicion_net

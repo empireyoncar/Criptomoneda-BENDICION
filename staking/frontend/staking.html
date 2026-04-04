@@ -131,23 +131,12 @@
 
     <h2>Staking Bendición</h2>
 
-    <!-- STAKING GLOBAL -->
-    <div class="wallet-box">
-        <div class="wallet-line">
-            <b>Staking Global:</b> <span id="globalStake">Cargando...</span>
-        </div>
-
-        <div style="background:#0e1117; border-radius:6px; height:10px; margin-top:5px;">
-            <div id="stakeProgress" style="height:10px; width:0%; background:#f0b90b; border-radius:6px;"></div>
-        </div>
-    </div>
-
         <!-- WALLET -->
     <section class="card">
         <h2>Wallet</h2>
-        <p><strong>ID Usuario:</strong> <span id="userId"></span></p>
+        <p>ID Usuario: <span id="userId"></span></p>
         <p>Address(wallet): <span id="address" class="mono"></span></p>
-        <p><strong>Saldo:</strong> <span id="balance"></span> BEND</p>
+        <p>Saldo:<span id="balance"></span> BEND</p>
         <button id="btnLoadWallet" class="btn btn-primary">Cargar Wallet</button>
         <button id="btnGetBalance" class="btn btn-primary">Ver Saldo</button>
     </section>
@@ -181,7 +170,6 @@
 <div id="toast"></div>
 
 <script>
-const API_STAKE = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/stake";
 const API_BLOCKCHAIN = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
 const amountInput = document.getElementById("amount");
@@ -191,25 +179,25 @@ const rewardText = document.getElementById("rewardText");
 const btn = document.getElementById("btnStake");
 const toast = document.getElementById("toast");
 
-const walletAddressEl = document.getElementById("walletAddress");
-const walletBalanceEl = document.getElementById("walletBalance");
 const userIdEl = document.getElementById("userId");
 
+// -------------------------
+//   CARGAR WALLET
+// -------------------------
 const address = localStorage.getItem("address");
-    const privateKey = localStorage.getItem("private_key");
-    const publicKey = localStorage.getItem("public_key");
+const privateKey = localStorage.getItem("private_key");
+const publicKey = localStorage.getItem("public_key");
 
-    if (!address || !privateKey || !publicKey) {
-        alert("Primero configura tu wallet en la página principal.");
-        window.location.href = "wallet.html";
-    } else {
-        document.getElementById("address").textContent = address;
-    }
-    
-    
-/* -------------------------
-   SEGURIDAD: EXIGIR LOGIN
--------------------------- */
+if (!address || !privateKey || !publicKey) {
+    alert("Primero configura tu wallet en la página principal.");
+    window.location.href = "wallet.html";
+} else {
+    document.getElementById("address").textContent = address;
+}
+
+// -------------------------
+//   LOGIN OBLIGATORIO
+// -------------------------
 let userId = localStorage.getItem("user_id");
 if (!userId) {
     alert("Debes iniciar sesión primero.");
@@ -218,50 +206,24 @@ if (!userId) {
     userIdEl.textContent = userId;
 }
 
-/* -------------------------
-   CARGAR STAKING GLOBAL
--------------------------- */
-async function loadGlobalStake() {
+// -------------------------
+//   VER BALANCE
+// -------------------------
+document.getElementById("btnGetBalance").onclick = async () => {
     try {
-        const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/total");
+        const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
         const data = await res.json();
-
-        const total = parseFloat(data.total_staked);
-        const max = 10000;
-
-        document.getElementById("globalStake").innerText =
-            `${total} / ${max} BEND stakeadas`;
-
-        const percent = Math.min((total / max) * 100, 100);
-        document.getElementById("stakeProgress").style.width = percent + "%";
-
-        if (total >= max) {
-            btn.disabled = true;
-            btn.innerText = "Límite alcanzado";
-        }
-
-    } catch (e) {
-        document.getElementById("globalStake").innerText = "Error al cargar";
+        document.getElementById("balance").textContent =
+            data && typeof data.balance !== "undefined" ? data.balance : "Error";
+    } catch (err) {
+        console.error(err);
+        alert("Error al obtener el balance.");
     }
-}
+};
 
-loadGlobalStake();
-
-// Ver balance
-    document.getElementById("btnGetBalance").onclick = async () => {
-        try {
-            const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}`);
-            const data = await res.json();
-            document.getElementById("balance").textContent =
-                data && typeof data.balance !== "undefined" ? data.balance : "Error";
-        } catch (err) {
-            console.error(err);
-            showAlert("Error al obtener el balance.", "error");
-        }
-    };
-/* -------------------------
-   CÁLCULO DE RECOMPENSA
--------------------------- */
+// -------------------------
+//   CÁLCULO DE RECOMPENSA
+// -------------------------
 function calcReward() {
     const amount = parseFloat(amountInput.value);
     const days = parseInt(daysSelect.value);
@@ -285,85 +247,50 @@ function calcReward() {
 amountInput.oninput = calcReward;
 daysSelect.onchange = calcReward;
 
-/* -------------------------
-   ENVIAR STAKE
--------------------------- */
-btn.onclick = async () => {
-    const amount = parseFloat(amountInput.value);
-    const days = daysSelect.value;
+// boton de crear staking
+
+document.getElementById("btnStake").onclick = async () => {
+    const amount = parseFloat(document.getElementById("amount").value);
+    const days = parseInt(document.getElementById("days").value);
+    const userId = localStorage.getItem("user_id");
+    const wallet = localStorage.getItem("address");
 
     if (!amount || amount <= 0) {
-        showToast("Ingresa un monto válido", "err");
+        alert("Ingresa un monto válido.");
         return;
     }
 
-    btn.disabled = true;
-    btn.innerText = "Validando...";
+    const payload = {
+        user_id: userId,
+        wallet: wallet,
+        amount: amount,
+        days: days
+    };
 
-    // 1) VALIDAR
-    let resVal;
     try {
-        resVal = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/validar", {
+        const res = await fetch("/Staking/create", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                user_id: userId,
-                amount,
-                days
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
         });
-    } catch (e) {
-        showToast("Error al validar", "err");
-        btn.disabled = false;
-        btn.innerText = "Iniciar Staking";
-        return;
+
+        const data = await res.json();
+
+        if (data.error) {
+            alert("Error: " + data.error);
+        } else {
+            alert("Staking creado. ID: " + data.stake_id);
+        }
+
+    } catch (err) {
+        alert("Error de conexión con el servidor.");
+        console.error(err);
     }
-
-    const dataVal = await resVal.json();
-    if (dataVal.error) {
-        showToast(dataVal.error, "err");
-        btn.disabled = false;
-        btn.innerText = "Iniciar Staking";
-        return;
-    }
-
-    // 2) CREAR STAKING
-    btn.innerText = "Creando...";
-
-    let resCreate;
-    try {
-        resCreate = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/staking_api/Staking/create", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                user_id: userId,
-                amount,
-                days
-            })
-        });
-    } catch (e) {
-        showToast("Error al crear staking", "err");
-        btn.disabled = false;
-        btn.innerText = "Iniciar Staking";
-        return;
-    }
-
-    const dataCreate = await resCreate.json();
-
-    if (dataCreate.error) {
-        showToast(dataCreate.error, "err");
-    } else {
-        showToast("Staking creado correctamente", "ok");
-        loadGlobalStake();
-    }
-
-    btn.disabled = false;
-    btn.innerText = "Iniciar Staking";
 };
 
-/* -------------------------
-   NAVEGACIÓN
--------------------------- */
+// -------------------------
+//   NAVEGACIÓN
+// -------------------------
 document.getElementById("btnGohome").onclick = () => {
     window.location.href = "/CriptoBendicion/home";
 };

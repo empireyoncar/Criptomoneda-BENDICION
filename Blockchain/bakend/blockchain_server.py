@@ -106,16 +106,14 @@ def wallet_history(address):
 
 
 # ============================================================
-#   TRANSACCIÓN FIRMADA (SEGURA)
+#   TRANSACCIÓN SIN FIRMA (MODO SIMPLE)
 # ============================================================
 @app.route("/send_tx", methods=["POST"])
 def send_tx():
     data = request.json
     tx = data.get("tx")
-    public_key_hex = data.get("public_key")
-    signature_hex = data.get("signature")
 
-    if not tx or not public_key_hex or not signature_hex:
+    if not tx:
         return jsonify({"error": "Datos incompletos"}), 400
 
     sender = tx.get("from")
@@ -124,17 +122,6 @@ def send_tx():
 
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
-
-    recalculated_address = sha256(bytes.fromhex(public_key_hex)).hexdigest()
-    if recalculated_address != sender:
-        return jsonify({"error": "Address no coincide con la clave pública"}), 400
-
-    try:
-        vk = VerifyingKey.from_string(bytes.fromhex(public_key_hex), curve=SECP256k1)
-        tx_hash = sha256(json.dumps(tx, sort_keys=True).encode()).digest()
-        vk.verify(bytes.fromhex(signature_hex), tx_hash)
-    except:
-        return jsonify({"error": "Firma inválida"}), 400
 
     ok = blockchain.add_transaction(sender, receiver, amount)
     if not ok:

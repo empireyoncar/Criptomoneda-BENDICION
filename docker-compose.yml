@@ -196,11 +196,11 @@ services:
       - ./staking/backend/validador_staking.py:/app/backend/validador_staking.py
 
       # JSON databases
-      - ./staking/backend/stakingactivos.json:/app/stakingactivos.json
-      - ./staking/backend/stakingcompletados_history.json:/app/stakingcompletados_history.json
-      - ./staking/backend/stakingcancelados_history.json:/app/stakingcancelados_history.json
-      - ./staking/backend/staking_recompensa.json:/app/staking_recompensa.json
-      - ./staking/backend/staking_payout.json:/app/staking_payout.json
+      - ./staking/backend/stakingactivos.json:/app/backend/stakingactivos.json
+      - ./staking/backend/stakingcompletados_history.json:/app/backend/stakingcompletados_history.json
+      - ./staking/backend/stakingcancelados_history.json:/app/backend/stakingcancelados_history.json
+      - ./staking/backend/staking_recompensa.json:/app/backend/staking_recompensa.json
+      - ./staking/backend/staking_payout.json:/app/backend/staking_payout.json
 
     restart: always
     networks:

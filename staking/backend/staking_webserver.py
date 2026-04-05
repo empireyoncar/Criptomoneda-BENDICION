@@ -20,10 +20,6 @@ app.jinja_loader = ChoiceLoader([
     FileSystemLoader("/app/frontend")
 ])
 
-# Registrar Blueprint
-app.register_blueprint(staking_api)
-
-
 # ============================================================
 # Rutas HTML
 # ============================================================

@@ -2,7 +2,7 @@ import json
 import os
 
 # Ruta base dentro del contenedor Docker
-BASE_PATH = "/app"
+BASE_PATH = "/app/backend"
 
 FILES = {
     "activos": os.path.join(BASE_PATH, "stakingactivos.json"),

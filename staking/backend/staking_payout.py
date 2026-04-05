@@ -4,8 +4,8 @@ import os
 import time
 import uuid
 
-HISTORY_FILE = "/app/stakingcompletados_history.json"
-PAYOUT_FILE = "/app/staking_payout.json"
+HISTORY_FILE = "/app/backend/stakingcompletados_history.json"
+PAYOUT_FILE = "/app/backend/staking_payout.json"
 
 # MISMO ENDPOINT QUE USA EL FRONTEND
 DON_API_URL = "https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/add"

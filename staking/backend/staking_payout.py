@@ -1,10 +1,14 @@
 import json
 import requests
 import os
+import time
+import uuid
 
-HISTORY_FILE = "/app/stakingcompletados_history.json"
-PAYOUT_FILE = "/app/staking_payout.json"
-DON_API_URL = "http://don_api:5008/don/add"
+HISTORY_FILE = "/app/db/stakingcompletados_history.json"
+PAYOUT_FILE = "/app/db/staking_payout.json"
+
+# MISMO ENDPOINT QUE USA EL FRONTEND
+DON_API_URL = "https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/add"
 
 
 def load_json(path):
@@ -30,6 +34,7 @@ def process_payouts():
     pagados = {p["staking_id"] for p in payouts}
 
     nuevos_pagos = []
+    cambios_history = False
 
     for item in history:
         staking_id = item.get("staking_id")
@@ -37,30 +42,46 @@ def process_payouts():
             continue
 
         user_id = item.get("user_id")
-        reward = item.get("reward")
+        reward = item.get("reward_don") or item.get("reward")
 
         if not user_id or reward is None:
             continue
 
-        # pagar DON
+        # PAGAR DON
         try:
-            requests.post(DON_API_URL, json={
+            res = requests.post(DON_API_URL, json={
                 "user_id": user_id,
                 "amount": reward
             })
-        except:
+            api_response = res.text
+        except Exception as e:
+            print("Error pagando DON:", e)
             continue
 
-        # registrar pago
+        # CAMBIAR ESTADO A PAID
+        item["status"] = "paid"
+        item["paid_timestamp"] = int(time.time())
+        cambios_history = True
+
+        # REGISTRAR LOG DE PAGO
         nuevos_pagos.append({
             "staking_id": staking_id,
             "user_id": user_id,
-            "amount": reward
+            "amount": reward,
+            "status": "paid",
+            "timestamp": int(time.time()),
+            "tx_id": str(uuid.uuid4()),
+            "source": "staking_payout",
+            "don_api_response": api_response
         })
 
+    # GUARDAR CAMBIOS
     if nuevos_pagos:
         payouts.extend(nuevos_pagos)
         save_json(PAYOUT_FILE, payouts)
+
+    if cambios_history:
+        save_json(HISTORY_FILE, history)
 
 
 if __name__ == "__main__":

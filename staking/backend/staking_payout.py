@@ -2,8 +2,8 @@ import json
 import requests
 import os
 
-HISTORY_FILE = "/app/db/stakingcompletados_history.json"
-PAYOUT_FILE = "/app/db/staking_payout.json"
+HISTORY_FILE = "/app/stakingcompletados_history.json"
+PAYOUT_FILE = "/app/staking_payout.json"
 DON_API_URL = "http://don_api:5008/don/add"
 
 

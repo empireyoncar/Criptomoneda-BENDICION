@@ -52,7 +52,7 @@ def procesar_recompensas():
     # 🔥 EJECUTAR payout de forma segura
     try:
         print("Ejecutando payout...")
-        staking_payout.procesar_payouts()
+        staking_payout.process_payouts()
         print("Payout ejecutado correctamente.")
     except Exception as e:
         print("Error ejecutando payout:", e)

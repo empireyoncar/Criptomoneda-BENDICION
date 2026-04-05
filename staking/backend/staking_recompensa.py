@@ -62,7 +62,7 @@ def procesar_recompensas():
     # 🔥 EJECUTAR staking_payout.py AUTOMÁTICAMENTE
     try:
         print("Ejecutando staking_payout.py...")
-        subprocess.run(["python3", "/app/staking_payout.py"], check=True)
+        subprocess.run(["python3", "/app/backend/staking_payout.py"], check=True)
         print("staking_payout.py ejecutado correctamente.")
     except Exception as e:
         print("Error ejecutando staking_payout.py:", e)

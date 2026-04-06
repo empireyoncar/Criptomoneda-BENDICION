@@ -40,7 +40,7 @@ def get_completed_chunk_path():
         return latest
 
     next_threshold = get_chunk_threshold(latest) + CHUNK_SIZE
-        return os.path.join(BASE_PATH, f"stakingcompletados_{next_threshold}.json")
+    return os.path.join(BASE_PATH, f"stakingcompletados_{next_threshold}.json")
 
 def load_json_file(path):
     if not os.path.exists(path):

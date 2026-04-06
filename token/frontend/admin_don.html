@@ -125,7 +125,13 @@
 <body>
 
 <header>Panel Administrador – Token DON</header>
-<p>ID de usuario: <span id="user_id"></span></p>
+
+<nav style="background:#181a20; padding:10px 20px; border-bottom:1px solid #2b3139; display:flex; justify-content:space-between; align-items:center;">
+  <span style="color:#9ea7b3; font-size:14px;">ID de usuario: <span id="user_id"></span></span>
+  <a href="/CriptoBendicion/don/admin/history" style="text-decoration:none;">
+    <button style="width:auto; padding:10px 24px; font-size:14px;">📋 Ver Historial de Transacciones</button>
+  </a>
+</nav>
 <div class="container">
 
   <!-- VALOR DE DON -->
@@ -286,6 +292,35 @@ document.getElementById("btnLoadSupply").onclick = loadSupply;
 loadSupply();
   // Cargar automáticamente al abrir
   loadDonValue();
+
+  // RESTAR DON
+  document.getElementById("btnSubtract").onclick = async () => {
+      let user = document.getElementById("subUser").value.trim();
+      let amount = parseFloat(document.getElementById("subAmount").value);
+
+      if (!user || !(amount > 0)) {
+          alert("Datos inválidos");
+          return;
+      }
+
+      try {
+          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/subtract", {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({user_id: user, amount: amount})
+          });
+          let data = await res.json();
+          if (data.success) {
+              alert(`DON restado correctamente.\nTX: ${data.tx_id}`);
+              document.getElementById("subUser").value = "";
+              document.getElementById("subAmount").value = "";
+          } else {
+              alert("Error: saldo insuficiente o usuario no encontrado.");
+          }
+      } catch (err) {
+          alert("Error de conexión al restar DON.");
+      }
+  };
 </script>
 
 </body>

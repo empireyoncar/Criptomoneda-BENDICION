@@ -65,6 +65,7 @@ def procesar_recompensas():
             "user_id": stake.get("user_id"),
             "wallet": stake.get("wallet"),
             "reward_don": stake.get("reward_don", 0),
+            "transfer_tx_id": stake.get("transfer_tx_id"),
             "timestamp": ahora,
             "status": "pending"
         }

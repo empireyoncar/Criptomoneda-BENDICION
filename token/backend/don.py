@@ -51,11 +51,11 @@ def get_total_supply() -> float:
         return float(data.get("total_supply", 0.0))
 
 
-def add(user_id: str, amount: float) -> None:
+def add(user_id: str, amount: float, metadata=None):
     """Generar DON (mint) y sumarlo al usuario."""
     amount = float(amount)
     if amount <= 0:
-        return
+        return None
 
     with _lock:
         data = _load()
@@ -67,14 +67,14 @@ def add(user_id: str, amount: float) -> None:
         _save(data)
 
         # HISTORIAL
-        log_transaction("mint", None, user_id, amount)
+        return log_transaction("mint", None, user_id, amount, metadata=metadata)
 
 
-def subtract(user_id: str, amount: float) -> bool:
+def subtract(user_id: str, amount: float, metadata=None):
     """Restar DON al usuario (pago/uso)."""
     amount = float(amount)
     if amount <= 0:
-        return False
+        return False, None
 
     with _lock:
         data = _load()
@@ -82,22 +82,22 @@ def subtract(user_id: str, amount: float) -> bool:
 
         current = float(users.get(user_id, 0.0))
         if current < amount:
-            return False
+            return False, None
 
         users[user_id] = current - amount
         _save(data)
 
         # HISTORIAL
-        log_transaction("subtract", user_id, None, amount)
+        tx_id = log_transaction("subtract", user_id, None, amount, metadata=metadata)
 
-        return True
+        return True, tx_id
 
 
-def transfer(from_user: str, to_user: str, amount: float) -> bool:
+def transfer(from_user: str, to_user: str, amount: float, metadata=None):
     """Transferir DON entre usuarios."""
     amount = float(amount)
     if amount <= 0:
-        return False
+        return False, None
 
     with _lock:
         data = _load()
@@ -105,7 +105,7 @@ def transfer(from_user: str, to_user: str, amount: float) -> bool:
 
         current_from = float(users.get(from_user, 0.0))
         if current_from < amount:
-            return False
+            return False, None
 
         users[from_user] = current_from - amount
         users[to_user] = float(users.get(to_user, 0.0)) + amount
@@ -113,16 +113,16 @@ def transfer(from_user: str, to_user: str, amount: float) -> bool:
         _save(data)
 
         # HISTORIAL
-        log_transaction("transfer", from_user, to_user, amount)
+        tx_id = log_transaction("transfer", from_user, to_user, amount, metadata=metadata)
 
-        return True
+        return True, tx_id
 
 
-def burn(user_id: str, amount: float) -> bool:
+def burn(user_id: str, amount: float, metadata=None):
     """Quemar DON del usuario (eliminar del sistema)."""
     amount = float(amount)
     if amount <= 0:
-        return False
+        return False, None
 
     with _lock:
         data = _load()
@@ -130,7 +130,7 @@ def burn(user_id: str, amount: float) -> bool:
 
         current = float(users.get(user_id, 0.0))
         if current < amount:
-            return False
+            return False, None
 
         users[user_id] = current - amount
         data["total_supply"] = float(data.get("total_supply", 0.0)) - amount
@@ -138,6 +138,6 @@ def burn(user_id: str, amount: float) -> bool:
         _save(data)
 
         # HISTORIAL
-        log_transaction("burn", user_id, None, amount)
+        tx_id = log_transaction("burn", user_id, None, amount, metadata=metadata)
 
-        return True
+        return True, tx_id

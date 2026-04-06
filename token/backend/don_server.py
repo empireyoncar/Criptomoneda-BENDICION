@@ -28,29 +28,29 @@ def total_supply():
 @app.route("/don/add", methods=["POST"])
 def add():
     data = request.json
-    don.add(data["user_id"], data["amount"])
-    return jsonify({"status": "ok"})
+    tx_id = don.add(data["user_id"], data["amount"], metadata=data.get("metadata"))
+    return jsonify({"status": "ok", "tx_id": tx_id})
 
 
 @app.route("/don/subtract", methods=["POST"])
 def subtract():
     data = request.json
-    ok = don.subtract(data["user_id"], data["amount"])
-    return jsonify({"success": ok})
+    ok, tx_id = don.subtract(data["user_id"], data["amount"], metadata=data.get("metadata"))
+    return jsonify({"success": ok, "tx_id": tx_id})
 
 
 @app.route("/don/transfer", methods=["POST"])
 def transfer():
     data = request.json
-    ok = don.transfer(data["from_user"], data["to_user"], data["amount"])
-    return jsonify({"success": ok})
+    ok, tx_id = don.transfer(data["from_user"], data["to_user"], data["amount"], metadata=data.get("metadata"))
+    return jsonify({"success": ok, "tx_id": tx_id})
 
 
 @app.route("/don/burn", methods=["POST"])
 def burn():
     data = request.json
-    ok = don.burn(data["user_id"], data["amount"])
-    return jsonify({"success": ok})
+    ok, tx_id = don.burn(data["user_id"], data["amount"], metadata=data.get("metadata"))
+    return jsonify({"success": ok, "tx_id": tx_id})
 
 @app.route("/price", methods=["GET"])
 def price():

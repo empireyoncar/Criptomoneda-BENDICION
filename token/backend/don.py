@@ -70,29 +70,6 @@ def add(user_id: str, amount: float, metadata=None):
         return log_transaction("mint", None, user_id, amount, metadata=metadata)
 
 
-def subtract(user_id: str, amount: float, metadata=None):
-    """Restar DON al usuario (pago/uso)."""
-    amount = float(amount)
-    if amount <= 0:
-        return False, None
-
-    with _lock:
-        data = _load()
-        users = data["users"]
-
-        current = float(users.get(user_id, 0.0))
-        if current < amount:
-            return False, None
-
-        users[user_id] = current - amount
-        _save(data)
-
-        # HISTORIAL
-        tx_id = log_transaction("subtract", user_id, None, amount, metadata=metadata)
-
-        return True, tx_id
-
-
 def transfer(from_user: str, to_user: str, amount: float, metadata=None):
     """Transferir DON entre usuarios."""
     amount = float(amount)

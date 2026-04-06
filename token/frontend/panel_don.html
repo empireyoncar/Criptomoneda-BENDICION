@@ -152,6 +152,8 @@
       <div class="stat-number" id="balance">0</div>
       <div class="stat-label">DON Disponibles</div>
     </div>
+
+    <button id="btnRefreshBalance">🔄 Actualizar Saldo</button>
   </section>
 
   <!-- TRANSFERIR -->
@@ -234,6 +236,9 @@ document.getElementById("btnTransfer").onclick = async () => {
     alert("Transferencia realizada");
     loadBalance(); // ← recargar balance
 };
+
+  // ACTUALIZAR BALANCE
+  document.getElementById("btnRefreshBalance").onclick = loadBalance;
 
   // Cargar automáticamente al abrir
   loadDonValue();

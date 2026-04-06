@@ -175,15 +175,6 @@
     <button id="btnMint">Generar DON</button>
   </section>
 
-  <!-- RESTAR -->
-  <section class="box">
-    <h2>Restar DON (Corrección Manual)</h2>
-
-    <input type="text" id="subUser" placeholder="ID del usuario">
-    <input type="number" id="subAmount" placeholder="Cantidad a restar">
-    <button id="btnSubtract">Restar DON</button>
-  </section>
-
   <!-- TRANSFERIR -->
   <section class="box">
     <h2>Transferir DON entre Usuarios</h2>
@@ -211,6 +202,8 @@
       <div class="stat-number" id="balance">0</div>
       <div class="stat-label">DON Disponibles</div>
     </div>
+
+    <button id="btnRefreshBalance">🔄 Actualizar Saldo</button>
   </section>
 
   <!-- HISTORIAL -->
@@ -319,35 +312,6 @@ loadSupply();
   loadDonValue();
   loadBalance();
 
-  // RESTAR DON
-  document.getElementById("btnSubtract").onclick = async () => {
-      let user = document.getElementById("subUser").value.trim();
-      let amount = parseFloat(document.getElementById("subAmount").value);
-
-      if (!user || !(amount > 0)) {
-          alert("Datos inválidos");
-          return;
-      }
-
-      try {
-          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/subtract", {
-              method: "POST",
-              headers: {"Content-Type": "application/json"},
-              body: JSON.stringify({user_id: user, amount: amount})
-          });
-          let data = await res.json();
-          if (data.success) {
-              alert(`DON restado correctamente.\nTX: ${data.tx_id}`);
-              document.getElementById("subUser").value = "";
-              document.getElementById("subAmount").value = "";
-          } else {
-              alert("Error: saldo insuficiente o usuario no encontrado.");
-          }
-      } catch (err) {
-          alert("Error de conexión al restar DON.");
-      }
-  };
-
       // TRANSFERIR DON
       document.getElementById("btnTransfer").onclick = async () => {
         let fromUser = document.getElementById("transferFromUser").value.trim();
@@ -407,6 +371,9 @@ loadSupply();
           alert("Error de conexión al quemar DON.");
         }
       };
+
+      // ACTUALIZAR BALANCE
+      document.getElementById("btnRefreshBalance").onclick = loadBalance;
 </script>
 
 </body>

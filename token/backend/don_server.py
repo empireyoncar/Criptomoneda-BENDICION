@@ -41,13 +41,6 @@ def add():
     return jsonify({"status": "ok", "tx_id": tx_id})
 
 
-@app.route("/don/subtract", methods=["POST"])
-def subtract():
-    data = request.json
-    ok, tx_id = don.subtract(data["user_id"], data["amount"], metadata=data.get("metadata"))
-    return jsonify({"success": ok, "tx_id": tx_id})
-
-
 @app.route("/don/transfer", methods=["POST"])
 def transfer():
     data = request.json

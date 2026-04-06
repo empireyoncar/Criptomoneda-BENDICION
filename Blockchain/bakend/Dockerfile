@@ -18,13 +18,8 @@ RUN apt-get update && apt-get install -y \
 # ============================================================
 WORKDIR /app
 
-# ============================================================
-# COPIAR ARCHIVOS DEL BACKEND
-# Copiamos TODO el contenido de la carpeta bakend al contenedor
-# ============================================================
-COPY . /app
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r /app/requirements.txt
+# Dependencias Python del servicio
+RUN pip install --no-cache-dir flask flask-cors ecdsa requests
 
 # ============================================================
 # INSTALAR DEPENDENCIAS PYTHON

@@ -12,7 +12,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - ./usuarios/backend/database.json:/app/database.json
+      - ./usuarios/backend:/app
     restart: always
     networks:
       - bendicion_net
@@ -27,6 +27,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
+      - ./usuarios/backend:/app
       - ./usuarios/frontend:/app/frontend
     restart: always
     networks:
@@ -42,10 +43,7 @@ services:
     ports:
       - "5002:5002"
     volumes:
-      - ./wallet/backend/wallet_server.py:/app/wallet_server.py
-      - ./wallet/backend/wallet.py:/app/wallet.py
-      - ./wallet/backend/wallet_manager.py:/app/wallet_manager.py
-      - ./wallet/backend/wallets.json:/app/wallets.json
+      - ./wallet/backend:/app
       - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
@@ -61,7 +59,7 @@ services:
     ports:
       - "5003:5003"
     volumes:
-      - ./wallet/backend/wallet_webserver.py:/app/wallet_webserver.py
+      - ./wallet/backend:/app
       - ./wallet/frontend:/app/frontend
     restart: always
     networks:
@@ -77,10 +75,7 @@ services:
     ports:
       - "5004:5004"
     volumes:
-      - ./Blockchain/bakend/blockchain_server.py:/app/blockchain_server.py
-      - ./Blockchain/bakend/blockchain.py:/app/blockchain.py
-      - ./Blockchain/bakend/blockchain_blocks.py:/app/blockchain_blocks.py
-      - ./Blockchain/bakend/archive:/app/archive
+      - ./Blockchain/bakend:/app
     restart: always
     networks:
       - bendicion_net
@@ -95,7 +90,7 @@ services:
     ports:
       - "5005:5005"
     volumes:
-      - ./Blockchain/bakend/blockchain_webserver.py:/app/blockchain_webserver.py
+      - ./Blockchain/bakend:/app
       - ./Blockchain/frontend:/app/frontend
     restart: always
     networks:
@@ -111,8 +106,7 @@ services:
     ports:
       - "5010:5010"
     volumes:
-      - ./admin/backend/admin_server.py:/app/admin_server.py
-      - ./admin/backend/admin_manager.py:/app/admin_manager.py
+      - ./admin/backend:/app
       - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
@@ -128,7 +122,7 @@ services:
     ports:
       - "5011:5011"
     volumes:
-      - ./admin/backend/admin_webserver.py:/app/admin_webserver.py
+      - ./admin/backend:/app
       - ./admin/frontend:/app/frontend
       - ./usuarios/backend/database.json:/app/database.json
     restart: always
@@ -145,13 +139,7 @@ services:
     ports:
       - "5008:5008"
     volumes:
-      - ./token/backend/don_server.py:/app/don_server.py
-      - ./token/backend/don_history.py:/app/don_history.py
-      - ./token/backend/don.py:/app/don.py
-      - ./token/backend/don_value.py:/app/don_value.py
-      - ./token/backend/don_ledger.json:/app/don_ledger.json
-      - ./token/backend/don_value.json:/app/don_value.json
-      - ./token/backend/don_history:/app/don_history     # ← NECESARIO
+      - ./token/backend:/app
     restart: always
     networks:
       - bendicion_net
@@ -166,10 +154,7 @@ services:
     ports:
       - "5009:5009"
     volumes:
-      - ./token/backend/don_webserver.py:/app/don_webserver.py
-      - ./token/backend/don.py:/app/don.py
-      - ./token/backend/don_value.py:/app/don_value.py
-      - ./token/backend/don_ledger.json:/app/don_ledger.json
+      - ./token/backend:/app
       - ./token/frontend:/app/token/frontend
     restart: always
     networks:
@@ -184,21 +169,7 @@ services:
     ports:
       - "5006:5006"
     volumes:
-      # Python scripts
-      - ./staking/backend/staking_server.py:/app/backend/staking_server.py
-      - ./staking/backend/staking_recompensa.py:/app/backend/staking_recompensa.py
-      - ./staking/backend/staking_payout.py:/app/backend/staking_payout.py
-      - ./staking/backend/staking_data.py:/app/backend/staking_data.py
-      - ./staking/backend/create_staking.py:/app/backend/create_staking.py
-
-      # JSON databases (activos)
-      - ./staking/backend/stakingactivos.json:/app/backend/stakingactivos.json
-      - ./staking/backend/stakingcancelados_history.json:/app/backend/stakingcancelados_history.json
-      - ./staking/backend/staking_recompensa.json:/app/backend/staking_recompensa.json
-      - ./staking/backend/staking_payout.json:/app/backend/staking_payout.json
-
-      # Historial de completados (chunks en archive/)
-      - ./staking/backend/archive:/app/backend/archive
+      - ./staking/backend:/app/backend
 
     restart: always
     networks:
@@ -217,7 +188,7 @@ services:
     ports:
       - "5007:5007"
     volumes:
-      - ./staking/backend/staking_webserver.py:/app/backend/staking_webserver.py
+      - ./staking/backend:/app/backend
       - ./staking/frontend:/app/frontend
     restart: always
     networks:

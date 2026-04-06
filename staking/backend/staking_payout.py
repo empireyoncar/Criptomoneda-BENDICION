@@ -4,7 +4,6 @@ import os
 import time
 import uuid
 
-HISTORY_FILE = "/app/backend/stakingcompletados.json"
 PAYOUT_FILE = "/app/backend/staking_payout.json"
 RECOMPENSAS_FILE = "/app/backend/staking_recompensa.json"
 
@@ -31,7 +30,6 @@ def save_json(path, data):
 
 
 def process_payouts():
-    history = load_json(HISTORY_FILE)
     recompensas = load_json(RECOMPENSAS_FILE)
     payouts = load_json(PAYOUT_FILE)
 

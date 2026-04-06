@@ -9,7 +9,6 @@ COMPLETED_CHUNK_PATTERN = os.path.join(BASE_PATH, "stakingcompletados_*.json")
 
 FILES = {
     "activos": os.path.join(BASE_PATH, "stakingactivos.json"),
-    "completados": os.path.join(BASE_PATH, "stakingcompletados.json"),
     "cancelados": os.path.join(BASE_PATH, "stakingcancelados_history.json")
 }
 
@@ -99,14 +98,11 @@ def add_staking(stake):
 # ---------------------------------------------------------
 def move_to_completed(stake_id):
     activos = load_file("activos")
-    completados = load_file("completados")
 
     for s in activos:
         if s["stake_id"] == stake_id:
             activos.remove(s)
-            completados.append(s)
             save_file("activos", activos)
-            save_file("completados", completados)
             append_to_completed_chunk(s)
             return True
 

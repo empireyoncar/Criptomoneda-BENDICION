@@ -190,7 +190,7 @@ const publicKey = localStorage.getItem("public_key");
 
 if (!address || !privateKey || !publicKey) {
     alert("Primero configura tu wallet en la página principal.");
-    window.location.href = "wallet.html";
+    window.location.href = "wallet";
 } else {
     document.getElementById("address").textContent = address;
 }
@@ -201,7 +201,7 @@ if (!address || !privateKey || !publicKey) {
 let userId = localStorage.getItem("user_id");
 if (!userId) {
     alert("Debes iniciar sesión primero.");
-    window.location.href = "login.html";
+    window.location.href = "login";
 } else {
     userIdEl.textContent = userId;
 }

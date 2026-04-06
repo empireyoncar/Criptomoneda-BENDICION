@@ -197,7 +197,6 @@ services:
 
       # JSON databases
       - ./staking/backend/stakingactivos.json:/app/backend/stakingactivos.json
-      - ./staking/backend/stakingcompletados.json:/app/backend/stakingcompletados.json
       - ./staking/backend/stakingcancelados_history.json:/app/backend/stakingcancelados_history.json
       - ./staking/backend/staking_recompensa.json:/app/backend/staking_recompensa.json
       - ./staking/backend/staking_payout.json:/app/backend/staking_payout.json

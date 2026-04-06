@@ -5,11 +5,11 @@ import os
 # Ruta base dentro del contenedor Docker
 BASE_PATH = "/app/backend"
 CHUNK_SIZE = 100
-COMPLETED_CHUNK_PATTERN = os.path.join(BASE_PATH, "stakingcompletados_history_*.json")
+COMPLETED_CHUNK_PATTERN = os.path.join(BASE_PATH, "stakingcompletados_*.json")
 
 FILES = {
     "activos": os.path.join(BASE_PATH, "stakingactivos.json"),
-    "completados": os.path.join(BASE_PATH, "stakingcompletados_history.json"),
+    "completados": os.path.join(BASE_PATH, "stakingcompletados.json"),
     "cancelados": os.path.join(BASE_PATH, "stakingcancelados_history.json")
 }
 
@@ -26,7 +26,7 @@ def get_chunk_threshold(path):
 def get_completed_chunk_path():
     chunk_files = glob.glob(COMPLETED_CHUNK_PATTERN)
     if not chunk_files:
-        return os.path.join(BASE_PATH, f"stakingcompletados_history_{CHUNK_SIZE}.json")
+        return os.path.join(BASE_PATH, f"stakingcompletados_{CHUNK_SIZE}.json")
 
     chunk_files.sort(key=get_chunk_threshold)
     latest = chunk_files[-1]
@@ -40,8 +40,7 @@ def get_completed_chunk_path():
         return latest
 
     next_threshold = get_chunk_threshold(latest) + CHUNK_SIZE
-    return os.path.join(BASE_PATH, f"stakingcompletados_history_{next_threshold}.json")
-
+        return os.path.join(BASE_PATH, f"stakingcompletados_{next_threshold}.json")
 
 def load_json_file(path):
     if not os.path.exists(path):

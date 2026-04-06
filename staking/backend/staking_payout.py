@@ -4,7 +4,7 @@ import os
 import time
 import uuid
 
-HISTORY_FILE = "/app/backend/stakingcompletados_history.json"
+HISTORY_FILE = "/app/backend/stakingcompletados.json"
 PAYOUT_FILE = "/app/backend/staking_payout.json"
 RECOMPENSAS_FILE = "/app/backend/staking_recompensa.json"
 

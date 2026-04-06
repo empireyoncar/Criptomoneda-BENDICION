@@ -36,6 +36,16 @@ def don_admin():
 
     return render_template("admin_don.html")
 
+
+@app.route("/don/admin/history")
+def don_admin_history():
+    client_ip = request.remote_addr
+
+    if not client_ip.startswith("192.168."):
+        return "Acceso permitido solo desde la red interna", 403
+
+    return render_template("admin_don_history.html")
+
 # ============================================================
 # Servidor
 # ============================================================

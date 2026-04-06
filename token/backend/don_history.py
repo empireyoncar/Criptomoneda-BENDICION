@@ -32,6 +32,43 @@ def _save_file(path, data):
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
 
+
+def _get_history_files():
+    _ensure_dir()
+    files = [f for f in os.listdir(HISTORY_DIR) if f.startswith("don_history_") and f.endswith(".json")]
+
+    def sort_key(filename):
+        try:
+            return int(filename.split("_")[-1].split(".")[0])
+        except ValueError:
+            return 0
+
+    files.sort(key=sort_key)
+    return [os.path.join(HISTORY_DIR, filename) for filename in files]
+
+
+def get_transactions(limit=None, user_id=None):
+    transactions = []
+
+    for path in _get_history_files():
+        try:
+            transactions.extend(_load_file(path))
+        except (OSError, json.JSONDecodeError):
+            continue
+
+    if user_id:
+        transactions = [
+            tx for tx in transactions
+            if tx.get("user_from") == user_id or tx.get("user_to") == user_id
+        ]
+
+    transactions.sort(key=lambda tx: tx.get("timestamp", 0), reverse=True)
+
+    if isinstance(limit, int) and limit > 0:
+        return transactions[:limit]
+
+    return transactions
+
 def _generate_tx_id():
     return f"don_{int(time.time())}"
 

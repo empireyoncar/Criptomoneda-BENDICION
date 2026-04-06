@@ -104,6 +104,7 @@
 <div class="container">
     <h1>Mint de Criptomonedas</h1>
     <p>Como administrador puedes crear nuevas monedas y asignarlas a cualquier wallet.</p>
+    <p><strong>Admin ID:</strong> <span id="adminUserId"></span></p>
 
     <label>Dirección de la wallet</label>
     <input type="text" id="address" placeholder="Ej: 4f8a9b...">
@@ -119,6 +120,19 @@
 </div>
 
 <script>
+    const sessionAdminId = "{{ session['user_id'] }}";
+    if (!localStorage.getItem("user_id") && sessionAdminId) {
+        localStorage.setItem("user_id", sessionAdminId);
+    }
+
+    const adminUserId = localStorage.getItem("user_id");
+    if (!adminUserId) {
+        alert("Debes iniciar sesión como administrador.");
+        window.location.href = "/CriptoBendicion/admin/login";
+    } else {
+        document.getElementById("adminUserId").textContent = adminUserId;
+    }
+
     const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 
     /* 🟩 CREAR TRANSACCIÓN DE MINT DIRECTO AL BLOCKCHAIN */

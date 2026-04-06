@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import don  # tu backend del token
+from don_history import get_transactions
 from don_value import get_don_value, set_don_value
 
 app = Flask(__name__)
@@ -23,6 +24,14 @@ def total_supply():
     return jsonify({
         "total_supply": don.get_total_supply()
     })
+
+
+@app.route("/don/history", methods=["GET"])
+def history():
+    limit = request.args.get("limit", type=int)
+    user_id = request.args.get("user_id")
+    transactions = get_transactions(limit=limit, user_id=user_id)
+    return jsonify({"transactions": transactions, "count": len(transactions)})
 
 
 @app.route("/don/add", methods=["POST"])

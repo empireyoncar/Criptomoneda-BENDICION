@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historial DON - Admin</title>
+  <style>
+    :root {
+      --bg: #0b0e11;
+      --panel: #181a20;
+      --accent: #f0b90b;
+      --text: #eaecef;
+      --muted: #9ea7b3;
+      --border: #2b3139;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0b0e11 0%, #050608 100%);
+      color: var(--text);
+    }
+    header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(24, 26, 32, 0.94);
+    }
+    .header-wrap {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    h1 { margin: 0; color: var(--accent); }
+    p { margin: 8px 0 0; color: var(--muted); }
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 160px 170px;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0d1117;
+      color: var(--text);
+      font-size: 14px;
+    }
+    button {
+      background: var(--accent);
+      color: #14171c;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .secondary {
+      background: transparent;
+      color: var(--text);
+    }
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .table-wrap {
+      max-height: 75vh;
+      overflow: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      background: #11151b;
+      color: var(--accent);
+      position: sticky;
+      top: 0;
+    }
+    .mono {
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      word-break: break-word;
+    }
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(240, 185, 11, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    @media (max-width: 980px) {
+      .toolbar { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-wrap">
+      <div>
+        <h1>Historial Global DON</h1>
+        <p>Vista completa de todas las transacciones registradas en el token DON.</p>
+        <p>Admin ID: <span id="adminUserId"></span></p>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="secondary" id="btnBack">Volver al admin</button>
+        <button id="btnReload">Recargar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="panel">
+      <div class="toolbar">
+        <input type="text" id="filterUser" placeholder="Filtrar por user_id, user_from o user_to">
+        <select id="filterType">
+          <option value="">Todos los tipos</option>
+          <option value="mint">mint</option>
+          <option value="subtract">subtract</option>
+          <option value="transfer">transfer</option>
+          <option value="burn">burn</option>
+        </select>
+        <input type="number" id="filterLimit" min="1" value="250" placeholder="Limite">
+        <button id="btnApplyFilters">Aplicar filtros</button>
+      </div>
+
+      <div class="meta">
+        <div id="summaryText">Cargando historial...</div>
+        <div id="updatedAt">-</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tx ID</th>
+              <th>Tipo</th>
+              <th>Desde</th>
+              <th>Hacia</th>
+              <th>Cantidad</th>
+              <th>Fecha</th>
+              <th>Metadata</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "/CriptoBendicion/don_api";
+    const adminUserId = localStorage.getItem("user_id");
+
+    if (!adminUserId) {
+      alert("Debes iniciar sesión como administrador.");
+      window.location.href = "/CriptoBendicion/admin/login";
+    } else {
+      document.getElementById("adminUserId").textContent = adminUserId;
+    }
+
+    function formatAmount(value) {
+      const amount = Number(value || 0);
+      return Number.isFinite(amount) ? amount.toFixed(4) : "0.0000";
+    }
+
+    function stringifyMetadata(metadata) {
+      if (!metadata || Object.keys(metadata).length === 0) {
+        return "-";
+      }
+      return JSON.stringify(metadata);
+    }
+
+    async function loadHistory() {
+      const userFilter = document.getElementById("filterUser").value.trim().toLowerCase();
+      const typeFilter = document.getElementById("filterType").value;
+      const limit = Math.max(Number(document.getElementById("filterLimit").value) || 250, 1);
+
+      const response = await fetch(`${API_BASE}/don/history?limit=${limit}`);
+      const data = await response.json();
+      const rows = (data.transactions || []).filter((tx) => {
+        const typeMatches = !typeFilter || tx.type === typeFilter;
+        const userMatches = !userFilter || [tx.user_from, tx.user_to, tx.metadata?.stake_id, tx.metadata?.source]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(userFilter));
+        return typeMatches && userMatches;
+      });
+
+      document.getElementById("summaryText").textContent = `${rows.length} transacciones mostradas de ${data.count} cargadas`;
+      document.getElementById("updatedAt").textContent = `Actualizado: ${new Date().toLocaleString()}`;
+
+      const body = document.getElementById("historyBody");
+      if (rows.length === 0) {
+        body.innerHTML = '<tr><td colspan="7">No hay transacciones para esos filtros.</td></tr>';
+        return;
+      }
+
+      body.innerHTML = rows.map((tx) => `
+        <tr>
+          <td class="mono">${tx.tx_id || "-"}</td>
+          <td><span class="tag">${tx.type || "-"}</span></td>
+          <td>${tx.user_from || "-"}</td>
+          <td>${tx.user_to || "-"}</td>
+          <td>${formatAmount(tx.amount)}</td>
+          <td>${tx.datetime || tx.timestamp || "-"}</td>
+          <td class="mono">${stringifyMetadata(tx.metadata)}</td>
+        </tr>
+      `).join("");
+    }
+
+    document.getElementById("btnReload").onclick = loadHistory;
+    document.getElementById("btnApplyFilters").onclick = loadHistory;
+    document.getElementById("btnBack").onclick = () => {
+      window.location.href = "/CriptoBendicion/don/admin";
+    };
+
+    loadHistory();
+  </script>
+</body>
+</html>

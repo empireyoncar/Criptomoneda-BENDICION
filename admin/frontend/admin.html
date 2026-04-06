@@ -203,12 +203,18 @@
 </div>
 
 <script>
-  window.onload = () => {
-    localStorage.setItem("user_id", "001");
-};
-  window.onload = () => {
-    localStorage.setItem("userId", "001");
-};
+  const sessionAdminId = "{{ session['user_id'] }}";
+  if (!localStorage.getItem("user_id") && sessionAdminId) {
+    localStorage.setItem("user_id", sessionAdminId);
+  }
+
+  const adminUserId = localStorage.getItem("user_id");
+  if (!adminUserId) {
+    alert("Debes iniciar sesión como administrador.");
+    window.location.href = "/CriptoBendicion/admin/login";
+  } else {
+    document.getElementById("userId").textContent = adminUserId;
+  }
 
    const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
 

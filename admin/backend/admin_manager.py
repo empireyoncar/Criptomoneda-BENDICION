@@ -19,9 +19,21 @@ def get_user(email):
             return user
     return None
 
-def is_admin(email):
-    user = get_user(email)
+
+def get_user_by_id(user_id):
+    db = load_db()
+    for user in db.get("users", []):
+        if user.get("id") == user_id:
+            return user
+    return None
+
+
+def is_admin(user_identifier):
+    user = get_user_by_id(user_identifier)
+    if not user:
+        user = get_user(user_identifier)
     return user and user.get("role") == "admin"
+
 
 def login_user(email, password):
     user = get_user(email)
@@ -34,4 +46,4 @@ def login_user(email, password):
     if user["password"] != hashed:
         return None
 
-    return email
+    return user.get("id")

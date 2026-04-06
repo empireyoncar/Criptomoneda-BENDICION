@@ -307,17 +307,51 @@
     /* ------------------------------
        VALIDACIÓN ANTES DE ENVIAR
     ------------------------------ */
-    document.getElementById("loginForm").addEventListener("submit", (e) => {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
         if (!email.value.includes("@")) {
-            e.preventDefault();
             showAlert("El email no es válido");
             email.classList.add("error");
+            return;
         }
 
         if (password.value.length < 4) {
-            e.preventDefault();
             showAlert("La contraseña es demasiado corta");
             password.classList.add("error");
+            return;
+        }
+
+        try {
+            const res = await fetch("/CriptoBendicion/admin_login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({
+                    email: email.value,
+                    password: password.value
+                })
+            });
+
+            const data = await res.json();
+
+            if (data.error) {
+                showAlert(data.error);
+                return;
+            }
+
+            if (data.user_id) {
+                localStorage.setItem("user_id", data.user_id);
+                showAlert("Login correcto", "success");
+
+                setTimeout(() => {
+                    window.location.href = data.redirect || "/CriptoBendicion/admin/";
+                }, 800);
+            } else {
+                showAlert("Respuesta inválida del servidor");
+            }
+        } catch (err) {
+            showAlert("No se pudo conectar con el servidor");
         }
     });
 </script>

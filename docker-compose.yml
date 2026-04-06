@@ -180,26 +180,25 @@ services:
   # ============================================================
   staking_api:
     build: ./staking/backend
-    command: python backend/staking_server.py
+    command: sh -c "python backend/staking_server.py & python backend/staking_recompensa.py"
     ports:
       - "5006:5006"
     volumes:
       # Python scripts
       - ./staking/backend/staking_server.py:/app/backend/staking_server.py
-      - ./staking/backend/staking_manager.py:/app/backend/staking_manager.py
-      - ./staking/backend/staking_dashboard.py:/app/backend/staking_dashboard.py
       - ./staking/backend/staking_recompensa.py:/app/backend/staking_recompensa.py
       - ./staking/backend/staking_payout.py:/app/backend/staking_payout.py
       - ./staking/backend/staking_data.py:/app/backend/staking_data.py
       - ./staking/backend/create_staking.py:/app/backend/create_staking.py
-      - ./staking/backend/staking.py:/app/backend/staking.py
-      - ./staking/backend/validador_staking.py:/app/backend/validador_staking.py
 
-      # JSON databases
+      # JSON databases (activos)
       - ./staking/backend/stakingactivos.json:/app/backend/stakingactivos.json
       - ./staking/backend/stakingcancelados_history.json:/app/backend/stakingcancelados_history.json
       - ./staking/backend/staking_recompensa.json:/app/backend/staking_recompensa.json
       - ./staking/backend/staking_payout.json:/app/backend/staking_payout.json
+
+      # Historial de completados (chunks en archive/)
+      - ./staking/backend/archive:/app/backend/archive
 
     restart: always
     networks:

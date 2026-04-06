@@ -23,6 +23,9 @@ def api_create_staking():
         )
         return jsonify(result)
 
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

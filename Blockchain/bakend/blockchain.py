@@ -88,7 +88,7 @@ class Blockchain:
         if self.locked_balances[address] < 0:
             self.locked_balances[address] = 0.0
 
-    def add_transaction(self, sender, receiver, amount):
+    def add_transaction(self, sender, receiver, amount, tx_id=None, metadata=None):
         amount = float(amount)
 
         self.create_wallet(sender)
@@ -105,6 +105,10 @@ class Blockchain:
                 return False
 
         tx = {"from": sender, "to": receiver, "amount": amount}
+        if tx_id:
+            tx["tx_id"] = str(tx_id)
+        if metadata is not None:
+            tx["metadata"] = metadata
 
         if sender != "SYSTEM":
             self._lock_amount(sender, amount)

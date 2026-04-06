@@ -119,15 +119,17 @@ def send_tx():
     sender = tx.get("from")
     receiver = tx.get("to")
     amount = tx.get("amount")
+    tx_id = tx.get("tx_id")
+    metadata = tx.get("metadata")
 
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
 
-    ok = blockchain.add_transaction(sender, receiver, amount)
+    ok = blockchain.add_transaction(sender, receiver, amount, tx_id=tx_id, metadata=metadata)
     if not ok:
         return jsonify({"error": "Saldo insuficiente"}), 400
 
-    return jsonify({"message": "Transacción añadida"})
+    return jsonify({"message": "Transacción añadida", "tx_id": tx_id})
 
 # ============================================================
 #   MINT (CREAR MONEDAS) 

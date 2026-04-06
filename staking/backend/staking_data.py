@@ -1,11 +1,13 @@
 import glob
 import json
 import os
+import time
 
 # Ruta base dentro del contenedor Docker
 BASE_PATH = "/app/backend"
+ARCHIVE_PATH = os.path.join(BASE_PATH, "archive")
 CHUNK_SIZE = 100
-COMPLETED_CHUNK_PATTERN = os.path.join(BASE_PATH, "stakingcompletados_*.json")
+COMPLETED_CHUNK_PATTERN = os.path.join(ARCHIVE_PATH, "stakingcompletados_*.json")
 
 FILES = {
     "activos": os.path.join(BASE_PATH, "stakingactivos.json"),
@@ -23,9 +25,10 @@ def get_chunk_threshold(path):
 
 
 def get_completed_chunk_path():
+    os.makedirs(ARCHIVE_PATH, exist_ok=True)
     chunk_files = glob.glob(COMPLETED_CHUNK_PATTERN)
     if not chunk_files:
-        return os.path.join(BASE_PATH, f"stakingcompletados_{CHUNK_SIZE}.json")
+        return os.path.join(ARCHIVE_PATH, f"stakingcompletados_{CHUNK_SIZE}.json")
 
     chunk_files.sort(key=get_chunk_threshold)
     latest = chunk_files[-1]
@@ -39,7 +42,7 @@ def get_completed_chunk_path():
         return latest
 
     next_threshold = get_chunk_threshold(latest) + CHUNK_SIZE
-    return os.path.join(BASE_PATH, f"stakingcompletados_{next_threshold}.json")
+    return os.path.join(ARCHIVE_PATH, f"stakingcompletados_{next_threshold}.json")
 
 def load_json_file(path):
     if not os.path.exists(path):
@@ -102,6 +105,8 @@ def move_to_completed(stake_id):
     for s in activos:
         if s["stake_id"] == stake_id:
             activos.remove(s)
+            s["status"] = "finished"
+            s["finished_timestamp"] = int(time.time())
             save_file("activos", activos)
             append_to_completed_chunk(s)
             return True

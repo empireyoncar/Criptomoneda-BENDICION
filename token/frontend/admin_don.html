@@ -184,6 +184,25 @@
     <button id="btnSubtract">Restar DON</button>
   </section>
 
+  <!-- TRANSFERIR -->
+  <section class="box">
+    <h2>Transferir DON entre Usuarios</h2>
+
+    <input type="text" id="transferFromUser" placeholder="ID del usuario origen">
+    <input type="text" id="transferToUser" placeholder="ID del usuario destino">
+    <input type="number" id="transferAmount" placeholder="Cantidad a transferir">
+    <button id="btnTransfer">Transferir DON</button>
+  </section>
+
+  <!-- BURN -->
+  <section class="box">
+    <h2>Quemar DON</h2>
+
+    <input type="text" id="burnUser" placeholder="ID del usuario">
+    <input type="number" id="burnAmount" placeholder="Cantidad a quemar">
+    <button id="btnBurn">Quemar DON</button>
+  </section>
+
   <!-- BALANCE -->
   <section class="box">
     <h2>Mi Balance DON</h2>
@@ -217,12 +236,18 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
-  window.onload = () => {
-    localStorage.setItem("user_id", "001");
-};    // Cargar balance del usuario
+  const adminUserId = localStorage.getItem("user_id");
+  if (!adminUserId) {
+    alert("Debes iniciar sesión como administrador.");
+    window.location.href = "/CriptoBendicion/admin/login";
+  } else {
+    document.getElementById("user_id").textContent = adminUserId;
+  }
+
+  // Cargar balance del usuario
     async function loadBalance() {
         try {
-            let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${userId}`);
+      let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${adminUserId}`);
             let data = await res.json();
             document.getElementById("balance").textContent = data.balance;
         } catch (err) {
@@ -292,6 +317,7 @@ document.getElementById("btnLoadSupply").onclick = loadSupply;
 loadSupply();
   // Cargar automáticamente al abrir
   loadDonValue();
+  loadBalance();
 
   // RESTAR DON
   document.getElementById("btnSubtract").onclick = async () => {
@@ -321,6 +347,66 @@ loadSupply();
           alert("Error de conexión al restar DON.");
       }
   };
+
+      // TRANSFERIR DON
+      document.getElementById("btnTransfer").onclick = async () => {
+        let fromUser = document.getElementById("transferFromUser").value.trim();
+        let toUser = document.getElementById("transferToUser").value.trim();
+        let amount = parseFloat(document.getElementById("transferAmount").value);
+
+        if (!fromUser || !toUser || !(amount > 0)) {
+          alert("Datos inválidos");
+          return;
+        }
+
+        try {
+          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/transfer", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({from_user: fromUser, to_user: toUser, amount: amount})
+          });
+          let data = await res.json();
+          if (data.success) {
+            alert(`Transferencia realizada correctamente.\nTX: ${data.tx_id}`);
+            document.getElementById("transferFromUser").value = "";
+            document.getElementById("transferToUser").value = "";
+            document.getElementById("transferAmount").value = "";
+          } else {
+            alert("Error: saldo insuficiente o datos inválidos.");
+          }
+        } catch (err) {
+          alert("Error de conexión al transferir DON.");
+        }
+      };
+
+      // QUEMAR DON
+      document.getElementById("btnBurn").onclick = async () => {
+        let user = document.getElementById("burnUser").value.trim();
+        let amount = parseFloat(document.getElementById("burnAmount").value);
+
+        if (!user || !(amount > 0)) {
+          alert("Datos inválidos");
+          return;
+        }
+
+        try {
+          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/burn", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({user_id: user, amount: amount})
+          });
+          let data = await res.json();
+          if (data.success) {
+            alert(`DON quemado correctamente.\nTX: ${data.tx_id}`);
+            document.getElementById("burnUser").value = "";
+            document.getElementById("burnAmount").value = "";
+          } else {
+            alert("Error: saldo insuficiente o usuario no encontrado.");
+          }
+        } catch (err) {
+          alert("Error de conexión al quemar DON.");
+        }
+      };
 </script>
 
 </body>

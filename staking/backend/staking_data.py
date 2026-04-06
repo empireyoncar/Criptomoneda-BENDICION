@@ -1,14 +1,61 @@
+import glob
 import json
 import os
 
 # Ruta base dentro del contenedor Docker
 BASE_PATH = "/app/backend"
+CHUNK_SIZE = 100
+COMPLETED_CHUNK_PATTERN = os.path.join(BASE_PATH, "stakingcompletados_history_*.json")
 
 FILES = {
     "activos": os.path.join(BASE_PATH, "stakingactivos.json"),
     "completados": os.path.join(BASE_PATH, "stakingcompletados_history.json"),
     "cancelados": os.path.join(BASE_PATH, "stakingcancelados_history.json")
 }
+
+
+def get_chunk_threshold(path):
+    name = os.path.basename(path)
+    number = name.split("_")[-1].split(".")[0]
+    try:
+        return int(number)
+    except ValueError:
+        return 0
+
+
+def get_completed_chunk_path():
+    chunk_files = glob.glob(COMPLETED_CHUNK_PATTERN)
+    if not chunk_files:
+        return os.path.join(BASE_PATH, f"stakingcompletados_history_{CHUNK_SIZE}.json")
+
+    chunk_files.sort(key=get_chunk_threshold)
+    latest = chunk_files[-1]
+    with open(latest, "r") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            data = []
+
+    if len(data) < CHUNK_SIZE:
+        return latest
+
+    next_threshold = get_chunk_threshold(latest) + CHUNK_SIZE
+    return os.path.join(BASE_PATH, f"stakingcompletados_history_{next_threshold}.json")
+
+
+def load_json_file(path):
+    if not os.path.exists(path):
+        return []
+    with open(path, "r") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+
+def save_json_file(path, data):
+    with open(path, "w") as f:
+        json.dump(data, f, indent=4)
 
 # ---------------------------------------------------------
 # ASEGURAR QUE LOS ARCHIVOS EXISTEN
@@ -24,14 +71,19 @@ for f in FILES.values():
 # ---------------------------------------------------------
 def load_file(name):
     """Carga un archivo JSON de staking."""
-    with open(FILES[name], "r") as f:
-        return json.load(f)
+    return load_json_file(FILES[name])
 
 
 def save_file(name, data):
     """Guarda un archivo JSON de staking."""
-    with open(FILES[name], "w") as f:
-        json.dump(data, f, indent=4)
+    save_json_file(FILES[name], data)
+
+
+def append_to_completed_chunk(stake):
+    path = get_completed_chunk_path()
+    data = load_json_file(path)
+    data.append(stake)
+    save_json_file(path, data)
 
 
 # ---------------------------------------------------------
@@ -56,6 +108,7 @@ def move_to_completed(stake_id):
             completados.append(s)
             save_file("activos", activos)
             save_file("completados", completados)
+            append_to_completed_chunk(s)
             return True
 
     return False

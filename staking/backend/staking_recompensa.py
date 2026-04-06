@@ -31,6 +31,7 @@ def procesar_recompensas():
     for stake in activos:
         if stake["end_timestamp"] <= ahora:
             stake_id = stake["stake_id"]
+            stake["status"] = "finished"
 
             staking_data.move_to_completed(stake_id)
 

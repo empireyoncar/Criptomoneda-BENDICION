@@ -6,6 +6,7 @@ import uuid
 
 HISTORY_FILE = "/app/backend/stakingcompletados_history.json"
 PAYOUT_FILE = "/app/backend/staking_payout.json"
+RECOMPENSAS_FILE = "/app/backend/staking_recompensa.json"
 
 # MISMO ENDPOINT QUE USA EL FRONTEND
 DON_API_URL = "https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/add"
@@ -15,9 +16,12 @@ def load_json(path):
     if not os.path.exists(path):
         return []
     with open(path, "r") as f:
+        content = f.read().strip()
+        if not content:
+            return []
         try:
-            return json.load(f)
-        except:
+            return json.loads(content)
+        except json.JSONDecodeError:
             return []
 
 
@@ -28,17 +32,21 @@ def save_json(path, data):
 
 def process_payouts():
     history = load_json(HISTORY_FILE)
+    recompensas = load_json(RECOMPENSAS_FILE)
     payouts = load_json(PAYOUT_FILE)
 
     # evitar pagos duplicados
-    pagados = {p["staking_id"] for p in payouts}
+    pagados = {p["stake_id"] for p in payouts}
 
     nuevos_pagos = []
-    cambios_history = False
+    cambios_recompensas = False
 
-    for item in history:
-        staking_id = item.get("staking_id")
-        if staking_id in pagados:
+    for item in recompensas:
+        if item.get("status") != "pending":
+            continue
+
+        stake_id = item.get("stake_id")
+        if stake_id in pagados:
             continue
 
         user_id = item.get("user_id")
@@ -53,6 +61,7 @@ def process_payouts():
                 "user_id": user_id,
                 "amount": reward
             })
+            res.raise_for_status()
             api_response = res.text
         except Exception as e:
             print("Error pagando DON:", e)
@@ -61,17 +70,17 @@ def process_payouts():
         # CAMBIAR ESTADO A PAID
         item["status"] = "paid"
         item["paid_timestamp"] = int(time.time())
-        cambios_history = True
+        cambios_recompensas = True
 
         # REGISTRAR LOG DE PAGO
         nuevos_pagos.append({
-            "staking_id": staking_id,
+            "stake_id": stake_id,
             "user_id": user_id,
             "amount": reward,
             "status": "paid",
             "timestamp": int(time.time()),
             "tx_id": str(uuid.uuid4()),
-            "source": "staking_payout",
+            "source": "staking_recompensa",
             "don_api_response": api_response
         })
 
@@ -80,8 +89,8 @@ def process_payouts():
         payouts.extend(nuevos_pagos)
         save_json(PAYOUT_FILE, payouts)
 
-    if cambios_history:
-        save_json(HISTORY_FILE, history)
+    if cambios_recompensas:
+        save_json(RECOMPENSAS_FILE, recompensas)
 
 
 if __name__ == "__main__":

@@ -26,11 +26,30 @@ CREATE TABLE IF NOT EXISTS p2p_offers (
 CREATE INDEX IF NOT EXISTS idx_p2p_offers_status_side_asset ON p2p_offers(status, side, asset);
 CREATE INDEX IF NOT EXISTS idx_p2p_offers_user_id ON p2p_offers(user_id);
 
-ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS country TEXT NOT NULL DEFAULT 'N/A';
-ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS payment_provider TEXT NOT NULL DEFAULT '';
-ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS account_reference TEXT NOT NULL DEFAULT '';
-ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS account_holder TEXT NOT NULL DEFAULT '';
-ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS completion_time_minutes INT NOT NULL DEFAULT 15;
+-- Add missing columns if they don't exist (for existing databases)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+                   WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='country') THEN
+        ALTER TABLE p2p_offers ADD COLUMN country TEXT NOT NULL DEFAULT 'N/A';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+                   WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='payment_provider') THEN
+        ALTER TABLE p2p_offers ADD COLUMN payment_provider TEXT NOT NULL DEFAULT '';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+                   WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='account_reference') THEN
+        ALTER TABLE p2p_offers ADD COLUMN account_reference TEXT NOT NULL DEFAULT '';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+                   WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='account_holder') THEN
+        ALTER TABLE p2p_offers ADD COLUMN account_holder TEXT NOT NULL DEFAULT '';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+                   WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='completion_time_minutes') THEN
+        ALTER TABLE p2p_offers ADD COLUMN completion_time_minutes INT NOT NULL DEFAULT 15 CHECK (completion_time_minutes IN (10, 15, 30, 60));
+    END IF;
+END$$;
 
 CREATE TABLE IF NOT EXISTS p2p_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -88,6 +88,22 @@
   </div>
 
   <div class="card">
+    <h2>Mis ofertas creadas</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Tipo</th>
+          <th>Disponible</th>
+          <th>Estado</th>
+          <th>Accion</th>
+        </tr>
+      </thead>
+      <tbody id="myOffersBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
     <h2>Publicar oferta</h2>
     <div class="grid">
       <div><label>Tipo de orden</label><select id="side"><option value="buy">Compra BEN</option><option value="sell">Venta BEN</option></select></div>
@@ -278,11 +294,58 @@
     window.location.href = "/CriptoBendicion/p2p/order/" + data.order.id;
   }
 
+  async function loadMyOffers() {
+    const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=seller&limit=50`);
+    const data = await res.json();
+    if (!res.ok) return;
+
+    const body = document.getElementById("myOffersBody");
+    body.innerHTML = "";
+
+    const offers = (data.offers || []).filter((o) => o.status === "active").slice(0, 10);
+    offers.forEach((o) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${o.id}</td>
+        <td>${o.side === "sell" ? "Vender" : "Comprar"}</td>
+        <td>${formatAmount(o.amount_available)} BEN</td>
+        <td>${o.status}</td>
+        <td><button class="${o.side === "sell" ? "btn-primary" : "btn-secondary"}" data-cancel="${o.id}">Cancelar</button></td>
+      `;
+      body.appendChild(tr);
+    });
+
+    if (!offers.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="5" class="muted">No tienes ofertas activas.</td>`;
+      body.appendChild(tr);
+    }
+
+    body.querySelectorAll("[data-cancel]").forEach((btn) => {
+      btn.onclick = async () => {
+        try {
+          const offerId = btn.getAttribute("data-cancel");
+          const res = await fetch(API + `/offers/${offerId}/cancel`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({user_id: userId})
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Error");
+          alert("Oferta cancelada.");
+          await loadMyOffers();
+        } catch (e) { alert(e.message); }
+      };
+    });
+  }
+
   document.getElementById("btnReload").onclick = loadOffers;
   document.getElementById("btnCreate").onclick = createOffer;
   document.getElementById("btnCreateDemoOrder").onclick = createDemoOrder;
   refreshOnlineOrdersButton();
+  loadMyOffers();
   window.setInterval(refreshOnlineOrdersButton, 12000);
+  window.setInterval(loadMyOffers, 15000);
   loadOffers();
 </script>
 </body>

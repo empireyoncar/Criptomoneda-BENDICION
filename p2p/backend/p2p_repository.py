@@ -435,6 +435,40 @@ def add_rating(order_id: str, from_user_id: str, to_user_id: str, score: int, co
     return rows[0]
 
 
+def cancel_offer(offer_id: str, requester_user_id: str) -> dict[str, Any]:
+    rows = run_query(
+        """
+        SELECT * FROM p2p_offers WHERE id = %s FOR UPDATE
+        """,
+        (offer_id,),
+    )
+    with db_transaction() as cur:
+        cur.execute(
+            """
+            SELECT * FROM p2p_offers WHERE id = %s FOR UPDATE
+            """,
+            (offer_id,),
+        )
+        offer = cur.fetchone()
+        if not offer:
+            raise ValueError("Oferta no encontrada")
+        if offer["user_id"] != requester_user_id:
+            raise PermissionError("Solo el creador puede cancelar la oferta")
+        if offer["status"] != "active":
+            raise ValueError("La oferta no puede ser cancelada en estado " + offer["status"])
+
+        cur.execute(
+            """
+            UPDATE p2p_offers
+            SET status = 'cancelled', updated_at = NOW()
+            WHERE id = %s
+            RETURNING *
+            """,
+            (offer_id,),
+        )
+        return dict(cur.fetchone())
+
+
 def get_user_reputation(user_id: str) -> dict[str, Any]:
         stats_rows = run_query(
                 """

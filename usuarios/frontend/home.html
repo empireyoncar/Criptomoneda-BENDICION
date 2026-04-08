@@ -203,7 +203,7 @@
     let userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("Debes iniciar sesión primero.");
-        window.location.href = "login.html";
+        window.location.href = "login";
     } else {
         document.getElementById("userId").textContent = userId;
     }

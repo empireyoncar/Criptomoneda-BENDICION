@@ -369,6 +369,18 @@ def api_get_dispute(order_id: str):
         return _error(f"Error interno al cargar disputa: {exc}", 500)
 
 
+@app.post("/offers/<offer_id>/cancel")
+def api_cancel_offer(offer_id: str):
+    try:
+        payload = _json_body()
+        offer = p2p.cancel_offer(offer_id=offer_id, requester_user_id=payload.get("user_id", ""))
+        return _ok({"success": True, "offer": offer})
+    except (ValueError, PermissionError) as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al cancelar oferta: {exc}", 500)
+
+
 @app.post("/demo/create-example-order")
 def api_demo_create_example_order():
     """Create a demo offer and immediately take it to produce a valid order."""

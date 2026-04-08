@@ -319,6 +319,12 @@ def validate_order_status(status: str) -> bool:
     return status in _ALLOWED_ORDER_STATUSES
 
 
+def cancel_offer(offer_id: str, requester_user_id: str) -> dict[str, Any]:
+    offer_id = _require_non_empty(offer_id, "offer_id")
+    requester_user_id = _require_non_empty(requester_user_id, "requester_user_id")
+    return repo.cancel_offer(offer_id, requester_user_id)
+
+
 def list_user_orders(user_id: str, role: str = "participant", limit: int = 100) -> list[dict[str, Any]]:
     user_id = _require_non_empty(user_id, "user_id")
     if role not in {"participant", "seller", "buyer"}:

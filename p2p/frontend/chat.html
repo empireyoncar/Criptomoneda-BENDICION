@@ -74,6 +74,8 @@
     }
   }
 
+  let messageIdsSeen = new Set();
+
   function append(msg) {
     const div = document.createElement("div");
     div.className = "msg";
@@ -84,11 +86,31 @@
     messages.scrollTop = messages.scrollHeight;
   }
 
+  async function loadChatHistory() {
+    const res = await fetch(`${API}/orders/${orderId}/chat?requester_user_id=${encodeURIComponent(userId)}&limit=100`);
+    const data = await res.json();
+    if (!res.ok) return;
+
+    (data.messages || []).forEach((msg) => {
+      const msgId = `${msg.id || msg.created_at}`;
+      if (!messageIdsSeen.has(msgId)) {
+        messageIdsSeen.add(msgId);
+        append(msg);
+      }
+    });
+  }
+
   const ws = new WebSocket(`${chatWsBase}/ws/order/${orderId}?user_id=${encodeURIComponent(userId)}`);
 
   ws.onmessage = (ev) => {
     const payload = JSON.parse(ev.data);
-    if (payload.type === "message") append(payload.message);
+    if (payload.type === "message") {
+      const msgId = `${payload.message.id || payload.message.created_at}`;
+      if (!messageIdsSeen.has(msgId)) {
+        messageIdsSeen.add(msgId);
+        append(payload.message);
+      }
+    }
     if (payload.type === "error") append({user_id: "error", message: payload.error});
   };
 
@@ -99,6 +121,9 @@
     ws.send(JSON.stringify({message: value}));
     txt.value = "";
   };
+
+  loadChatHistory();
+  window.setInterval(loadChatHistory, 10000);
 
   syncPresence();
   window.setInterval(syncPresence, 15000);

@@ -1,0 +1,5 @@
+bcrypt==4.1.2
+PyJWT==2.8.1
+cryptography==41.0.7
+ecdsa==0.18.0
+email-validator==2.1.0

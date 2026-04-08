@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mercado P2P - BENDICION (BEN)</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#0b0e11; color:#eaecef; margin:0; }
+    .layout { max-width:1100px; margin:0 auto; padding:20px; }
+    .card { background:#181a20; border-radius:12px; padding:16px; margin-bottom:14px; }
+    h1 { margin:0 0 8px 0; color:#f0b90b; }
+    table { width:100%; border-collapse: collapse; }
+    th, td { border-bottom:1px solid #2b3139; padding:10px; text-align:left; }
+    th { color:#8b8d90; }
+    input, select, textarea { width:100%; background:#0f1115; color:#eaecef; border:1px solid #2b3139; border-radius:6px; padding:8px; }
+    button { background:#f0b90b; border:none; border-radius:6px; padding:10px 14px; font-weight:bold; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
+    .muted { color:#8b8d90; font-size:13px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <div class="card">
+    <h1>Mercado P2P - BENDICION (BEN)</h1>
+    <div class="muted">Usuario: <span id="userId">-</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Ofertas activas</h2>
+    <div class="grid">
+      <div>
+        <label>Tipo de orden</label>
+        <select id="fSide">
+          <option value="">Todos</option>
+          <option value="buy">Compra BEN</option>
+          <option value="sell">Venta BEN</option>
+        </select>
+      </div>
+      <div>
+        <label>Criptomoneda</label>
+        <input value="BENDICION (BEN)" disabled>
+      </div>
+      <div style="align-self:end;">
+        <button id="btnReload">Actualizar</button>
+        <button id="btnCreateDemoOrder">Crear orden de ejemplo</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Usuario</th>
+          <th>Pais</th>
+          <th>Tipo de orden</th>
+          <th>Precio</th>
+          <th>Disponible</th>
+          <th>Metodo de pago</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="offersBody"></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Publicar oferta</h2>
+    <div class="grid">
+      <div><label>Tipo de orden</label><select id="side"><option value="buy">Compra BEN</option><option value="sell">Venta BEN</option></select></div>
+      <div><label>Criptomoneda</label><input value="BENDICION (BEN)" disabled></div>
+      <div><label>Pais</label><input id="country" placeholder="Ej: Espana"></div>
+      <div><label>Fiat</label><input id="fiat" value="USD"></div>
+      <div><label>Metodo de pago</label><input id="payment_method" placeholder="Ej: Bizum, transferencia"></div>
+      <div><label>Banco / Proveedor</label><input id="payment_provider" placeholder="Ej: Santander o Bizum"></div>
+      <div><label>Cuenta o Telefono</label><input id="account_reference" placeholder="IBAN o numero de telefono"></div>
+      <div><label>Titular de la cuenta</label><input id="account_holder" placeholder="Nombre del titular"></div>
+      <div><label>Precio</label><input id="price" type="number" step="0.0001"></div>
+      <div><label>Cantidad</label><input id="amount_total" type="number" step="0.0001"></div>
+      <div><label>Min limite</label><input id="min_limit" type="number" step="0.01" value="0"></div>
+      <div><label>Max limite</label><input id="max_limit" type="number" step="0.01" value="0"></div>
+      <div style="grid-column:1/-1;"><label>Terminos</label><textarea id="terms"></textarea></div>
+    </div>
+    <div style="margin-top:12px;"><button id="btnCreate">Crear oferta</button></div>
+  </div>
+</div>
+
+<script>
+  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  document.getElementById("userId").textContent = userId;
+
+  const API = "/CriptoBendicion/p2p_api";
+
+  async function loadOffers() {
+    const side = document.getElementById("fSide").value;
+    const url = new URL(API + "/offers", window.location.origin);
+    if (side) url.searchParams.set("side", side);
+    url.searchParams.set("asset", "BEN");
+
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    const tbody = document.getElementById("offersBody");
+    tbody.innerHTML = "";
+
+    (data.offers || []).forEach((o) => {
+      const tipoOrden = o.side === "sell" ? "Vende BEN" : "Compra BEN";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${o.id}</td>
+        <td>${o.user_id}</td>
+        <td>${o.country || "-"}</td>
+        <td>${tipoOrden}</td>
+        <td>${o.price}</td>
+        <td>${o.amount_available}</td>
+        <td>${o.payment_method}</td>
+        <td><button data-id="${o.id}">Comprar</button></td>
+      `;
+      tr.querySelector("button").onclick = () => takeOffer(o.id);
+      tbody.appendChild(tr);
+    });
+  }
+
+  async function createOffer() {
+    const payload = {
+      user_id: userId,
+      country: document.getElementById("country").value.trim(),
+      side: document.getElementById("side").value,
+      asset: "BEN",
+      fiat_currency: document.getElementById("fiat").value.trim(),
+      payment_method: document.getElementById("payment_method").value.trim(),
+      payment_provider: document.getElementById("payment_provider").value.trim(),
+      account_reference: document.getElementById("account_reference").value.trim(),
+      account_holder: document.getElementById("account_holder").value.trim(),
+      price: parseFloat(document.getElementById("price").value),
+      amount_total: parseFloat(document.getElementById("amount_total").value),
+      min_limit: parseFloat(document.getElementById("min_limit").value || "0"),
+      max_limit: parseFloat(document.getElementById("max_limit").value || "0"),
+      terms: document.getElementById("terms").value.trim()
+    };
+
+    const res = await fetch(API + "/offers", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "Error al crear oferta");
+      return;
+    }
+    alert("Oferta creada: " + data.offer.id);
+    await loadOffers();
+  }
+
+  async function takeOffer(offerId) {
+    const amountRaw = prompt("Cantidad a tomar:");
+    if (!amountRaw) return;
+
+    const res = await fetch(API + "/orders/take", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({offer_id: offerId, taker_user_id: userId, amount: parseFloat(amountRaw)})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo tomar oferta");
+      return;
+    }
+    alert("Orden creada: " + data.order.id);
+    window.location.href = "/CriptoBendicion/p2p/order/" + data.order.id;
+  }
+
+  async function createDemoOrder() {
+    const payload = {
+      seller_id: "vendedor_demo",
+      buyer_id: userId,
+      country: "Venezuela",
+      payment_method: "Transferencia",
+      payment_provider: "Banesco",
+      account_reference: "04141234567",
+      account_holder: "Juan Perez",
+      fiat_currency: "USD",
+      price: 1.25,
+      amount_total: 120,
+      take_amount: 20
+    };
+
+    const res = await fetch(API + "/demo/create-example-order", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo crear la orden de ejemplo");
+      return;
+    }
+
+    alert("Orden de ejemplo creada: " + data.order.id);
+    window.location.href = "/CriptoBendicion/p2p/order/" + data.order.id;
+  }
+
+  document.getElementById("btnReload").onclick = loadOffers;
+  document.getElementById("btnCreate").onclick = createOffer;
+  document.getElementById("btnCreateDemoOrder").onclick = createDemoOrder;
+  loadOffers();
+</script>
+</body>
+</html>

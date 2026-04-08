@@ -1,0 +1,23 @@
+P2P MODULE - QUICK SETUP
+
+1) Apply schema:
+   psql -h <host> -U <user> -d <db> -f p2p_schema.sql
+   Host and container PostgreSQL port used by this module: 5544
+
+2) Required env vars:
+   P2P_DB_HOST
+   P2P_DB_PORT
+   P2P_DB_NAME
+   P2P_DB_USER
+   P2P_DB_PASSWORD
+   P2P_JWT_SECRET  (for websocket token validation)
+
+3) Servers:
+   python p2p_server.py      # API on 5012
+   python p2p_webserver.py   # WEB on 5013
+   python p2p_chatserver.py  # CHAT on 5014
+
+4) Routes:
+   /p2p
+   /p2p/order/<order_id>
+   /p2p/chat/<order_id>

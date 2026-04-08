@@ -1,0 +1,108 @@
+name: p2p_bendicion
+
+services:
+  p2p_db:
+    image: postgres:16
+    container_name: p2p_db
+    command: postgres -p 5544
+    environment:
+      POSTGRES_DB: p2p_db
+      POSTGRES_USER: p2p_user
+      POSTGRES_PASSWORD: p2p_password
+    ports:
+      - "5544:5544"
+    volumes:
+      - p2p_postgres_data:/var/lib/postgresql/data
+      - ./backend/p2p_schema.sql:/docker-entrypoint-initdb.d/01_p2p_schema.sql:ro
+    restart: always
+    networks:
+      - p2p_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U p2p_user -d p2p_db -p 5544"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  p2p_api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: p2p_api
+    command: python p2p_server.py
+    environment:
+      P2P_DB_HOST: p2p_db
+      P2P_DB_PORT: 5544
+      P2P_DB_NAME: p2p_db
+      P2P_DB_USER: p2p_user
+      P2P_DB_PASSWORD: p2p_password
+      P2P_JWT_SECRET: super_secret_dev_change_me
+    ports:
+      - "5012:5012"
+    volumes:
+      - ./backend:/app
+    restart: always
+    networks:
+      - p2p_net
+    depends_on:
+      p2p_db:
+        condition: service_healthy
+
+  p2p_web:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: p2p_web
+    command: python p2p_webserver.py
+    environment:
+      P2P_DB_HOST: p2p_db
+      P2P_DB_PORT: 5544
+      P2P_DB_NAME: p2p_db
+      P2P_DB_USER: p2p_user
+      P2P_DB_PASSWORD: p2p_password
+      P2P_JWT_SECRET: super_secret_dev_change_me
+    ports:
+      - "5013:5013"
+    volumes:
+      - ./backend:/app
+      - ./frontend:/app/p2p/frontend
+    restart: always
+    networks:
+      - p2p_net
+    depends_on:
+      p2p_db:
+        condition: service_healthy
+      p2p_api:
+        condition: service_started
+
+  p2p_chat:
+    build:
+      context: ./backend
+      dockerfile: chat.Dockerfile
+    container_name: p2p_chat
+    command: python p2p_chatserver.py
+    environment:
+      P2P_DB_HOST: p2p_db
+      P2P_DB_PORT: 5544
+      P2P_DB_NAME: p2p_db
+      P2P_DB_USER: p2p_user
+      P2P_DB_PASSWORD: p2p_password
+      P2P_JWT_SECRET: super_secret_dev_change_me
+    ports:
+      - "5014:5014"
+    volumes:
+      - ./backend:/app
+    restart: always
+    networks:
+      - p2p_net
+    depends_on:
+      p2p_db:
+        condition: service_healthy
+      p2p_api:
+        condition: service_started
+
+networks:
+  p2p_net:
+    driver: bridge
+
+volumes:
+  p2p_postgres_data:

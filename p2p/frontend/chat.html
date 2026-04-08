@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat P2P</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .wrap{max-width:800px;margin:0 auto;}
+    .box{background:#181a20;border-radius:10px;padding:16px;}
+    #messages{height:340px;overflow:auto;background:#0f1115;border:1px solid #2b3139;padding:10px;border-radius:6px;margin-bottom:10px;}
+    .msg{margin-bottom:8px;font-size:14px;}
+    .meta{color:#8b8d90;font-size:12px;}
+    input{width:100%;padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;}
+    button{margin-top:10px;padding:10px 14px;border:none;border-radius:6px;background:#f0b90b;color:#000;font-weight:bold;cursor:pointer;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="box">
+    <h1>Chat de Orden</h1>
+    <p>Orden: <span id="orderId">{{ order_id }}</span></p>
+    <div id="messages"></div>
+    <input id="txt" placeholder="Escribe un mensaje...">
+    <button id="btnSend">Enviar</button>
+  </div>
+</div>
+
+<script>
+  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  const orderId = document.getElementById("orderId").textContent.trim();
+  const messages = document.getElementById("messages");
+  const chatWsBase = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/CriptoBendicion/p2p_chat";
+
+  function append(msg) {
+    const div = document.createElement("div");
+    div.className = "msg";
+    const who = msg.sender_user_id || msg.user_id || "sistema";
+    const text = msg.message || msg.error || "";
+    div.innerHTML = `<strong>${who}:</strong> ${text}<div class="meta">${msg.created_at || new Date().toISOString()}</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  const ws = new WebSocket(`${chatWsBase}/ws/order/${orderId}?user_id=${encodeURIComponent(userId)}`);
+
+  ws.onmessage = (ev) => {
+    const payload = JSON.parse(ev.data);
+    if (payload.type === "message") append(payload.message);
+    if (payload.type === "error") append({user_id: "error", message: payload.error});
+  };
+
+  document.getElementById("btnSend").onclick = () => {
+    const txt = document.getElementById("txt");
+    const value = txt.value.trim();
+    if (!value) return;
+    ws.send(JSON.stringify({message: value}));
+    txt.value = "";
+  };
+</script>
+</body>
+</html>

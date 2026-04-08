@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Orden P2P BEN</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .card{background:#181a20;border-radius:10px;padding:16px;max-width:820px;margin:0 auto;}
+    .muted{color:#9aa4af;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:12px 0;}
+    .field{background:#0f1115;border:1px solid #2b3139;border-radius:8px;padding:10px;}
+    .label{font-size:12px;color:#9aa4af;}
+    .value{font-size:14px;margin-top:4px;word-break:break-word;}
+    button,input{padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;}
+    button{background:#f0b90b;color:#000;border:none;cursor:pointer;margin-right:8px;margin-top:8px;}
+    .warn{background:#2a1f09;color:#f7d27a;border-radius:8px;padding:10px;margin-top:10px;}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Detalle de Orden BEN</h1>
+    <p>ID: <span id="orderId">{{ order_id }}</span></p>
+    <p>Usuario actual: <span id="userId">-</span></p>
+    <p>Estado: <strong id="orderStatus">cargando...</strong></p>
+
+    <div class="grid">
+      <div class="field"><div class="label">Pais</div><div id="country" class="value">-</div></div>
+      <div class="field"><div class="label">Metodo de pago</div><div id="paymentMethod" class="value">-</div></div>
+      <div class="field"><div class="label">Banco / Proveedor</div><div id="paymentProvider" class="value">-</div></div>
+      <div class="field"><div class="label">Cuenta o Telefono</div><div id="accountReference" class="value">-</div></div>
+      <div class="field"><div class="label">Titular de cuenta</div><div id="accountHolder" class="value">-</div></div>
+      <div class="field"><div class="label">Precio unitario</div><div id="unitPrice" class="value">-</div></div>
+      <div class="field"><div class="label">Cantidad BEN</div><div id="amount" class="value">-</div></div>
+      <div class="field"><div class="label">Total fiat</div><div id="totalFiat" class="value">-</div></div>
+    </div>
+
+    <div class="warn">
+      El comprador realiza el pago fuera de plataforma, luego presiona <strong>He Pagado</strong>.
+      Cuando el estado cambie a <strong>paid</strong>, el vendedor podra presionar <strong>Liberar Criptos</strong>.
+    </div>
+
+    <div>
+      <input id="proofUrl" placeholder="URL comprobante de pago" style="width:100%;margin-bottom:10px;">
+      <button id="btnPay">He Pagado</button>
+      <button id="btnRelease">Liberar Criptos</button>
+      <button id="btnDispute">Abrir Disputa</button>
+      <button id="btnChat">Abrir chat</button>
+    </div>
+  </div>
+
+<script>
+  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  document.getElementById("userId").textContent = userId;
+  const orderId = document.getElementById("orderId").textContent.trim();
+  const API = "/CriptoBendicion/p2p_api";
+
+  let order = null;
+
+  async function post(path, payload) {
+    const res = await fetch(API + path, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error");
+    return data;
+  }
+
+  async function loadOrder() {
+    const res = await fetch(`${API}/orders/${orderId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar la orden");
+
+    order = data.order;
+    document.getElementById("orderStatus").textContent = order.status;
+    document.getElementById("country").textContent = order.country || "-";
+    document.getElementById("paymentMethod").textContent = order.payment_method || "-";
+    document.getElementById("paymentProvider").textContent = order.payment_provider || "-";
+    document.getElementById("accountReference").textContent = order.account_reference || "-";
+    document.getElementById("accountHolder").textContent = order.account_holder || "-";
+    document.getElementById("unitPrice").textContent = order.unit_price || "-";
+    document.getElementById("amount").textContent = order.amount || "-";
+    document.getElementById("totalFiat").textContent = order.total_fiat || "-";
+
+    const isBuyer = order.buyer_id === userId;
+    const isSeller = order.seller_id === userId;
+
+    document.getElementById("btnPay").disabled = !(isBuyer && order.status === "pending_payment");
+    document.getElementById("btnRelease").disabled = !(isSeller && order.status === "paid");
+  }
+
+  document.getElementById("btnPay").onclick = async () => {
+    try {
+      const proof = document.getElementById("proofUrl").value.trim();
+      await post(`/orders/${orderId}/pay`, {buyer_id: userId, payment_proof_url: proof});
+      alert("Pago marcado. Espera la liberacion del vendedor.");
+      await loadOrder();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnRelease").onclick = async () => {
+    try {
+      await post(`/orders/${orderId}/release`, {seller_id: userId});
+      alert("Criptos liberados correctamente.");
+      await loadOrder();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnDispute").onclick = async () => {
+    try {
+      const reason = prompt("Motivo de disputa:");
+      if (!reason) return;
+      await post(`/orders/${orderId}/dispute`, {opened_by_user_id: userId, reason: reason, evidence: []});
+      alert("Disputa abierta.");
+      await loadOrder();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnChat").onclick = () => {
+    window.location.href = `/CriptoBendicion/p2p/chat/${orderId}`;
+  };
+
+  loadOrder().catch((e) => alert(e.message));
+</script>
+</body>
+</html>

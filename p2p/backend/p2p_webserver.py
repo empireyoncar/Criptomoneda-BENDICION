@@ -33,5 +33,20 @@ def p2p_reputation():
     return render_template("reputacion.html")
 
 
+@app.route("/p2p/orders-online")
+def p2p_orders_online():
+    return render_template("ordenesonline.html")
+
+
+@app.route("/p2p/disputas")
+def p2p_disputas():
+    return render_template("disputas1.html")
+
+
+@app.route("/p2p/panel-disputas")
+def p2p_panel_disputas():
+    return render_template("paneldisputas.html")
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5013, debug=True)

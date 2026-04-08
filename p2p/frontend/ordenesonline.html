@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ordenes Online - Vendedor P2P</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .wrap{max-width:1100px;margin:0 auto;}
+    .card{background:#181a20;border-radius:10px;padding:16px;margin-bottom:14px;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    .muted{color:#9aa4af;font-size:13px;}
+    .marketBtn{display:inline-block;background:#2b3139;color:#eaecef;text-decoration:none;border-radius:6px;padding:10px 12px;font-weight:bold;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border-bottom:1px solid #2b3139;padding:10px;text-align:left;vertical-align:top;}
+    th{color:#8b8d90;}
+    .status{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:bold;display:inline-block;}
+    .status.pending_payment{background:#9d2f2f;color:#fff;}
+    .status.paid{background:#6b7280;color:#ffffff;}
+    .status.disputed{background:#f59e0b;color:#111827;}
+    .status.released,.status.completed{background:#0f9d58;color:#fff;}
+    .status.cancelled,.status.refunded{background:#4b5563;color:#fff;}
+    .btn{padding:8px 10px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin-right:8px;margin-bottom:6px;}
+    .btn-chat{background:#f0b90b;color:#111827;}
+    .btn-release{background:#6b7280;color:#ffffff;}
+    .btn-release[disabled]{background:#2b3139;color:#9aa4af;cursor:not-allowed;}
+    .btn-dispute{background:#2b3139;color:#9aa4af;}
+    .btn-dispute.active{background:#f0b90b;color:#111827;cursor:pointer;}
+    .timer{font-weight:bold;color:#f7d27a;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="topbar">
+      <div>
+        <h1>Ordenes online del vendedor</h1>
+        <div class="muted">Da seguimiento en tiempo real, chat con comprador y estado de pago.</div>
+      </div>
+      <a class="marketBtn" href="/CriptoBendicion/p2p/">Ir a mercado P2P</a>
+    </div>
+    <div class="muted">Usuario actual: <span id="userId">-</span></div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Orden</th>
+          <th>Comprador</th>
+          <th>Estado</th>
+          <th>Tiempo restante</th>
+          <th>Datos de pago</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/p2p_api";
+  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  document.getElementById("userId").textContent = userId;
+  const ordersCache = new Map();
+
+  function escapeHtml(value) {
+    return String(value || "").replace(/[&<>\"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+  }
+
+  function formatTimer(expiresAt, status) {
+    if (!expiresAt || status !== "pending_payment") return "00:00";
+    const diff = Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000));
+    const mm = String(Math.floor(diff / 60)).padStart(2, "0");
+    const ss = String(diff % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }
+
+  async function post(path, payload) {
+    const res = await fetch(API + path, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error");
+    return data;
+  }
+
+  async function getTimeout(orderId) {
+    const res = await fetch(`${API}/orders/${orderId}/timeout/status?requester_user_id=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    return res.ok ? data.timeout : null;
+  }
+
+  async function maybePromptTimeout(order, timeout) {
+    if (!timeout || order.status !== "pending_payment" || !timeout.expired) return;
+    if ((timeout.votes || []).some((v) => v.user_id === userId)) return;
+
+    const wantsCancel = window.confirm(`Se acabo el tiempo de la orden ${order.id}. Quieres cancelar la orden?`);
+    await post(`/orders/${order.id}/timeout/vote`, {user_id: userId, cancel_requested: wantsCancel});
+  }
+
+  async function loadOrders() {
+    const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=seller&limit=100`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar ordenes");
+
+    const body = document.getElementById("ordersBody");
+    body.innerHTML = "";
+
+    const orders = (data.orders || []).filter((o) => ["pending_payment", "paid", "disputed", "released"].includes(o.status));
+
+    for (const order of orders) {
+      const timeout = await getTimeout(order.id);
+      await maybePromptTimeout(order, timeout);
+      ordersCache.set(order.id, {order, timeout});
+
+      const disputeEnabled = order.status !== "pending_payment" || (timeout && timeout.dispute_unlocked);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${escapeHtml(order.id)}</td>
+        <td>${escapeHtml(order.buyer_id)}</td>
+        <td><span class="status ${escapeHtml(order.status)}">${escapeHtml(order.status)}</span></td>
+        <td class="timer" data-timer="${escapeHtml(order.id)}">${formatTimer(order.expires_at, order.status)}</td>
+        <td>
+          ${escapeHtml(order.payment_method || "-")}<br>
+          <span class="muted">${escapeHtml(order.payment_provider || "-")} | ${escapeHtml(order.account_reference || "-")}</span>
+        </td>
+        <td>
+          <button class="btn btn-chat" data-chat="${escapeHtml(order.id)}">Chat con comprador</button><br>
+          <button class="btn btn-release" data-release="${escapeHtml(order.id)}" ${order.status === "paid" ? "" : "disabled"}>Liberar criptos</button><br>
+          <button class="btn btn-dispute ${disputeEnabled ? "active" : ""}" data-dispute="${escapeHtml(order.id)}" ${disputeEnabled ? "" : "disabled"}>Abrir disputa</button>
+        </td>
+      `;
+      body.appendChild(tr);
+    }
+
+    if (!orders.length) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="6" class="muted">No tienes ordenes online activas como vendedor.</td>`;
+      body.appendChild(tr);
+    }
+
+    body.querySelectorAll("[data-chat]").forEach((btn) => {
+      btn.onclick = () => {
+        const orderId = btn.getAttribute("data-chat");
+        window.location.href = `/CriptoBendicion/p2p/chat/${orderId}`;
+      };
+    });
+
+    body.querySelectorAll("[data-release]").forEach((btn) => {
+      btn.onclick = async () => {
+        try {
+          const orderId = btn.getAttribute("data-release");
+          await post(`/orders/${orderId}/release`, {seller_id: userId});
+          alert("Criptos liberados correctamente.");
+          await loadOrders();
+        } catch (e) {
+          alert(e.message);
+        }
+      };
+    });
+
+    body.querySelectorAll("[data-dispute]").forEach((btn) => {
+      btn.onclick = async () => {
+        try {
+          const orderId = btn.getAttribute("data-dispute");
+          const reason = prompt("Motivo de disputa:");
+          if (!reason) return;
+          await post(`/orders/${orderId}/dispute`, {opened_by_user_id: userId, reason, evidence: []});
+          alert("Disputa abierta.");
+          await loadOrders();
+        } catch (e) {
+          alert(e.message);
+        }
+      };
+    });
+  }
+
+  function tickTimers() {
+    document.querySelectorAll("[data-timer]").forEach((el) => {
+      const orderId = el.getAttribute("data-timer");
+      const cache = ordersCache.get(orderId);
+      if (!cache) return;
+      el.textContent = formatTimer(cache.order.expires_at, cache.order.status);
+    });
+  }
+
+  loadOrders().catch((e) => alert(e.message));
+  window.setInterval(loadOrders, 15000);
+  window.setInterval(tickTimers, 1000);
+</script>
+</body>
+</html>

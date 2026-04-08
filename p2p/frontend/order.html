@@ -30,6 +30,11 @@
     .dot-red{background:#9d2f2f;}
     .dot-white{background:#f3f4f6;border:1px solid #cbd5e1;}
     .dot-green{background:#0f9d58;}
+    .timerBox{margin:10px 0;background:#11151b;border:1px solid #2b3139;border-radius:8px;padding:10px;font-size:14px;}
+    .timerValue{font-weight:bold;color:#f7d27a;}
+    .helper{color:#9aa4af;font-size:12px;margin-top:8px;}
+    .toolbar{margin-top:10px;}
+    .marketBtn{display:inline-block;background:#2b3139;color:#eaecef;text-decoration:none;border-radius:6px;padding:10px 12px;font-weight:bold;}
   </style>
 </head>
 <body>
@@ -38,6 +43,7 @@
     <p>ID: <span id="orderId">{{ order_id }}</span></p>
     <p>Usuario actual: <span id="userId">-</span></p>
     <p>Estado: <strong id="orderStatus">cargando...</strong></p>
+    <div class="timerBox">Tiempo restante: <span class="timerValue" id="countdown">--:--</span></div>
 
     <div class="grid">
       <div class="field"><div class="label">Comprador</div><div class="value presenceRow"><span id="buyerPresenceDot" class="presenceDot"></span><span id="buyerPresenceText">-</span></div></div>
@@ -61,9 +67,11 @@
       <input id="proofUrl" placeholder="URL comprobante de pago" style="width:100%;margin-bottom:10px;">
       <button id="btnPay" class="btn-muted">He Pagado</button>
       <button id="btnRelease" class="btn-red">Liberar Criptos</button>
-      <button id="btnDispute">Abrir Disputa</button>
+      <button id="btnDispute" class="btn-muted" disabled>Abrir Disputa</button>
       <button id="btnChat">Abrir chat</button>
+      <a class="marketBtn" href="/CriptoBendicion/p2p/">Ir a mercado P2P</a>
     </div>
+    <div class="helper" id="timeoutHint">La disputa estara bloqueada hasta que termine el cronometro.</div>
 
     <div class="legend">
       <p><strong>Leyenda del boton Liberar Criptos</strong></p>
@@ -79,6 +87,9 @@
   const orderId = document.getElementById("orderId").textContent.trim();
   const API = "/CriptoBendicion/p2p_api";
   let presenceIntervalId = null;
+  let countdownIntervalId = null;
+  let timeoutPromptDone = false;
+  let timeoutState = null;
 
   let order = null;
 
@@ -117,6 +128,72 @@
     setButtonState(btnRelease, "btn-red", true, "Esperando que el comprador marque He Pagado.");
   }
 
+  function renderCountdown() {
+    if (!order || !order.expires_at || order.status !== "pending_payment") {
+      document.getElementById("countdown").textContent = "00:00";
+      return;
+    }
+
+    const endAt = new Date(order.expires_at).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, Math.floor((endAt - now) / 1000));
+    const mm = String(Math.floor(diff / 60)).padStart(2, "0");
+    const ss = String(diff % 60).padStart(2, "0");
+    document.getElementById("countdown").textContent = `${mm}:${ss}`;
+  }
+
+  function updateDisputeButton() {
+    const btn = document.getElementById("btnDispute");
+    const hint = document.getElementById("timeoutHint");
+
+    if (!order) return;
+    if (order.status === "disputed") {
+      setButtonState(btn, "btn-active", true, "La orden ya esta en disputa.");
+      hint.textContent = "Disputa activa, esperando resolucion administrativa.";
+      return;
+    }
+    if (order.status !== "pending_payment") {
+      setButtonState(btn, "btn-active", false, "Puedes abrir disputa en este estado.");
+      hint.textContent = "La disputa esta habilitada.";
+      return;
+    }
+
+    const unlocked = Boolean(timeoutState && timeoutState.dispute_unlocked);
+    if (unlocked) {
+      setButtonState(btn, "btn-active", false, "El cronometro termino, ya puedes abrir disputa.");
+      hint.textContent = "Cronometro finalizado: disputa habilitada para comprador y vendedor.";
+    } else {
+      setButtonState(btn, "btn-muted", true, "La disputa se habilita al finalizar el cronometro.");
+      hint.textContent = "La disputa estara bloqueada hasta que termine el cronometro.";
+    }
+  }
+
+  async function refreshTimeoutState() {
+    const res = await fetch(`${API}/orders/${orderId}/timeout/status?requester_user_id=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      timeoutState = null;
+      updateDisputeButton();
+      return;
+    }
+
+    timeoutState = data.timeout;
+    updateDisputeButton();
+
+    if (
+      order &&
+      order.status === "pending_payment" &&
+      timeoutState.expired &&
+      !timeoutPromptDone &&
+      !(timeoutState.votes || []).some((v) => v.user_id === userId)
+    ) {
+      timeoutPromptDone = true;
+      const answer = window.confirm("El tiempo termino. Quieres cancelar la orden?");
+      await post(`/orders/${orderId}/timeout/vote`, {user_id: userId, cancel_requested: answer});
+      await loadOrder();
+    }
+  }
+
   function renderPresence(role, userLabel, isOnline) {
     const dot = document.getElementById(`${role}PresenceDot`);
     const text = document.getElementById(`${role}PresenceText`);
@@ -146,6 +223,8 @@
       await heartbeat();
       if (order) {
         await refreshPresence();
+        await refreshTimeoutState();
+        renderCountdown();
       }
     } catch (_error) {
     }
@@ -178,10 +257,15 @@
     document.getElementById("amount").textContent = order.amount || "-";
     document.getElementById("totalFiat").textContent = order.total_fiat || "-";
     updateActionButtons();
+    renderCountdown();
     await refreshPresence();
+    await refreshTimeoutState();
 
     if (!presenceIntervalId) {
       presenceIntervalId = window.setInterval(syncPresence, 15000);
+    }
+    if (!countdownIntervalId) {
+      countdownIntervalId = window.setInterval(renderCountdown, 1000);
     }
   }
 

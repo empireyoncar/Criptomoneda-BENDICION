@@ -23,6 +23,10 @@ _rooms: dict[str, set[Any]] = defaultdict(set)
 _rooms_lock = threading.Lock()
 
 
+def _is_admin_user(user_id: str) -> bool:
+    return user_id.startswith("admin") or user_id == "001"
+
+
 def _decode_token(token: str) -> dict[str, Any]:
     secret = os.getenv("P2P_JWT_SECRET", "")
     if not secret:
@@ -65,7 +69,7 @@ def ws_order_chat(ws, order_id: str):
 
     try:
         user_id = _resolve_user_id()
-        if not p2p.is_order_participant(order_id, user_id) and not user_id.startswith("admin"):
+        if not p2p.is_order_participant(order_id, user_id) and not _is_admin_user(user_id):
             ws.send(json.dumps({"type": "error", "error": "No autorizado para esta orden"}))
             ws.close()
             return

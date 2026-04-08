@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Disputa P2P - Administracion</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .wrap{max-width:1100px;margin:0 auto;}
+    .card{background:#181a20;border-radius:10px;padding:16px;margin-bottom:14px;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    .muted{color:#9aa4af;font-size:13px;}
+    .btn{padding:8px 10px;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin-right:8px;margin-top:8px;}
+    .btn-reload{background:#2b3139;color:#eaecef;}
+    .btn-buyer{background:#f0b90b;color:#111827;}
+    .btn-seller{background:#0f9d58;color:#fff;}
+    .btn-reject{background:#9d2f2f;color:#fff;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+    .field{background:#0f1115;border:1px solid #2b3139;border-radius:8px;padding:10px;}
+    .label{font-size:12px;color:#9aa4af;}
+    #messages{height:280px;overflow:auto;background:#0f1115;border:1px solid #2b3139;padding:10px;border-radius:6px;margin-bottom:10px;}
+    input{width:100%;padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card topbar">
+    <div>
+      <h1>Gestion de disputa</h1>
+      <div class="muted">Admin: <span id="adminId">-</span></div>
+      <div class="muted">Orden: <span id="orderId">-</span></div>
+    </div>
+    <button class="btn btn-reload" id="btnBack">Volver al panel</button>
+  </div>
+
+  <div class="card">
+    <div class="grid">
+      <div class="field"><div class="label">Estado disputa</div><div id="disputeStatus">-</div></div>
+      <div class="field"><div class="label">Estado orden</div><div id="orderStatus">-</div></div>
+      <div class="field"><div class="label">Comprador</div><div id="buyerId">-</div></div>
+      <div class="field"><div class="label">Vendedor</div><div id="sellerId">-</div></div>
+      <div class="field"><div class="label">Monto</div><div id="amount">-</div></div>
+      <div class="field"><div class="label">Total fiat</div><div id="totalFiat">-</div></div>
+      <div class="field" style="grid-column:1/-1;"><div class="label">Motivo</div><div id="reason">-</div></div>
+    </div>
+
+    <div>
+      <button class="btn btn-buyer" id="btnResolveBuyer">Resolver a favor comprador</button>
+      <button class="btn btn-seller" id="btnResolveSeller">Resolver a favor vendedor</button>
+      <button class="btn btn-reject" id="btnReject">Rechazar disputa</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Chat con usuarios</h2>
+    <div id="messages"></div>
+    <input id="txt" placeholder="Escribe mensaje como admin...">
+    <button class="btn btn-buyer" id="btnSend">Enviar al chat</button>
+  </div>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/p2p_api";
+  const adminId = localStorage.getItem("user_id") || "001";
+  document.getElementById("adminId").textContent = adminId;
+  const orderId = new URLSearchParams(window.location.search).get("order_id") || "";
+  document.getElementById("orderId").textContent = orderId || "(sin orden)";
+
+  const chatWsBase = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/CriptoBendicion/p2p_chat";
+  const messages = document.getElementById("messages");
+
+  function append(msg) {
+    const div = document.createElement("div");
+    const who = msg.sender_user_id || msg.user_id || "sistema";
+    const text = msg.message || msg.error || "";
+    div.innerHTML = `<strong>${who}:</strong> ${text}<div class="muted">${msg.created_at || new Date().toISOString()}</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  async function post(path, payload) {
+    const res = await fetch(API + path, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error");
+    return data;
+  }
+
+  async function loadDispute() {
+    if (!orderId) return;
+    const res = await fetch(`${API}/disputes/${orderId}?requester_user_id=${encodeURIComponent(adminId)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar disputa");
+    const d = data.dispute;
+
+    document.getElementById("disputeStatus").textContent = d.status || "-";
+    document.getElementById("orderStatus").textContent = d.order_status || "-";
+    document.getElementById("buyerId").textContent = d.buyer_id || "-";
+    document.getElementById("sellerId").textContent = d.seller_id || "-";
+    document.getElementById("amount").textContent = d.amount || "-";
+    document.getElementById("totalFiat").textContent = d.total_fiat || "-";
+    document.getElementById("reason").textContent = d.reason || "-";
+  }
+
+  let ws = null;
+  function openChat() {
+    if (!orderId) return;
+    ws = new WebSocket(`${chatWsBase}/ws/order/${orderId}?user_id=${encodeURIComponent(adminId)}`);
+    ws.onmessage = (ev) => {
+      const payload = JSON.parse(ev.data);
+      if (payload.type === "message") append(payload.message);
+      if (payload.type === "error") append({user_id: "error", message: payload.error});
+    };
+  }
+
+  document.getElementById("btnSend").onclick = () => {
+    const txt = document.getElementById("txt");
+    const value = txt.value.trim();
+    if (!value || !ws) return;
+    ws.send(JSON.stringify({message: value}));
+    txt.value = "";
+  };
+
+  document.getElementById("btnResolveBuyer").onclick = async () => {
+    try {
+      await post(`/orders/${orderId}/dispute/resolve`, {admin_id: adminId, resolution: "resolved_buyer", note: "Resuelto por panel admin"});
+      alert("Disputa resuelta a favor comprador.");
+      await loadDispute();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnResolveSeller").onclick = async () => {
+    try {
+      await post(`/orders/${orderId}/dispute/resolve`, {admin_id: adminId, resolution: "resolved_seller", note: "Resuelto por panel admin"});
+      alert("Disputa resuelta a favor vendedor.");
+      await loadDispute();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnReject").onclick = async () => {
+    try {
+      await post(`/orders/${orderId}/dispute/resolve`, {admin_id: adminId, resolution: "rejected", note: "Disputa rechazada por admin"});
+      alert("Disputa rechazada.");
+      await loadDispute();
+    } catch (e) { alert(e.message); }
+  };
+
+  document.getElementById("btnBack").onclick = () => {
+    window.location.href = "/CriptoBendicion/p2p/panel-disputas";
+  };
+
+  loadDispute().catch((e) => alert(e.message));
+  openChat();
+  window.setInterval(() => loadDispute().catch(() => {}), 15000);
+</script>
+</body>
+</html>

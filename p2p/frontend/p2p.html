@@ -17,7 +17,12 @@
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
     .muted { color:#8b8d90; font-size:13px; }
     .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .topbarLinks { display:flex; gap:10px; align-items:center; }
     .market-link { color:var(--yellow); text-decoration:none; font-size:13px; }
+    .online-orders-btn { border-radius:6px; padding:8px 12px; font-size:13px; font-weight:bold; border:none; text-decoration:none; color:#fff; background:#4b5563; }
+    .online-orders-btn.red { background:#9d2f2f; }
+    .online-orders-btn.white { background:#f3f4f6; color:#111827; }
+    .online-orders-btn.gray { background:#4b5563; }
     .userCell a { color:#eaecef; text-decoration:none; font-weight:bold; }
     .userMeta { display:block; color:#8b8d90; font-size:11px; margin-top:4px; }
     .side-buy { color:var(--green); font-weight:bold; }
@@ -37,7 +42,10 @@
         <h1>Mercado P2P - BENDICION (BEN)</h1>
         <div class="muted">Usuario: <span id="userId">-</span></div>
       </div>
-      <a class="market-link" id="myReputationLink" href="/CriptoBendicion/p2p/reputation">Ver reputacion</a>
+      <div class="topbarLinks">
+        <a id="btnOnlineOrders" class="online-orders-btn gray" href="/CriptoBendicion/p2p/orders-online">Ordenes online</a>
+        <a class="market-link" id="myReputationLink" href="/CriptoBendicion/p2p/reputation">Ver reputacion</a>
+      </div>
     </div>
   </div>
 
@@ -107,6 +115,26 @@
   document.getElementById("myReputationLink").href = `/CriptoBendicion/p2p/reputation?user_id=${encodeURIComponent(userId)}`;
 
   const API = "/CriptoBendicion/p2p_api";
+
+  async function refreshOnlineOrdersButton() {
+    const btn = document.getElementById("btnOnlineOrders");
+    try {
+      const res = await fetch(`${API}/orders/online/status?user_id=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+      if (!res.ok) {
+        btn.className = "online-orders-btn gray";
+        btn.textContent = "Ordenes online";
+        return;
+      }
+
+      const color = data.color || "gray";
+      btn.className = `online-orders-btn ${color}`;
+      btn.textContent = `Ordenes online (${data.count || 0})`;
+    } catch (_error) {
+      btn.className = "online-orders-btn gray";
+      btn.textContent = "Ordenes online";
+    }
+  }
 
   function formatPrice(value) {
     return Number(value || 0).toFixed(3);
@@ -253,6 +281,8 @@
   document.getElementById("btnReload").onclick = loadOffers;
   document.getElementById("btnCreate").onclick = createOffer;
   document.getElementById("btnCreateDemoOrder").onclick = createDemoOrder;
+  refreshOnlineOrdersButton();
+  window.setInterval(refreshOnlineOrdersButton, 12000);
   loadOffers();
 </script>
 </body>

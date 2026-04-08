@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Disputas P2P</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .wrap{max-width:1100px;margin:0 auto;}
+    .card{background:#181a20;border-radius:10px;padding:16px;margin-bottom:14px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border-bottom:1px solid #2b3139;padding:10px;text-align:left;}
+    th{color:#8b8d90;}
+    .btn{padding:8px 10px;border:none;border-radius:6px;background:#f0b90b;color:#111827;font-weight:bold;cursor:pointer;}
+    .muted{color:#9aa4af;font-size:13px;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card topbar">
+    <div>
+      <h1>Panel de control de disputas</h1>
+      <div class="muted">Vista general de disputas activas para resolver una por una.</div>
+      <div class="muted">Admin: <span id="adminId">-</span></div>
+    </div>
+    <button class="btn" id="btnReload">Actualizar</button>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+      <tr>
+        <th>Orden</th>
+        <th>Estado disputa</th>
+        <th>Estado orden</th>
+        <th>Comprador</th>
+        <th>Vendedor</th>
+        <th>Motivo</th>
+        <th>Accion</th>
+      </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/p2p_api";
+  const adminId = localStorage.getItem("user_id") || "001";
+  document.getElementById("adminId").textContent = adminId;
+
+  function esc(v){
+    return String(v || "").replace(/[&<>\"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));
+  }
+
+  async function loadDisputes(){
+    const res = await fetch(`${API}/disputes?requester_user_id=${encodeURIComponent(adminId)}&status=open&limit=200`);
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "No se pudo cargar disputas");
+
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    (data.disputes || []).forEach((d) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${esc(d.order_id)}</td>
+        <td>${esc(d.status)}</td>
+        <td>${esc(d.order_status)}</td>
+        <td>${esc(d.buyer_id)}</td>
+        <td>${esc(d.seller_id)}</td>
+        <td>${esc(d.reason)}</td>
+        <td><button class="btn" data-order="${esc(d.order_id)}">Abrir disputa</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    if(!(data.disputes || []).length){
+      const tr = document.createElement("tr");
+      tr.innerHTML = '<td colspan="7" class="muted">No hay disputas activas.</td>';
+      tbody.appendChild(tr);
+    }
+
+    tbody.querySelectorAll("[data-order]").forEach((btn) => {
+      btn.onclick = () => {
+        const orderId = btn.getAttribute("data-order");
+        window.location.href = `/CriptoBendicion/p2p/disputas?order_id=${encodeURIComponent(orderId)}`;
+      };
+    });
+  }
+
+  document.getElementById("btnReload").onclick = () => loadDisputes().catch((e) => alert(e.message));
+  loadDisputes().catch((e) => alert(e.message));
+  window.setInterval(() => loadDisputes().catch(() => {}), 20000);
+</script>
+</body>
+</html>

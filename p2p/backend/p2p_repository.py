@@ -204,6 +204,7 @@ def get_order_detail(order_id: str) -> dict[str, Any] | None:
           o.payment_proof_url,
           o.status,
           o.created_at,
+          o.expires_at,
           f.country,
           f.payment_method,
           f.payment_provider,
@@ -222,6 +223,50 @@ def get_order_detail(order_id: str) -> dict[str, Any] | None:
         (order_id,),
     )
     return rows[0] if rows else None
+
+
+def list_user_orders(user_id: str, role: str = "participant", limit: int = 100) -> list[dict[str, Any]]:
+    if role == "seller":
+        where_clause = "o.seller_id = %s"
+    elif role == "buyer":
+        where_clause = "o.buyer_id = %s"
+    else:
+        where_clause = "(o.buyer_id = %s OR o.seller_id = %s)"
+
+    if role == "participant":
+        params: tuple[Any, ...] = (user_id, user_id, limit)
+    else:
+        params = (user_id, limit)
+
+    return run_query(
+        f"""
+        SELECT
+            o.id,
+            o.offer_id,
+            o.buyer_id,
+            o.seller_id,
+            o.amount,
+            o.unit_price,
+            o.total_fiat,
+            o.status,
+            o.created_at,
+            o.expires_at,
+            f.country,
+            f.payment_method,
+            f.payment_provider,
+            f.account_reference,
+            f.account_holder,
+            f.completion_time_minutes,
+            f.fiat_currency,
+            f.asset
+        FROM p2p_orders o
+        JOIN p2p_offers f ON f.id = o.offer_id
+        WHERE {where_clause}
+        ORDER BY o.created_at DESC
+        LIMIT %s
+        """,
+        params,
+    )
 
 
 def update_order_status(order_id: str, status: str, proof_url: str | None = None) -> dict[str, Any]:
@@ -289,6 +334,93 @@ def resolve_dispute(order_id: str, admin_id: str, status: str, note: str) -> dic
         (status, admin_id, note, order_id),
     )
     return rows[0]
+
+
+def list_disputes(status: str = "open", limit: int = 100) -> list[dict[str, Any]]:
+    return run_query(
+        """
+        SELECT
+            d.id,
+            d.order_id,
+            d.opened_by_user_id,
+            d.reason,
+            d.evidence,
+            d.status,
+            d.admin_id,
+            d.resolution_note,
+            d.created_at,
+            d.resolved_at,
+            o.buyer_id,
+            o.seller_id,
+            o.amount,
+            o.total_fiat,
+            o.status AS order_status,
+            o.expires_at
+        FROM p2p_disputes d
+        JOIN p2p_orders o ON o.id = d.order_id
+        WHERE (%s = '' OR d.status = %s)
+        ORDER BY d.created_at DESC
+        LIMIT %s
+        """,
+        (status, status, limit),
+    )
+
+
+def get_dispute_detail(order_id: str) -> dict[str, Any] | None:
+    rows = run_query(
+        """
+        SELECT
+            d.id,
+            d.order_id,
+            d.opened_by_user_id,
+            d.reason,
+            d.evidence,
+            d.status,
+            d.admin_id,
+            d.resolution_note,
+            d.created_at,
+            d.resolved_at,
+            o.buyer_id,
+            o.seller_id,
+            o.amount,
+            o.unit_price,
+            o.total_fiat,
+            o.status AS order_status,
+            o.expires_at
+        FROM p2p_disputes d
+        JOIN p2p_orders o ON o.id = d.order_id
+        WHERE d.order_id = %s
+        """,
+        (order_id,),
+    )
+    return rows[0] if rows else None
+
+
+def upsert_timeout_vote(order_id: str, user_id: str, cancel_requested: bool) -> dict[str, Any]:
+    rows = run_query(
+        """
+        INSERT INTO p2p_order_timeout_votes (order_id, user_id, cancel_requested)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (order_id, user_id) DO UPDATE
+        SET cancel_requested = EXCLUDED.cancel_requested,
+            created_at = NOW()
+        RETURNING order_id, user_id, cancel_requested, created_at
+        """,
+        (order_id, user_id, cancel_requested),
+    )
+    return rows[0]
+
+
+def get_timeout_votes(order_id: str) -> list[dict[str, Any]]:
+    return run_query(
+        """
+        SELECT order_id, user_id, cancel_requested, created_at
+        FROM p2p_order_timeout_votes
+        WHERE order_id = %s
+        ORDER BY created_at ASC
+        """,
+        (order_id,),
+    )
 
 
 def add_rating(order_id: str, from_user_id: str, to_user_id: str, score: int, comment: str) -> dict[str, Any]:

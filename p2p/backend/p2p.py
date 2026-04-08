@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any
 
 import p2p_repository as repo
@@ -19,6 +20,24 @@ _ALLOWED_ORDER_STATUSES = {
 ASSET_CODE = "BEN"
 ASSET_NAME = "BENDICION"
 ALLOWED_COMPLETION_MINUTES = {10, 15, 30, 60}
+
+
+def _is_admin_user(user_id: str) -> bool:
+    return user_id.startswith("admin") or user_id == "001"
+
+
+def _parse_dt(value: Any) -> datetime | None:
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
 
 
 def _require_non_empty(value: str, name: str) -> str:
@@ -182,6 +201,11 @@ def open_dispute(order_id: str, opened_by_user_id: str, reason: str, evidence: l
         raise ValueError("Orden no encontrada")
     _require_order_participant(order, opened_by_user_id)
 
+    if order["status"] == "pending_payment":
+        expires_at = _parse_dt(order.get("expires_at"))
+        if expires_at and datetime.now(timezone.utc) < expires_at:
+            raise ValueError("La disputa se habilita cuando termine el cronometro")
+
     repo.update_order_status(order_id, "disputed")
     dispute = repo.create_dispute(order_id, opened_by_user_id, reason, evidence)
     repo.add_escrow_event(order_id, "dispute_open", opened_by_user_id, {"reason": reason})
@@ -192,6 +216,9 @@ def resolve_dispute(order_id: str, admin_id: str, resolution: str, note: str) ->
     order_id = _require_non_empty(order_id, "order_id")
     admin_id = _require_non_empty(admin_id, "admin_id")
     resolution = _require_non_empty(resolution, "resolution")
+
+    if not _is_admin_user(admin_id):
+        raise PermissionError("Solo admin puede resolver disputas")
 
     if resolution not in {"resolved_buyer", "resolved_seller", "rejected"}:
         raise ValueError("resolution invalida")
@@ -222,7 +249,7 @@ def send_chat_message(order_id: str, sender_user_id: str, message: str, message_
         raise ValueError("Orden no encontrada")
 
     # Allow admin users too when handling disputes.
-    if sender_user_id not in {order["buyer_id"], order["seller_id"]} and not sender_user_id.startswith("admin"):
+    if sender_user_id not in {order["buyer_id"], order["seller_id"]} and not _is_admin_user(sender_user_id):
         raise PermissionError("No tienes acceso al chat de esta orden")
 
     return repo.add_chat_message(order_id, sender_user_id, message, message_type)
@@ -236,7 +263,7 @@ def list_chat_messages(order_id: str, requester_user_id: str, limit: int = 200) 
     if not order:
         raise ValueError("Orden no encontrada")
 
-    if requester_user_id not in {order["buyer_id"], order["seller_id"]} and not requester_user_id.startswith("admin"):
+    if requester_user_id not in {order["buyer_id"], order["seller_id"]} and not _is_admin_user(requester_user_id):
         raise PermissionError("No tienes acceso al chat de esta orden")
 
     return repo.get_chat_messages(order_id, limit)
@@ -290,3 +317,84 @@ def update_profile(user_id: str, actor_user_id: str, bio: str) -> dict[str, Any]
 
 def validate_order_status(status: str) -> bool:
     return status in _ALLOWED_ORDER_STATUSES
+
+
+def list_user_orders(user_id: str, role: str = "participant", limit: int = 100) -> list[dict[str, Any]]:
+    user_id = _require_non_empty(user_id, "user_id")
+    if role not in {"participant", "seller", "buyer"}:
+        raise ValueError("role invalido")
+    return repo.list_user_orders(user_id=user_id, role=role, limit=limit)
+
+
+def get_timeout_status(order_id: str, requester_user_id: str) -> dict[str, Any]:
+    order_id = _require_non_empty(order_id, "order_id")
+    requester_user_id = _require_non_empty(requester_user_id, "requester_user_id")
+
+    order = repo.get_order(order_id)
+    if not order:
+        raise ValueError("Orden no encontrada")
+    _require_order_participant(order, requester_user_id)
+
+    expires_at = _parse_dt(order.get("expires_at"))
+    now = datetime.now(timezone.utc)
+    expired = bool(expires_at and now >= expires_at)
+    votes = repo.get_timeout_votes(order_id)
+    vote_map = {row["user_id"]: bool(row["cancel_requested"]) for row in votes}
+    participants = [order["buyer_id"], order["seller_id"]]
+    both_voted = all(user in vote_map for user in participants)
+    both_cancel = both_voted and all(vote_map[user] for user in participants)
+    any_keep = any((user in vote_map and not vote_map[user]) for user in participants)
+
+    dispute_unlocked = expired and (order["status"] == "pending_payment") and (any_keep or not both_cancel)
+    return {
+        "order_id": order_id,
+        "status": order["status"],
+        "expired": expired,
+        "expires_at": order.get("expires_at"),
+        "votes": votes,
+        "both_voted": both_voted,
+        "both_cancel": both_cancel,
+        "dispute_unlocked": dispute_unlocked,
+    }
+
+
+def submit_timeout_vote(order_id: str, user_id: str, cancel_requested: bool) -> dict[str, Any]:
+    order_id = _require_non_empty(order_id, "order_id")
+    user_id = _require_non_empty(user_id, "user_id")
+
+    order = repo.get_order(order_id)
+    if not order:
+        raise ValueError("Orden no encontrada")
+    _require_order_participant(order, user_id)
+    if order["status"] != "pending_payment":
+        raise ValueError("Solo aplica en ordenes pending_payment")
+
+    expires_at = _parse_dt(order.get("expires_at"))
+    if not expires_at or datetime.now(timezone.utc) < expires_at:
+        raise ValueError("El cronometro aun no ha finalizado")
+
+    repo.upsert_timeout_vote(order_id, user_id, bool(cancel_requested))
+    status = get_timeout_status(order_id, user_id)
+    if status["both_cancel"]:
+        repo.update_order_status(order_id, "cancelled")
+        repo.add_escrow_event(order_id, "timeout", user_id, {"decision": "cancelled_by_both"})
+        status["status"] = "cancelled"
+        status["dispute_unlocked"] = True
+    return status
+
+
+def list_disputes(requester_user_id: str, status: str = "open", limit: int = 100) -> list[dict[str, Any]]:
+    requester_user_id = _require_non_empty(requester_user_id, "requester_user_id")
+    if not _is_admin_user(requester_user_id):
+        raise PermissionError("Solo admin puede ver disputas")
+    return repo.list_disputes(status=status, limit=limit)
+
+
+def get_dispute_detail(order_id: str, requester_user_id: str) -> dict[str, Any]:
+    requester_user_id = _require_non_empty(requester_user_id, "requester_user_id")
+    if not _is_admin_user(requester_user_id):
+        raise PermissionError("Solo admin puede ver disputas")
+    dispute = repo.get_dispute_detail(order_id)
+    if not dispute:
+        raise ValueError("Disputa no encontrada")
+    return dispute

@@ -142,3 +142,14 @@ CREATE TABLE IF NOT EXISTS p2p_audit_log (
 
 CREATE INDEX IF NOT EXISTS idx_p2p_audit_user_id ON p2p_audit_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_p2p_audit_action ON p2p_audit_log(action);
+
+CREATE TABLE IF NOT EXISTS p2p_order_timeout_votes (
+  id BIGSERIAL PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES p2p_orders(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  cancel_requested BOOLEAN NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(order_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_p2p_order_timeout_votes_order_id ON p2p_order_timeout_votes(order_id);

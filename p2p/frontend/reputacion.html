@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Reputacion P2P</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
+    .wrap{max-width:980px;margin:0 auto;}
+    .card{background:#181a20;border-radius:12px;padding:18px;margin-bottom:14px;}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+    .stat{background:#0f1115;border:1px solid #2b3139;border-radius:10px;padding:12px;}
+    .label{font-size:12px;color:#9aa4af;}
+    .value{font-size:24px;margin-top:6px;}
+    .muted{color:#9aa4af;font-size:13px;}
+    .comment{background:#0f1115;border:1px solid #2b3139;border-radius:10px;padding:12px;margin-top:10px;}
+    textarea,input{width:100%;box-sizing:border-box;background:#0f1115;color:#eaecef;border:1px solid #2b3139;border-radius:8px;padding:10px;}
+    button{background:#f0b90b;color:#000;border:none;border-radius:8px;padding:10px 14px;font-weight:bold;cursor:pointer;}
+    .row{display:flex;gap:10px;align-items:end;}
+    .row > div{flex:1;}
+    a{color:#f0b90b;text-decoration:none;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div>
+        <label class="label" for="searchUserId">Buscar por ID</label>
+        <input id="searchUserId" placeholder="Ej: 03a4061b-86a3-456b-b7f8-0d20632da61f">
+      </div>
+      <div style="flex:0 0 auto;">
+        <button id="btnSearch">Buscar reputacion</button>
+      </div>
+      <div style="flex:0 0 auto;">
+        <a href="/CriptoBendicion/p2p/">Volver al mercado</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h1>Perfil P2P</h1>
+    <p>ID: <strong id="profileUserId">-</strong></p>
+    <p class="muted">En este modulo se usa el ID del usuario. No se toma un nombre visible desde otra base externa.</p>
+    <div class="grid">
+      <div class="stat"><div class="label">Ordenes totales</div><div id="totalOrders" class="value">0</div></div>
+      <div class="stat"><div class="label">Ordenes completadas</div><div id="completedOrders" class="value">0</div></div>
+      <div class="stat"><div class="label">Ordenes canceladas</div><div id="cancelledOrders" class="value">0</div></div>
+      <div class="stat"><div class="label">Tasa completada</div><div id="completionRate" class="value">0%</div></div>
+      <div class="stat"><div class="label">Promedio estrellas</div><div id="averageScore" class="value">0.0</div></div>
+      <div class="stat"><div class="label">Comentarios positivos</div><div id="positiveComments" class="value">0</div></div>
+      <div class="stat"><div class="label">Comentarios negativos</div><div id="negativeComments" class="value">0</div></div>
+      <div class="stat"><div class="label">Valoraciones recibidas</div><div id="totalRatings" class="value">0</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Biografia</h2>
+    <p class="muted">Solo el propietario del perfil puede guardar su biografia.</p>
+    <textarea id="bio" rows="4" maxlength="300" placeholder="Escribe una pequena biografia sobre tu experiencia en P2P."></textarea>
+    <div style="margin-top:10px;"><button id="btnSaveBio">Guardar biografia</button></div>
+  </div>
+
+  <div class="card">
+    <h2>Comentarios recibidos</h2>
+    <div id="comments"></div>
+  </div>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/p2p_api";
+  const currentUserId = localStorage.getItem("user_id") || "usuario_demo";
+  const params = new URLSearchParams(window.location.search);
+  const initialUserId = params.get("user_id") || currentUserId;
+
+  function renderComments(comments) {
+    const container = document.getElementById("comments");
+    container.innerHTML = "";
+    if (!comments.length) {
+      container.innerHTML = '<p class="muted">Este usuario aun no tiene comentarios.</p>';
+      return;
+    }
+
+    comments.forEach((comment) => {
+      const div = document.createElement("div");
+      div.className = "comment";
+      div.innerHTML = `
+        <div><strong>${comment.score} ★</strong> de ${comment.from_user_id}</div>
+        <div style="margin-top:6px;">${comment.comment}</div>
+        <div class="muted" style="margin-top:8px;">${comment.created_at}</div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function loadReputation(userId) {
+    const res = await fetch(`${API}/users/${encodeURIComponent(userId)}/reputation`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar la reputacion");
+
+    const rep = data.reputation;
+    document.getElementById("searchUserId").value = userId;
+    document.getElementById("profileUserId").textContent = rep.user_id;
+    document.getElementById("totalOrders").textContent = rep.total_orders || 0;
+    document.getElementById("completedOrders").textContent = rep.completed_orders || 0;
+    document.getElementById("cancelledOrders").textContent = rep.cancelled_orders || 0;
+    document.getElementById("completionRate").textContent = `${rep.completion_rate || 0}%`;
+    document.getElementById("averageScore").textContent = Number(rep.average_score || 0).toFixed(1);
+    document.getElementById("positiveComments").textContent = rep.positive_comments || 0;
+    document.getElementById("negativeComments").textContent = rep.negative_comments || 0;
+    document.getElementById("totalRatings").textContent = rep.total_ratings || 0;
+    document.getElementById("bio").value = rep.bio || "";
+    renderComments(rep.comments || []);
+  }
+
+  async function saveBio() {
+    const userId = document.getElementById("profileUserId").textContent.trim();
+    const bio = document.getElementById("bio").value.trim();
+    const res = await fetch(`${API}/users/${encodeURIComponent(userId)}/profile`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({actor_user_id: currentUserId, bio})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo guardar la biografia");
+    alert("Biografia guardada.");
+  }
+
+  document.getElementById("btnSearch").onclick = () => {
+    const userId = document.getElementById("searchUserId").value.trim();
+    if (!userId) return;
+    loadReputation(userId).catch((error) => alert(error.message));
+  };
+
+  document.getElementById("btnSaveBio").onclick = () => {
+    saveBio().catch((error) => alert(error.message));
+  };
+
+  loadReputation(initialUserId).catch((error) => alert(error.message));
+</script>
+</body>
+</html>

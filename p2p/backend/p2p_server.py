@@ -208,6 +208,22 @@ def api_reputation(user_id: str):
         return _error(f"Error interno al consultar reputacion: {exc}", 500)
 
 
+@app.post("/users/<user_id>/profile")
+def api_update_profile(user_id: str):
+    try:
+        payload = _json_body()
+        profile = p2p.update_profile(
+            user_id=user_id,
+            actor_user_id=payload.get("actor_user_id", ""),
+            bio=payload.get("bio", ""),
+        )
+        return _ok({"success": True, "profile": profile})
+    except (ValueError, PermissionError) as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al actualizar perfil: {exc}", 500)
+
+
 @app.post("/demo/create-example-order")
 def api_demo_create_example_order():
     """Create a demo offer and immediately take it to produce a valid order."""
@@ -231,6 +247,7 @@ def api_demo_create_example_order():
                 "amount_total": float(payload.get("amount_total", 100.0)),
                 "min_limit": float(payload.get("min_limit", 10.0)),
                 "max_limit": float(payload.get("max_limit", 300.0)),
+                "completion_time_minutes": int(payload.get("completion_time_minutes", 30)),
                 "terms": payload.get("terms", "Demo de orden P2P BEN"),
             }
         )

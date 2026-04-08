@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS p2p_offers (
   amount_available NUMERIC(20,8) NOT NULL CHECK (amount_available >= 0),
   min_limit NUMERIC(20,8) NOT NULL DEFAULT 0,
   max_limit NUMERIC(20,8) NOT NULL DEFAULT 0,
+  completion_time_minutes INT NOT NULL DEFAULT 15 CHECK (completion_time_minutes IN (10, 15, 30, 60)),
   terms TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'filled', 'cancelled')) DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -29,6 +30,7 @@ ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS country TEXT NOT NULL DEFAULT 'N
 ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS payment_provider TEXT NOT NULL DEFAULT '';
 ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS account_reference TEXT NOT NULL DEFAULT '';
 ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS account_holder TEXT NOT NULL DEFAULT '';
+ALTER TABLE p2p_offers ADD COLUMN IF NOT EXISTS completion_time_minutes INT NOT NULL DEFAULT 15;
 
 CREATE TABLE IF NOT EXISTS p2p_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -99,6 +101,13 @@ CREATE TABLE IF NOT EXISTS p2p_ratings (
 );
 
 CREATE INDEX IF NOT EXISTS idx_p2p_ratings_to_user_id ON p2p_ratings(to_user_id);
+
+CREATE TABLE IF NOT EXISTS p2p_user_profiles (
+  user_id TEXT PRIMARY KEY,
+  bio TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
 CREATE TABLE IF NOT EXISTS p2p_audit_log (
   id BIGSERIAL PRIMARY KEY,

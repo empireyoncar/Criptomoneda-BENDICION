@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <title>Mercado P2P - BENDICION (BEN)</title>
   <style>
+    :root { --green:#0f9d58; --red:#d64b4b; --yellow:#f0b90b; --panel:#181a20; --line:#2b3139; --bg:#0b0e11; }
     body { font-family: Arial, sans-serif; background:#0b0e11; color:#eaecef; margin:0; }
-    .layout { max-width:1100px; margin:0 auto; padding:20px; }
+    .layout { max-width:1240px; margin:0 auto; padding:20px; }
     .card { background:#181a20; border-radius:12px; padding:16px; margin-bottom:14px; }
     h1 { margin:0 0 8px 0; color:#f0b90b; }
     table { width:100%; border-collapse: collapse; }
@@ -15,13 +16,29 @@
     button { background:#f0b90b; border:none; border-radius:6px; padding:10px 14px; font-weight:bold; cursor:pointer; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px; }
     .muted { color:#8b8d90; font-size:13px; }
+    .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; }
+    .market-link { color:var(--yellow); text-decoration:none; font-size:13px; }
+    .userCell a { color:#eaecef; text-decoration:none; font-weight:bold; }
+    .userMeta { display:block; color:#8b8d90; font-size:11px; margin-top:4px; }
+    .side-buy { color:var(--green); font-weight:bold; }
+    .side-sell { color:var(--red); font-weight:bold; }
+    .action-buy { background:var(--green); color:#fff; }
+    .action-sell { background:var(--red); color:#fff; }
+    .amountSmall { font-size:12px; color:#b3bcc7; }
+    .limitBox { font-size:12px; color:#b3bcc7; margin-top:4px; }
+    .ratingBadge { display:inline-block; margin-top:6px; color:#f4d35e; font-size:12px; }
   </style>
 </head>
 <body>
 <div class="layout">
   <div class="card">
-    <h1>Mercado P2P - BENDICION (BEN)</h1>
-    <div class="muted">Usuario: <span id="userId">-</span></div>
+    <div class="topbar">
+      <div>
+        <h1>Mercado P2P - BENDICION (BEN)</h1>
+        <div class="muted">Usuario: <span id="userId">-</span></div>
+      </div>
+      <a class="market-link" id="myReputationLink" href="/CriptoBendicion/p2p/reputation">Ver reputacion</a>
+    </div>
   </div>
 
   <div class="card">
@@ -53,7 +70,7 @@
           <th>Pais</th>
           <th>Tipo de orden</th>
           <th>Precio</th>
-          <th>Disponible</th>
+          <th>Disponible / Limite</th>
           <th>Metodo de pago</th>
           <th></th>
         </tr>
@@ -77,6 +94,7 @@
       <div><label>Cantidad</label><input id="amount_total" type="number" step="0.0001"></div>
       <div><label>Min limite</label><input id="min_limit" type="number" step="0.01" value="0"></div>
       <div><label>Max limite</label><input id="max_limit" type="number" step="0.01" value="0"></div>
+      <div><label>Tiempo para completar</label><select id="completion_time_minutes"><option value="10">10 min</option><option value="15" selected>15 min</option><option value="30">30 min</option><option value="60">60 min</option></select></div>
       <div style="grid-column:1/-1;"><label>Terminos</label><textarea id="terms"></textarea></div>
     </div>
     <div style="margin-top:12px;"><button id="btnCreate">Crear oferta</button></div>
@@ -86,8 +104,27 @@
 <script>
   const userId = localStorage.getItem("user_id") || "usuario_demo";
   document.getElementById("userId").textContent = userId;
+  document.getElementById("myReputationLink").href = `/CriptoBendicion/p2p/reputation?user_id=${encodeURIComponent(userId)}`;
 
   const API = "/CriptoBendicion/p2p_api";
+
+  function formatPrice(value) {
+    return Number(value || 0).toFixed(3);
+  }
+
+  function formatAmount(value) {
+    return Number(value || 0).toFixed(2);
+  }
+
+  function formatLimit(minLimit, maxLimit, fiatCurrency) {
+    return `${formatPrice(minLimit)} - ${formatPrice(maxLimit)} ${fiatCurrency || "USD"}`;
+  }
+
+  function actionConfig(side) {
+    return side === "sell"
+      ? { label: "Comprar", className: "action-buy" }
+      : { label: "Vender", className: "action-sell" };
+  }
 
   async function loadOffers() {
     const side = document.getElementById("fSide").value;
@@ -101,17 +138,27 @@
     tbody.innerHTML = "";
 
     (data.offers || []).forEach((o) => {
-      const tipoOrden = o.side === "sell" ? "Vende BEN" : "Compra BEN";
+      const tipoOrden = o.side === "sell"
+        ? '<span class="side-sell">Vender BEN</span>'
+        : '<span class="side-buy">Comprar BEN</span>';
+      const action = actionConfig(o.side);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${o.id}</td>
-        <td>${o.user_id}</td>
+        <td class="userCell">
+          <a href="/CriptoBendicion/p2p/reputation?user_id=${encodeURIComponent(o.user_id)}">${o.user_id}</a>
+          <span class="userMeta">${o.total_orders || 0} Ordenes | ${o.completion_rate || 0}% Completadas | ${o.completion_time_minutes || 15} min</span>
+          <span class="ratingBadge">${Number(o.average_score || 0).toFixed(1)} ★</span>
+        </td>
         <td>${o.country || "-"}</td>
         <td>${tipoOrden}</td>
-        <td>${o.price}</td>
-        <td>${o.amount_available}</td>
+        <td>${formatPrice(o.price)}</td>
+        <td>
+          <div class="amountSmall">${formatAmount(o.amount_available)} BEN</div>
+          <div class="limitBox">${formatLimit(o.min_limit, o.max_limit, o.fiat_currency)}</div>
+        </td>
         <td>${o.payment_method}</td>
-        <td><button data-id="${o.id}">Comprar</button></td>
+        <td><button class="${action.className}" data-id="${o.id}">${action.label}</button></td>
       `;
       tr.querySelector("button").onclick = () => takeOffer(o.id);
       tbody.appendChild(tr);
@@ -133,6 +180,7 @@
       amount_total: parseFloat(document.getElementById("amount_total").value),
       min_limit: parseFloat(document.getElementById("min_limit").value || "0"),
       max_limit: parseFloat(document.getElementById("max_limit").value || "0"),
+      completion_time_minutes: parseInt(document.getElementById("completion_time_minutes").value, 10),
       terms: document.getElementById("terms").value.trim()
     };
 
@@ -180,6 +228,9 @@
       fiat_currency: "USD",
       price: 1.25,
       amount_total: 120,
+      min_limit: 1,
+      max_limit: 2000,
+      completion_time_minutes: 30,
       take_amount: 20
     };
 

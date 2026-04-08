@@ -18,6 +18,7 @@ _ALLOWED_ORDER_STATUSES = {
 
 ASSET_CODE = "BEN"
 ASSET_NAME = "BENDICION"
+ALLOWED_COMPLETION_MINUTES = {10, 15, 30, 60}
 
 
 def _require_non_empty(value: str, name: str) -> str:
@@ -52,6 +53,10 @@ def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
     if max_limit > 0 and min_limit > max_limit:
         raise ValueError("min_limit no puede ser mayor que max_limit")
 
+    completion_time_minutes = int(payload.get("completion_time_minutes") or 15)
+    if completion_time_minutes not in ALLOWED_COMPLETION_MINUTES:
+        raise ValueError("completion_time_minutes debe ser 10, 15, 30 o 60")
+
     data = {
         "user_id": user_id,
         "country": _require_non_empty(payload.get("country", ""), "country"),
@@ -66,6 +71,7 @@ def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
         "amount_total": amount_total,
         "min_limit": min_limit,
         "max_limit": max_limit,
+        "completion_time_minutes": completion_time_minutes,
         "terms": str(payload.get("terms") or "").strip(),
     }
 
@@ -268,6 +274,18 @@ def submit_rating(order_id: str, from_user_id: str, score: int, comment: str = "
 def get_reputation(user_id: str) -> dict[str, Any]:
     user_id = _require_non_empty(user_id, "user_id")
     return repo.get_user_reputation(user_id)
+
+
+def update_profile(user_id: str, actor_user_id: str, bio: str) -> dict[str, Any]:
+    user_id = _require_non_empty(user_id, "user_id")
+    actor_user_id = _require_non_empty(actor_user_id, "actor_user_id")
+    if user_id != actor_user_id:
+        raise PermissionError("Solo el propietario puede editar su biografia")
+
+    bio = str(bio or "").strip()
+    if len(bio) > 300:
+        raise ValueError("La biografia no puede superar 300 caracteres")
+    return repo.upsert_user_profile(user_id, bio)
 
 
 def validate_order_status(status: str) -> bool:

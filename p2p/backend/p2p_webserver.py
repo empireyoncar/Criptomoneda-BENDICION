@@ -28,5 +28,10 @@ def p2p_chat(order_id: str):
     return render_template("chat.html", order_id=order_id)
 
 
+@app.route("/p2p/reputation")
+def p2p_reputation():
+    return render_template("reputacion.html")
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5013, debug=True)

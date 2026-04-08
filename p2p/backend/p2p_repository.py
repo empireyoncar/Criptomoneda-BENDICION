@@ -18,25 +18,27 @@ def create_offer(data: dict[str, Any]) -> dict[str, Any]:
         INSERT INTO p2p_offers (
                     user_id, country, side, asset, fiat_currency, payment_method,
                     payment_provider, account_reference, account_holder,
-                    price, amount_total, amount_available, min_limit, max_limit, terms, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'active')
+                    price, amount_total, amount_available, min_limit, max_limit,
+                    completion_time_minutes, terms, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'active')
         RETURNING *
         """,
         (
             data["user_id"],
-                        data.get("country", "N/A"),
+            data.get("country", "N/A"),
             data["side"],
             data.get("asset", "BEN"),
             data.get("fiat_currency", "USD"),
             data["payment_method"],
-                        data.get("payment_provider", ""),
-                        data.get("account_reference", ""),
-                        data.get("account_holder", ""),
+            data.get("payment_provider", ""),
+            data.get("account_reference", ""),
+            data.get("account_holder", ""),
             data["price"],
             data["amount_total"],
             data["amount_total"],
             data.get("min_limit", 0),
             data.get("max_limit", 0),
+            data.get("completion_time_minutes", 15),
             data.get("terms", ""),
         ),
     )
@@ -57,9 +59,39 @@ def list_active_offers(side: str | None, asset: str | None, limit: int) -> list[
     params.append(limit)
 
     query = f"""
-    SELECT *
-    FROM p2p_offers
-    WHERE {' AND '.join(filters)}
+        SELECT
+            o.*,
+            COALESCE(stats.total_orders, 0) AS total_orders,
+            COALESCE(stats.completed_orders, 0) AS completed_orders,
+            COALESCE(stats.completion_rate, 0) AS completion_rate,
+            COALESCE(rating.average_score, 0) AS average_score,
+            COALESCE(rating.total_ratings, 0) AS total_ratings
+        FROM p2p_offers o
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(*)::INT AS total_orders,
+                COUNT(*) FILTER (WHERE status IN ('released', 'completed'))::INT AS completed_orders,
+                COALESCE(
+                    ROUND(
+                        (
+                            COUNT(*) FILTER (WHERE status IN ('released', 'completed'))::numeric
+                            / NULLIF(COUNT(*)::numeric, 0)
+                        ) * 100,
+                        0
+                    ),
+                    0
+                )::INT AS completion_rate
+            FROM p2p_orders po
+            WHERE po.buyer_id = o.user_id OR po.seller_id = o.user_id
+        ) AS stats ON TRUE
+        LEFT JOIN LATERAL (
+            SELECT
+                COUNT(*)::INT AS total_ratings,
+                COALESCE(ROUND(AVG(score)::numeric, 2), 0) AS average_score
+            FROM p2p_ratings pr
+            WHERE pr.to_user_id = o.user_id
+        ) AS rating ON TRUE
+        WHERE {' AND '.join(f'o.{part}' for part in filters)}
     ORDER BY created_at DESC
     LIMIT %s
     """
@@ -105,11 +137,22 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, An
             """
             INSERT INTO p2p_orders (
               offer_id, buyer_id, seller_id, amount,
-              unit_price, total_fiat, status
-            ) VALUES (%s, %s, %s, %s, %s, %s, 'pending_payment')
+                            unit_price, total_fiat, status, expires_at
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, 'pending_payment',
+                            NOW() + make_interval(mins => %s)
+                        )
             RETURNING *
             """,
-            (offer_id, buyer_id, seller_id, amount, unit_price, total_fiat),
+                        (
+                                offer_id,
+                                buyer_id,
+                                seller_id,
+                                amount,
+                                unit_price,
+                                total_fiat,
+                                int(offer.get("completion_time_minutes") or 15),
+                        ),
         )
         order = cur.fetchone()
 
@@ -166,6 +209,9 @@ def get_order_detail(order_id: str) -> dict[str, Any] | None:
           f.payment_provider,
           f.account_reference,
           f.account_holder,
+          f.min_limit,
+          f.max_limit,
+          f.completion_time_minutes,
           f.fiat_currency,
           f.asset,
           f.terms
@@ -258,21 +304,94 @@ def add_rating(order_id: str, from_user_id: str, to_user_id: str, score: int, co
 
 
 def get_user_reputation(user_id: str) -> dict[str, Any]:
-    rows = run_query(
-        """
-        SELECT
-          to_user_id AS user_id,
-          COUNT(*)::INT AS total_ratings,
-          COALESCE(ROUND(AVG(score)::numeric, 2), 0) AS average_score
-        FROM p2p_ratings
-        WHERE to_user_id = %s
-        GROUP BY to_user_id
-        """,
-        (user_id,),
-    )
-    if not rows:
-        return {"user_id": user_id, "total_ratings": 0, "average_score": 0.0}
-    return rows[0]
+        stats_rows = run_query(
+                """
+                SELECT
+                    %s AS user_id,
+                    COALESCE(profile.bio, '') AS bio,
+                    COALESCE(order_stats.total_orders, 0) AS total_orders,
+                    COALESCE(order_stats.completed_orders, 0) AS completed_orders,
+                    COALESCE(order_stats.cancelled_orders, 0) AS cancelled_orders,
+                    COALESCE(order_stats.completion_rate, 0) AS completion_rate,
+                    COALESCE(rating_stats.total_ratings, 0) AS total_ratings,
+                    COALESCE(rating_stats.average_score, 0) AS average_score,
+                    COALESCE(rating_stats.positive_comments, 0) AS positive_comments,
+                    COALESCE(rating_stats.negative_comments, 0) AS negative_comments
+                FROM (SELECT 1) AS anchor
+                LEFT JOIN LATERAL (
+                    SELECT bio
+                    FROM p2p_user_profiles
+                    WHERE user_id = %s
+                ) AS profile ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT
+                        COUNT(*)::INT AS total_orders,
+                        COUNT(*) FILTER (WHERE status IN ('released', 'completed'))::INT AS completed_orders,
+                        COUNT(*) FILTER (WHERE status IN ('cancelled', 'refunded'))::INT AS cancelled_orders,
+                        COALESCE(
+                            ROUND(
+                                (
+                                    COUNT(*) FILTER (WHERE status IN ('released', 'completed'))::numeric
+                                    / NULLIF(COUNT(*)::numeric, 0)
+                                ) * 100,
+                                0
+                            ),
+                            0
+                        )::INT AS completion_rate
+                    FROM p2p_orders
+                    WHERE buyer_id = %s OR seller_id = %s
+                ) AS order_stats ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT
+                        COUNT(*)::INT AS total_ratings,
+                        COALESCE(ROUND(AVG(score)::numeric, 2), 0) AS average_score,
+                        COUNT(*) FILTER (WHERE score >= 4 AND comment <> '')::INT AS positive_comments,
+                        COUNT(*) FILTER (WHERE score <= 2 AND comment <> '')::INT AS negative_comments
+                    FROM p2p_ratings
+                    WHERE to_user_id = %s
+                ) AS rating_stats ON TRUE
+                """,
+                (user_id, user_id, user_id, user_id, user_id),
+        )
+        comments = run_query(
+                """
+                SELECT from_user_id, score, comment, created_at
+                FROM p2p_ratings
+                WHERE to_user_id = %s AND comment <> ''
+                ORDER BY created_at DESC
+                LIMIT 50
+                """,
+                (user_id,),
+        )
+        result = stats_rows[0] if stats_rows else {
+                "user_id": user_id,
+                "bio": "",
+                "total_orders": 0,
+                "completed_orders": 0,
+                "cancelled_orders": 0,
+                "completion_rate": 0,
+                "total_ratings": 0,
+                "average_score": 0,
+                "positive_comments": 0,
+                "negative_comments": 0,
+        }
+        result["comments"] = comments
+        return result
+
+
+def upsert_user_profile(user_id: str, bio: str) -> dict[str, Any]:
+        rows = run_query(
+                """
+                INSERT INTO p2p_user_profiles (user_id, bio, updated_at)
+                VALUES (%s, %s, NOW())
+                ON CONFLICT (user_id) DO UPDATE
+                SET bio = EXCLUDED.bio,
+                        updated_at = NOW()
+                RETURNING user_id, bio, updated_at
+                """,
+                (user_id, bio),
+        )
+        return rows[0]
 
 
 def add_chat_message(order_id: str, sender_user_id: str, message: str, message_type: str = "text") -> dict[str, Any]:

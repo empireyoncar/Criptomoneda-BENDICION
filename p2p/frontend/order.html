@@ -12,8 +12,21 @@
     .label{font-size:12px;color:#9aa4af;}
     .value{font-size:14px;margin-top:4px;word-break:break-word;}
     button,input{padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;}
-    button{background:#f0b90b;color:#000;border:none;cursor:pointer;margin-right:8px;margin-top:8px;}
+    button{background:#f0b90b;color:#000;border:none;cursor:pointer;margin-right:8px;margin-top:8px;transition:background .2s ease,color .2s ease,opacity .2s ease;}
+    button[disabled]{cursor:not-allowed;opacity:1;}
     .warn{background:#2a1f09;color:#f7d27a;border-radius:8px;padding:10px;margin-top:10px;}
+    .btn-active{background:#f0b90b;color:#000;}
+    .btn-muted{background:#2b3139;color:#9aa4af;}
+    .btn-red{background:#9d2f2f;color:#ffffff;}
+    .btn-white{background:#f3f4f6;color:#111827;}
+    .btn-green{background:#0f9d58;color:#ffffff;}
+    .legend{background:#11151b;border:1px solid #2b3139;border-radius:8px;padding:12px;margin-top:14px;}
+    .legend p{margin:0 0 8px 0;}
+    .legendItem{display:inline-block;margin-right:12px;margin-bottom:8px;font-size:13px;}
+    .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+    .dot-red{background:#9d2f2f;}
+    .dot-white{background:#f3f4f6;border:1px solid #cbd5e1;}
+    .dot-green{background:#0f9d58;}
   </style>
 </head>
 <body>
@@ -41,10 +54,17 @@
 
     <div>
       <input id="proofUrl" placeholder="URL comprobante de pago" style="width:100%;margin-bottom:10px;">
-      <button id="btnPay">He Pagado</button>
-      <button id="btnRelease">Liberar Criptos</button>
+      <button id="btnPay" class="btn-muted">He Pagado</button>
+      <button id="btnRelease" class="btn-red">Liberar Criptos</button>
       <button id="btnDispute">Abrir Disputa</button>
       <button id="btnChat">Abrir chat</button>
+    </div>
+
+    <div class="legend">
+      <p><strong>Leyenda del boton Liberar Criptos</strong></p>
+      <span class="legendItem"><span class="dot dot-red"></span>Rojo: esperando que el comprador marque He Pagado</span>
+      <span class="legendItem"><span class="dot dot-white"></span>Blanco: pago marcado, listo para liberar</span>
+      <span class="legendItem"><span class="dot dot-green"></span>Verde: criptos liberados por el vendedor</span>
     </div>
   </div>
 
@@ -55,6 +75,41 @@
   const API = "/CriptoBendicion/p2p_api";
 
   let order = null;
+
+  function setButtonState(button, className, disabled, titleText) {
+    button.className = className;
+    button.disabled = disabled;
+    button.title = titleText || "";
+  }
+
+  function updateActionButtons() {
+    const btnPay = document.getElementById("btnPay");
+    const btnRelease = document.getElementById("btnRelease");
+    const isBuyer = order.buyer_id === userId;
+    const isSeller = order.seller_id === userId;
+
+    if (isBuyer && order.status === "pending_payment") {
+      setButtonState(btnPay, "btn-active", false, "Tu eres el comprador y puedes marcar el pago.");
+    } else {
+      setButtonState(btnPay, "btn-muted", true, isBuyer ? "Ya no puedes marcar pago en este estado." : "Solo el comprador puede marcar el pago.");
+    }
+
+    if (order.status === "released" || order.status === "completed") {
+      setButtonState(btnRelease, "btn-green", true, "Las criptos ya fueron liberadas.");
+      return;
+    }
+
+    if (order.status === "paid") {
+      if (isSeller) {
+        setButtonState(btnRelease, "btn-white", false, "El comprador ya marco el pago. Puedes liberar las criptos.");
+      } else {
+        setButtonState(btnRelease, "btn-white", true, "Esperando que el vendedor libere las criptos.");
+      }
+      return;
+    }
+
+    setButtonState(btnRelease, "btn-red", true, "Esperando que el comprador marque He Pagado.");
+  }
 
   async function post(path, payload) {
     const res = await fetch(API + path, {
@@ -82,12 +137,7 @@
     document.getElementById("unitPrice").textContent = order.unit_price || "-";
     document.getElementById("amount").textContent = order.amount || "-";
     document.getElementById("totalFiat").textContent = order.total_fiat || "-";
-
-    const isBuyer = order.buyer_id === userId;
-    const isSeller = order.seller_id === userId;
-
-    document.getElementById("btnPay").disabled = !(isBuyer && order.status === "pending_payment");
-    document.getElementById("btnRelease").disabled = !(isSeller && order.status === "paid");
+    updateActionButtons();
   }
 
   document.getElementById("btnPay").onclick = async () => {

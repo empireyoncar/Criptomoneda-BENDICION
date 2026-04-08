@@ -7,6 +7,8 @@
     body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
     .wrap{max-width:800px;margin:0 auto;}
     .box{background:#181a20;border-radius:10px;padding:16px;}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;}
+    .back{display:inline-block;padding:10px 14px;border-radius:6px;background:#2b3139;color:#eaecef;text-decoration:none;font-weight:bold;}
     #messages{height:340px;overflow:auto;background:#0f1115;border:1px solid #2b3139;padding:10px;border-radius:6px;margin-bottom:10px;}
     .msg{margin-bottom:8px;font-size:14px;}
     .meta{color:#8b8d90;font-size:12px;}
@@ -17,8 +19,13 @@
 <body>
 <div class="wrap">
   <div class="box">
-    <h1>Chat de Orden</h1>
-    <p>Orden: <span id="orderId">{{ order_id }}</span></p>
+    <div class="topbar">
+      <div>
+        <h1>Chat de Orden</h1>
+        <p>Orden: <span id="orderId">{{ order_id }}</span></p>
+      </div>
+      <a class="back" id="btnBackToOrder" href="#">Volver a detalle de orden BEN</a>
+    </div>
     <div id="messages"></div>
     <input id="txt" placeholder="Escribe un mensaje...">
     <button id="btnSend">Enviar</button>
@@ -30,6 +37,7 @@
   const orderId = document.getElementById("orderId").textContent.trim();
   const messages = document.getElementById("messages");
   const chatWsBase = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/CriptoBendicion/p2p_chat";
+  document.getElementById("btnBackToOrder").href = `/CriptoBendicion/p2p/order/${orderId}`;
 
   function append(msg) {
     const div = document.createElement("div");

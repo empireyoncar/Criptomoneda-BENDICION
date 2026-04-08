@@ -19,6 +19,7 @@
     .topbar { display:flex; justify-content:space-between; gap:12px; align-items:center; }
     .topbarLinks { display:flex; gap:10px; align-items:center; }
     .market-link { color:var(--yellow); text-decoration:none; font-size:13px; }
+    .home-btn { display:inline-block; background:#2b3139; color:#eaecef; text-decoration:none; border-radius:6px; padding:8px 12px; font-size:13px; font-weight:bold; }
     .online-orders-btn { border-radius:6px; padding:8px 12px; font-size:13px; font-weight:bold; border:none; text-decoration:none; color:#fff; background:#4b5563; }
     .online-orders-btn.red { background:#9d2f2f; }
     .online-orders-btn.white { background:#f3f4f6; color:#111827; }
@@ -43,6 +44,7 @@
         <div class="muted">Usuario: <span id="userId">-</span></div>
       </div>
       <div class="topbarLinks">
+        <a class="home-btn" href="/CriptoBendicion/home">Ir a Home</a>
         <a id="btnOnlineOrders" class="online-orders-btn gray" href="/CriptoBendicion/p2p/orders-online">Ordenes online</a>
         <a class="market-link" id="myReputationLink" href="/CriptoBendicion/p2p/reputation">Ver reputacion</a>
       </div>
@@ -239,7 +241,7 @@
       return;
     }
     alert("Oferta creada: " + data.offer.id);
-    await loadOffers();
+    await Promise.all([loadOffers(), loadMyOffers(), refreshOnlineOrdersButton()]);
   }
 
   async function takeOffer(offerId) {
@@ -344,6 +346,7 @@
   document.getElementById("btnCreateDemoOrder").onclick = createDemoOrder;
   refreshOnlineOrdersButton();
   loadMyOffers();
+  window.setInterval(loadOffers, 8000);
   window.setInterval(refreshOnlineOrdersButton, 12000);
   window.setInterval(loadMyOffers, 15000);
   loadOffers();

@@ -74,56 +74,111 @@
     }
   }
 
-  let messageIdsSeen = new Set();
+  const messagesById = new Map();
+  let ws = null;
+  let reconnectTimeoutId = null;
 
-  function append(msg) {
-    const div = document.createElement("div");
-    div.className = "msg";
-    const who = msg.sender_user_id || msg.user_id || "sistema";
-    const text = msg.message || msg.error || "";
-    div.innerHTML = `<strong>${who}:</strong> ${text}<div class="meta">${msg.created_at || new Date().toISOString()}</div>`;
-    messages.appendChild(div);
+  function getMessageId(msg) {
+    return String(msg.id || `${msg.sender_user_id || msg.user_id || "sistema"}-${msg.created_at || ""}-${msg.message || ""}`);
+  }
+
+  function renderMessages() {
+    const ordered = Array.from(messagesById.values()).sort((a, b) => {
+      const ad = new Date(a.created_at || 0).getTime();
+      const bd = new Date(b.created_at || 0).getTime();
+      return ad - bd;
+    });
+
+    messages.innerHTML = "";
+    ordered.forEach((msg) => {
+      const div = document.createElement("div");
+      div.className = "msg";
+      const who = msg.sender_user_id || msg.user_id || "sistema";
+      const text = msg.message || msg.error || "";
+      div.innerHTML = `<strong>${who}:</strong> ${text}<div class="meta">${msg.created_at || new Date().toISOString()}</div>`;
+      messages.appendChild(div);
+    });
     messages.scrollTop = messages.scrollHeight;
   }
 
-  async function loadChatHistory() {
-    const res = await fetch(`${API}/orders/${orderId}/chat?requester_user_id=${encodeURIComponent(userId)}&limit=100`);
-    const data = await res.json();
-    if (!res.ok) return;
-
-    (data.messages || []).forEach((msg) => {
-      const msgId = `${msg.id || msg.created_at}`;
-      if (!messageIdsSeen.has(msgId)) {
-        messageIdsSeen.add(msgId);
-        append(msg);
-      }
-    });
+  function upsertMessage(msg) {
+    const msgId = getMessageId(msg);
+    messagesById.set(msgId, msg);
   }
 
-  const ws = new WebSocket(`${chatWsBase}/ws/order/${orderId}?user_id=${encodeURIComponent(userId)}`);
+  async function loadChatHistory() {
+    try {
+      const res = await fetch(`${API}/orders/${orderId}/chat?requester_user_id=${encodeURIComponent(userId)}&limit=200`);
+      const data = await res.json();
+      if (!res.ok) return;
 
-  ws.onmessage = (ev) => {
-    const payload = JSON.parse(ev.data);
-    if (payload.type === "message") {
-      const msgId = `${payload.message.id || payload.message.created_at}`;
-      if (!messageIdsSeen.has(msgId)) {
-        messageIdsSeen.add(msgId);
-        append(payload.message);
-      }
+      (data.messages || []).forEach((msg) => upsertMessage(msg));
+      renderMessages();
+    } catch (_error) {
     }
-    if (payload.type === "error") append({user_id: "error", message: payload.error});
-  };
+  }
 
-  document.getElementById("btnSend").onclick = () => {
+  function connectWs() {
+    ws = new WebSocket(`${chatWsBase}/ws/order/${orderId}?user_id=${encodeURIComponent(userId)}`);
+
+    ws.onmessage = (ev) => {
+      const payload = JSON.parse(ev.data);
+      if (payload.type === "message") {
+        upsertMessage(payload.message);
+        renderMessages();
+      }
+      if (payload.type === "error") {
+        upsertMessage({
+          id: `error-${Date.now()}`,
+          user_id: "error",
+          message: payload.error,
+          created_at: new Date().toISOString()
+        });
+        renderMessages();
+      }
+    };
+
+    ws.onclose = () => {
+      if (reconnectTimeoutId) window.clearTimeout(reconnectTimeoutId);
+      reconnectTimeoutId = window.setTimeout(connectWs, 2000);
+    };
+
+    ws.onerror = () => {
+      try { ws.close(); } catch (_e) {}
+    };
+  }
+
+  async function sendMessage() {
     const txt = document.getElementById("txt");
     const value = txt.value.trim();
     if (!value) return;
-    ws.send(JSON.stringify({message: value}));
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({message: value}));
+    } else {
+      await fetch(`${API}/orders/${orderId}/chat`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({sender_user_id: userId, message: value})
+      });
+      await loadChatHistory();
+    }
     txt.value = "";
+  }
+
+  document.getElementById("btnSend").onclick = () => {
+    sendMessage().catch(() => {});
   };
 
+  document.getElementById("txt").addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      sendMessage().catch(() => {});
+    }
+  });
+
+  connectWs();
   loadChatHistory();
-  window.setInterval(loadChatHistory, 10000);
+  window.setInterval(loadChatHistory, 3000);
 
   syncPresence();
   window.setInterval(syncPresence, 15000);

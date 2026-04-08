@@ -9,6 +9,9 @@
     .box{background:#181a20;border-radius:10px;padding:16px;}
     .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;}
     .back{display:inline-block;padding:10px 14px;border-radius:6px;background:#2b3139;color:#eaecef;text-decoration:none;font-weight:bold;}
+    .presence{font-size:12px;color:#9aa4af;margin-top:4px;}
+    .presenceDot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#4b5563;margin-right:6px;vertical-align:middle;}
+    .presenceDot.online{background:#0f9d58;box-shadow:0 0 8px rgba(15,157,88,.7);}
     #messages{height:340px;overflow:auto;background:#0f1115;border:1px solid #2b3139;padding:10px;border-radius:6px;margin-bottom:10px;}
     .msg{margin-bottom:8px;font-size:14px;}
     .meta{color:#8b8d90;font-size:12px;}
@@ -23,6 +26,7 @@
       <div>
         <h1>Chat de Orden</h1>
         <p>Orden: <span id="orderId">{{ order_id }}</span></p>
+        <div class="presence"><span id="counterpartyDot" class="presenceDot"></span><span id="counterpartyPresenceText">Comprobando estado...</span></div>
       </div>
       <a class="back" id="btnBackToOrder" href="#">Volver a detalle de orden BEN</a>
     </div>
@@ -37,7 +41,38 @@
   const orderId = document.getElementById("orderId").textContent.trim();
   const messages = document.getElementById("messages");
   const chatWsBase = (location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/CriptoBendicion/p2p_chat";
+  const API = "/CriptoBendicion/p2p_api";
   document.getElementById("btnBackToOrder").href = `/CriptoBendicion/p2p/order/${orderId}`;
+
+  async function heartbeat() {
+    await fetch(`${API}/presence/heartbeat`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({user_id: userId})
+    });
+  }
+
+  async function refreshPresence() {
+    const res = await fetch(`${API}/orders/${orderId}/presence?requester_user_id=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) return;
+
+    const isBuyer = data.presence.buyer_id === userId;
+    const counterpartyId = isBuyer ? data.presence.seller_id : data.presence.buyer_id;
+    const counterpartyOnline = isBuyer ? data.presence.seller_online : data.presence.buyer_online;
+    const dot = document.getElementById("counterpartyDot");
+    const text = document.getElementById("counterpartyPresenceText");
+    dot.classList.toggle("online", Boolean(counterpartyOnline));
+    text.textContent = `${counterpartyId} ${counterpartyOnline ? "en linea" : "desconectado"}`;
+  }
+
+  async function syncPresence() {
+    try {
+      await heartbeat();
+      await refreshPresence();
+    } catch (_error) {
+    }
+  }
 
   function append(msg) {
     const div = document.createElement("div");
@@ -64,6 +99,9 @@
     ws.send(JSON.stringify({message: value}));
     txt.value = "";
   };
+
+  syncPresence();
+  window.setInterval(syncPresence, 15000);
 </script>
 </body>
 </html>

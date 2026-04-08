@@ -11,6 +11,9 @@
     .field{background:#0f1115;border:1px solid #2b3139;border-radius:8px;padding:10px;}
     .label{font-size:12px;color:#9aa4af;}
     .value{font-size:14px;margin-top:4px;word-break:break-word;}
+    .presenceRow{display:flex;align-items:center;gap:8px;}
+    .presenceDot{width:10px;height:10px;border-radius:50%;display:inline-block;background:#4b5563;box-shadow:0 0 0 2px rgba(255,255,255,0.04);}
+    .presenceDot.online{background:#0f9d58;box-shadow:0 0 8px rgba(15,157,88,.7);}
     button,input{padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;}
     button{background:#f0b90b;color:#000;border:none;cursor:pointer;margin-right:8px;margin-top:8px;transition:background .2s ease,color .2s ease,opacity .2s ease;}
     button[disabled]{cursor:not-allowed;opacity:1;}
@@ -37,6 +40,8 @@
     <p>Estado: <strong id="orderStatus">cargando...</strong></p>
 
     <div class="grid">
+      <div class="field"><div class="label">Comprador</div><div class="value presenceRow"><span id="buyerPresenceDot" class="presenceDot"></span><span id="buyerPresenceText">-</span></div></div>
+      <div class="field"><div class="label">Vendedor</div><div class="value presenceRow"><span id="sellerPresenceDot" class="presenceDot"></span><span id="sellerPresenceText">-</span></div></div>
       <div class="field"><div class="label">Pais</div><div id="country" class="value">-</div></div>
       <div class="field"><div class="label">Metodo de pago</div><div id="paymentMethod" class="value">-</div></div>
       <div class="field"><div class="label">Banco / Proveedor</div><div id="paymentProvider" class="value">-</div></div>
@@ -73,6 +78,7 @@
   document.getElementById("userId").textContent = userId;
   const orderId = document.getElementById("orderId").textContent.trim();
   const API = "/CriptoBendicion/p2p_api";
+  let presenceIntervalId = null;
 
   let order = null;
 
@@ -111,6 +117,40 @@
     setButtonState(btnRelease, "btn-red", true, "Esperando que el comprador marque He Pagado.");
   }
 
+  function renderPresence(role, userLabel, isOnline) {
+    const dot = document.getElementById(`${role}PresenceDot`);
+    const text = document.getElementById(`${role}PresenceText`);
+    dot.classList.toggle("online", Boolean(isOnline));
+    text.textContent = `${userLabel} ${isOnline ? "en linea" : "desconectado"}`;
+  }
+
+  async function heartbeat() {
+    await fetch(`${API}/presence/heartbeat`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({user_id: userId})
+    });
+  }
+
+  async function refreshPresence() {
+    const res = await fetch(`${API}/orders/${orderId}/presence?requester_user_id=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar la presencia");
+
+    renderPresence("buyer", data.presence.buyer_id, data.presence.buyer_online);
+    renderPresence("seller", data.presence.seller_id, data.presence.seller_online);
+  }
+
+  async function syncPresence() {
+    try {
+      await heartbeat();
+      if (order) {
+        await refreshPresence();
+      }
+    } catch (_error) {
+    }
+  }
+
   async function post(path, payload) {
     const res = await fetch(API + path, {
       method: "POST",
@@ -138,6 +178,11 @@
     document.getElementById("amount").textContent = order.amount || "-";
     document.getElementById("totalFiat").textContent = order.total_fiat || "-";
     updateActionButtons();
+    await refreshPresence();
+
+    if (!presenceIntervalId) {
+      presenceIntervalId = window.setInterval(syncPresence, 15000);
+    }
   }
 
   document.getElementById("btnPay").onclick = async () => {
@@ -171,6 +216,7 @@
     window.location.href = `/CriptoBendicion/p2p/chat/${orderId}`;
   };
 
+  syncPresence();
   loadOrder().catch((e) => alert(e.message));
 </script>
 </body>

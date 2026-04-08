@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import threading
+import time
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -10,6 +13,10 @@ from p2p_db import health_check
 
 app = Flask(__name__)
 CORS(app)
+
+_presence_lock = threading.Lock()
+_presence_last_seen: dict[str, float] = {}
+_PRESENCE_TTL_SECONDS = 45
 
 
 def _json_body() -> dict:
@@ -25,6 +32,23 @@ def _ok(payload: dict, code: int = 200):
 
 def _error(message: str, code: int = 400):
     return jsonify({"success": False, "error": message}), code
+
+
+def _mark_online(user_id: str) -> None:
+    if not isinstance(user_id, str) or not user_id.strip():
+        return
+    with _presence_lock:
+        _presence_last_seen[user_id.strip()] = time.time()
+
+
+def _is_online(user_id: str) -> bool:
+    now = time.time()
+    with _presence_lock:
+        expired = [key for key, ts in _presence_last_seen.items() if now - ts > _PRESENCE_TTL_SECONDS]
+        for key in expired:
+            _presence_last_seen.pop(key, None)
+        last_seen = _presence_last_seen.get(user_id)
+    return bool(last_seen and now - last_seen <= _PRESENCE_TTL_SECONDS)
 
 
 @app.get("/health")
@@ -78,6 +102,43 @@ def api_get_order_detail(order_id: str):
         return _error(str(exc), 404)
     except Exception as exc:
         return _error(f"Error interno al consultar orden: {exc}", 500)
+
+
+@app.post("/presence/heartbeat")
+def api_presence_heartbeat():
+    try:
+        payload = _json_body()
+        user_id = str(payload.get("user_id", "")).strip()
+        if not user_id:
+            raise ValueError("user_id es requerido")
+        _mark_online(user_id)
+        return _ok({"success": True, "user_id": user_id, "online": True})
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno de presencia: {exc}", 500)
+
+
+@app.get("/orders/<order_id>/presence")
+def api_order_presence(order_id: str):
+    try:
+        requester_user_id = str(request.args.get("requester_user_id", "")).strip()
+        detail = p2p.get_order_detail(order_id)
+        if requester_user_id not in {detail["buyer_id"], detail["seller_id"]} and not requester_user_id.startswith("admin"):
+            raise PermissionError("No tienes acceso a la presencia de esta orden")
+
+        _mark_online(requester_user_id)
+        presence = {
+            "buyer_id": detail["buyer_id"],
+            "buyer_online": _is_online(detail["buyer_id"]),
+            "seller_id": detail["seller_id"],
+            "seller_online": _is_online(detail["seller_id"]),
+        }
+        return _ok({"success": True, "presence": presence})
+    except (ValueError, PermissionError) as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al consultar presencia: {exc}", 500)
 
 
 @app.post("/orders/<order_id>/pay")

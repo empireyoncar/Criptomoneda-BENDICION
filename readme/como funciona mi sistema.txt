@@ -1,0 +1,11 @@
+sabes como funciona lo que hago y donde lo subo no?
+te explico, lo subo a github y de github, lo envia con actions, a una pc laptop 
+que uso como servidor esta pc tiene linux, y tiene dockers,nginx y alli subo el servidor,
+ en esta pc ya esta levantado el openmu que te mencione,  y una pagina web donde se 
+ registran los usuarios, del openmu, en docker esta levantado el server de openmu y la 
+ base de datos, y un nginx, que funciona para cosas del openmu, de forma exterior 
+ tengo otro nginx, inatalado que es el que administra lo que hacemos, y tambien levanto 
+ node, con el conando npm buidl , npm start, para levantar la pagina del openmu donde 
+ se registran los usuarios y esa pagina esta expuesta a traves del localhost:3000, uso el
+  nginx que esta fuera de docker el mismo que uso para la criptomoneda.
+del resto de nginx lo uso para todos los modulos de criptobendicion.

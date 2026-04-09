@@ -2,3 +2,4 @@ flask
 flask-cors
 jinja2
 werkzeug
+psycopg2-binary

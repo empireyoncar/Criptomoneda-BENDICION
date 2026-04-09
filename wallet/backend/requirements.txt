@@ -2,3 +2,4 @@ Flask==2.3.2
 ecdsa==0.18.0
 flask_cors
 requests
+psycopg2-binary==2.9.10

@@ -3,12 +3,68 @@ name: criptobendicion
 services:
 
   # ============================================================
+  # BASE DE DATOS DE USUARIOS (POSTGRESQL)
+  # Puerto: 5546
+  # ============================================================
+  users_db:
+    image: postgres:16
+    command: postgres -p 5546
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: users_user
+      POSTGRES_PASSWORD: users_password
+    ports:
+      - "5546:5546"
+    volumes:
+      - users_postgres_data:/var/lib/postgresql/data
+      - ./usuarios/backend/users_schema.sql:/docker-entrypoint-initdb.d/01_users_schema.sql:ro
+    restart: always
+    networks:
+      - bendicion_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U users_user -d users_db -p 5546"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ============================================================
+  # BASE DE DATOS DE WALLET (POSTGRESQL)
+  # Puerto: 5545
+  # ============================================================
+  wallet_db:
+    image: postgres:16
+    command: postgres -p 5545
+    environment:
+      POSTGRES_DB: wallet_db
+      POSTGRES_USER: wallet_user
+      POSTGRES_PASSWORD: wallet_password
+    ports:
+      - "5545:5545"
+    volumes:
+      - wallet_postgres_data:/var/lib/postgresql/data
+      - ./wallet/backend/wallet_schema.sql:/docker-entrypoint-initdb.d/01_wallet_schema.sql:ro
+    restart: always
+    networks:
+      - bendicion_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet_user -d wallet_db -p 5545"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ============================================================
   # BACKEND DE USUARIOS (API)
   # Puerto: 5001
   # ============================================================
   usuarios_api:
     build: ./usuarios/backend
     command: python login_server.py
+    environment:
+      USERS_DB_HOST: users_db
+      USERS_DB_PORT: 5546
+      USERS_DB_NAME: users_db
+      USERS_DB_USER: users_user
+      USERS_DB_PASSWORD: users_password
     ports:
       - "5001:5001"
     volumes:
@@ -16,6 +72,9 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      users_db:
+        condition: service_healthy
 
   # ============================================================
   # FRONTEND DE USUARIOS (WEB)
@@ -40,6 +99,17 @@ services:
   wallet_api:
     build: ./wallet/backend
     command: python wallet_server.py
+    environment:
+      WALLET_DB_HOST: wallet_db
+      WALLET_DB_PORT: 5545
+      WALLET_DB_NAME: wallet_db
+      WALLET_DB_USER: wallet_user
+      WALLET_DB_PASSWORD: wallet_password
+      USERS_DB_HOST: users_db
+      USERS_DB_PORT: 5546
+      USERS_DB_NAME: users_db
+      USERS_DB_USER: users_user
+      USERS_DB_PASSWORD: users_password
     ports:
       - "5002:5002"
     volumes:
@@ -48,6 +118,11 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      users_db:
+        condition: service_healthy
+      wallet_db:
+        condition: service_healthy
 
   # ============================================================
   # FRONTEND DE WALLET (WEB)
@@ -103,6 +178,12 @@ services:
   admin_api:
     build: ./admin/backend
     command: python admin_server.py
+    environment:
+      USERS_DB_HOST: users_db
+      USERS_DB_PORT: 5546
+      USERS_DB_NAME: users_db
+      USERS_DB_USER: users_user
+      USERS_DB_PASSWORD: users_password
     ports:
       - "5010:5010"
     volumes:
@@ -111,6 +192,9 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      users_db:
+        condition: service_healthy
 
   # ============================================================
   # ADMIN (WEB)
@@ -167,6 +251,12 @@ services:
   kyc_api:
     build: ./kyc/backend
     command: python kyc_server.py
+    environment:
+      USERS_DB_HOST: users_db
+      USERS_DB_PORT: 5546
+      USERS_DB_NAME: users_db
+      USERS_DB_USER: users_user
+      USERS_DB_PASSWORD: users_password
     ports:
       - "5015:5015"
     volumes:
@@ -175,6 +265,9 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      users_db:
+        condition: service_healthy
 
   # ============================================================
   # KYC (WEB)
@@ -238,3 +331,7 @@ services:
 networks:
   bendicion_net:
     driver: bridge
+
+volumes:
+  wallet_postgres_data:
+  users_postgres_data:

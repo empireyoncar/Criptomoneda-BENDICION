@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import psycopg2
+from psycopg2.extras import Json, RealDictCursor
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
@@ -50,26 +52,146 @@ DB_FILE = Path(os.getenv("KYC_DB_FILE", str(_resolve_default_db_path())))
 DOCS_ROOT = Path(os.getenv("KYC_DOCS_ROOT", str(_resolve_default_docs_root())))
 
 
+def _users_db_env(name: str, default: str) -> str:
+	return os.getenv(name, default)
+
+
+def _users_connection():
+	return psycopg2.connect(
+		host=_users_db_env("USERS_DB_HOST", "localhost"),
+		port=int(_users_db_env("USERS_DB_PORT", "5546")),
+		dbname=_users_db_env("USERS_DB_NAME", "users_db"),
+		user=_users_db_env("USERS_DB_USER", "users_user"),
+		password=_users_db_env("USERS_DB_PASSWORD", "users_password"),
+		cursor_factory=RealDictCursor,
+	)
+
+
+def _row_to_user(row: dict[str, Any]) -> dict[str, Any]:
+	return {
+		"id": str(row.get("id", "")),
+		"fullname": str(row.get("fullname", "")).strip(),
+		"birthdate": row.get("birthdate"),
+		"country": str(row.get("country", "")).strip(),
+		"address": row.get("address"),
+		"phone": row.get("phone"),
+		"email": str(row.get("email", "")).strip(),
+		"password": row.get("password", ""),
+		"role": row.get("role", "user"),
+		"wallets": list(row.get("wallets") or []),
+		"kyc": row.get("kyc") if isinstance(row.get("kyc"), dict) else _default_kyc_state(),
+	}
+
+
+def _migrate_legacy_users_if_needed() -> None:
+	if not DB_FILE.exists():
+		return
+
+	with _users_connection() as conn:
+		with conn.cursor() as cur:
+			cur.execute("SELECT COUNT(*) AS total FROM users")
+			total = cur.fetchone()["total"]
+			if total > 0:
+				return
+
+			with DB_FILE.open("r", encoding="utf-8") as f:
+				data = json.load(f)
+
+			for user in data.get("users", []):
+				kyc = user.get("kyc") if isinstance(user.get("kyc"), dict) else _default_kyc_state()
+				cur.execute(
+					"""
+					INSERT INTO users (
+						id, fullname, birthdate, country, address, phone,
+						email, password, role, wallets, kyc
+					)
+					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+					ON CONFLICT (id) DO NOTHING
+					""",
+					(
+						str(user.get("id", "")),
+						user.get("fullname", ""),
+						user.get("birthdate"),
+						user.get("country"),
+						user.get("address"),
+						user.get("phone"),
+						user.get("email", ""),
+						user.get("password", ""),
+						user.get("role", "user"),
+						Json(user.get("wallets") or []),
+						Json(kyc),
+					),
+				)
+		conn.commit()
+
+
 def ensure_storage() -> None:
 	DOCS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 def load_db() -> dict[str, Any]:
-	if not DB_FILE.exists():
-		DB_FILE.parent.mkdir(parents=True, exist_ok=True)
-		DB_FILE.write_text(json.dumps({"users": []}, indent=2), encoding="utf-8")
-
-	with DB_FILE.open("r", encoding="utf-8") as f:
-		data = json.load(f)
-	if "users" not in data or not isinstance(data["users"], list):
-		data["users"] = []
-	return data
+	_migrate_legacy_users_if_needed()
+	with _users_connection() as conn:
+		with conn.cursor() as cur:
+			cur.execute(
+				"""
+				SELECT id, fullname, birthdate, country, address, phone,
+					   email, password, role, wallets, kyc
+				FROM users
+				ORDER BY created_at ASC, id ASC
+				"""
+			)
+			return {"users": [_row_to_user(dict(row)) for row in cur.fetchall()]}
 
 
 def save_db(data: dict[str, Any]) -> None:
-	DB_FILE.parent.mkdir(parents=True, exist_ok=True)
-	with DB_FILE.open("w", encoding="utf-8") as f:
-		json.dump(data, f, ensure_ascii=True, indent=2)
+	users = data.get("users", []) if isinstance(data, dict) else []
+	ids = [str(user.get("id", "")) for user in users if user.get("id")]
+
+	with _users_connection() as conn:
+		with conn.cursor() as cur:
+			if ids:
+				cur.execute("DELETE FROM users WHERE NOT (id = ANY(%s))", (ids,))
+			else:
+				cur.execute("DELETE FROM users")
+
+			for user in users:
+				normalized = _row_to_user(user)
+				cur.execute(
+					"""
+					INSERT INTO users (
+						id, fullname, birthdate, country, address, phone,
+						email, password, role, wallets, kyc
+					)
+					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+					ON CONFLICT (id)
+					DO UPDATE SET
+						fullname = EXCLUDED.fullname,
+						birthdate = EXCLUDED.birthdate,
+						country = EXCLUDED.country,
+						address = EXCLUDED.address,
+						phone = EXCLUDED.phone,
+						email = EXCLUDED.email,
+						password = EXCLUDED.password,
+						role = EXCLUDED.role,
+						wallets = EXCLUDED.wallets,
+						kyc = EXCLUDED.kyc
+					""",
+					(
+						normalized["id"],
+						normalized["fullname"],
+						normalized["birthdate"],
+						normalized["country"],
+						normalized["address"],
+						normalized["phone"],
+						normalized["email"],
+						normalized["password"],
+						normalized["role"],
+						Json(normalized["wallets"]),
+						Json(normalized["kyc"]),
+					),
+				)
+		conn.commit()
 
 
 def _ensure_user_kyc(user: dict[str, Any]) -> dict[str, Any]:

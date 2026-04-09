@@ -4,7 +4,7 @@ FROM python:3.10-slim
 # Crear carpeta de trabajo
 WORKDIR /app
 
-RUN pip install --no-cache-dir Flask==2.3.2 ecdsa==0.18.0 flask_cors requests
+RUN pip install --no-cache-dir Flask==2.3.2 ecdsa==0.18.0 flask_cors requests psycopg2-binary==2.9.10
 
 # Exponer el puerto del backend
 EXPOSE 5002

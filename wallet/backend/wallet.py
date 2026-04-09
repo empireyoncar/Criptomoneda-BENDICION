@@ -2,10 +2,23 @@
 
 import sys
 import json
+import importlib
+from pathlib import Path
 from ecdsa import SigningKey, SECP256k1
 
-sys.path.insert(0, "/app/criptografia")
-from blockchain_crypto import hash_sha256
+
+def _load_hash_sha256():
+    """Load hash_sha256 in local workspace and Docker layouts."""
+    try:
+        return importlib.import_module("criptografia.blockchain_crypto").hash_sha256
+    except ModuleNotFoundError:
+        crypto_dir = Path(__file__).resolve().parents[2] / "criptografia"
+        if str(crypto_dir) not in sys.path:
+            sys.path.insert(0, str(crypto_dir))
+        return importlib.import_module("blockchain_crypto").hash_sha256
+
+
+hash_sha256 = _load_hash_sha256()
 
 
 def generate_wallet():

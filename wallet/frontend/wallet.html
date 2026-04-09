@@ -88,14 +88,75 @@
             color: #000;
         }
 
+        .btn-secondary {
+            background: #2b3139;
+            color: var(--text);
+        }
+
         .mono {
             font-family: "Consolas", monospace;
             font-size: 12px;
             word-break: break-all;
         }
 
-        .hidden {
-            filter: blur(6px);
+        .muted {
+            color: var(--text-muted);
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 620px;
+            background: var(--bg-box);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+        }
+
+        .modal h2 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+
+        .backup-box {
+            background: #101318;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin: 14px 0;
+        }
+
+        .warning-text {
+            color: #ffd666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+            margin-top: 0;
+        }
+
+        .is-hidden {
+            display: none;
         }
     </style>
 </head>
@@ -132,12 +193,9 @@
             <p id="address" class="mono"></p>
 
             <p><strong>Clave pública:</strong></p>
-            <p id="publicKey" class="mono hidden"></p>
+            <p id="publicKey" class="mono"></p>
 
-            <p><strong>Clave privada:</strong></p>
-            <p id="privateKey" class="mono hidden"></p>
-
-            <button id="btnShowKeys" class="btn btn-warning">Mostrar claves (10 segundos)</button>
+            <p class="muted">La clave privada solo se mostrará una vez al crear la wallet. No se almacena en el backend ni en el navegador.</p>
         </section>
 <!-- Importar wallet -->
         <section class="card">
@@ -156,6 +214,29 @@
 
     </div>
 </div>
+
+<div id="backupModal" class="modal-backdrop is-hidden">
+    <div class="modal">
+        <h2>Respaldo unico de tu wallet</h2>
+        <p class="warning-text">Esta es la unica vez que veras tu clave privada en esta wallet. Descarga el respaldo ahora y guardalo fuera del dispositivo si es posible.</p>
+
+        <div class="backup-box">
+            <p><strong>Address:</strong></p>
+            <p id="backupAddress" class="mono"></p>
+
+            <p><strong>Clave publica:</strong></p>
+            <p id="backupPublicKey" class="mono"></p>
+
+            <p><strong>Clave privada:</strong></p>
+            <p id="backupPrivateKey" class="mono"></p>
+        </div>
+
+        <div class="modal-actions">
+            <button id="btnDownloadBackup" class="btn btn-warning">Descargar respaldo</button>
+            <button id="btnAcknowledgeBackup" class="btn btn-secondary">Ya lo guarde</button>
+        </div>
+    </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
@@ -163,9 +244,62 @@
 <script>
     
 const API = "https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api"; // Cambia si usas dominio
+let activePrivateKey = null;
 
 function showAlert(msg) {
     alert(msg);
+}
+
+function renderWallet(wallet) {
+    document.getElementById("address").textContent = wallet.address || "";
+    document.getElementById("publicKey").textContent = wallet.public_key || "";
+}
+
+function persistPublicWallet(wallet) {
+    localStorage.setItem("address", wallet.address || "");
+    localStorage.setItem("public_key", wallet.public_key || "");
+    localStorage.removeItem("private_key");
+}
+
+function openBackupModal(wallet) {
+    activePrivateKey = wallet.private_key || null;
+    document.getElementById("backupAddress").textContent = wallet.address || "";
+    document.getElementById("backupPublicKey").textContent = wallet.public_key || "";
+    document.getElementById("backupPrivateKey").textContent = wallet.private_key || "";
+    document.getElementById("backupModal").classList.remove("is-hidden");
+}
+
+function closeBackupModal() {
+    document.getElementById("backupModal").classList.add("is-hidden");
+    document.getElementById("backupPrivateKey").textContent = "";
+    activePrivateKey = null;
+}
+
+function downloadBackup() {
+    if (!activePrivateKey) {
+        showAlert("No hay clave privada disponible para descargar.");
+        return;
+    }
+
+    const backup = {
+        address: document.getElementById("backupAddress").textContent,
+        public_key: document.getElementById("backupPublicKey").textContent,
+        private_key: activePrivateKey,
+        exported_at: new Date().toISOString(),
+        warning: "Guarda este archivo en un lugar seguro. Si pierdes la clave privada, no podras recuperar la wallet."
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const address = backup.address || "wallet";
+
+    link.href = url;
+    link.download = `bendicion-wallet-backup-${address.slice(0, 12)}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
 // Seguridad: exigir login
@@ -200,15 +334,11 @@ document.getElementById("btnLoadWallet").onclick = async () => {
             return;
         }
 
-        document.getElementById("address").textContent = wallet.address;
-        document.getElementById("publicKey").textContent = wallet.public_key;
-        document.getElementById("privateKey").textContent = wallet.private_key;
+        renderWallet(wallet);
+        persistPublicWallet(wallet);
+        activePrivateKey = null;
 
-        localStorage.setItem("address", wallet.address);
-        localStorage.setItem("public_key", wallet.public_key);
-        localStorage.setItem("private_key", wallet.private_key);
-
-        showAlert("Wallet cargada correctamente.");
+        showAlert("Wallet cargada correctamente. La clave privada no se almacena ni se devuelve desde el servidor.");
 
     } catch (err) {
         console.error(err);
@@ -242,46 +372,16 @@ document.getElementById("btnCreateWallet").onclick = async () => {
             return;
         }
 
-        document.getElementById("address").textContent = wallet.address;
-        document.getElementById("publicKey").textContent = wallet.public_key;
-        document.getElementById("privateKey").textContent = wallet.private_key;
+        renderWallet(wallet);
+        persistPublicWallet(wallet);
+        openBackupModal(wallet);
 
-        localStorage.setItem("address", wallet.address);
-        localStorage.setItem("public_key", wallet.public_key);
-        localStorage.setItem("private_key", wallet.private_key);
-
-        showAlert("Wallet creada correctamente.");
+        showAlert("Wallet creada correctamente. Descarga el respaldo antes de cerrar la ventana.");
 
     } catch (err) {
         console.error(err);
         showAlert("Error al crear wallet.");
     }
-};
-
-// ============================================================
-// 3) Mostrar claves por 10 segundos
-// ============================================================
-document.getElementById("btnShowKeys").onclick = () => {
-    const priv = localStorage.getItem("private_key");
-    const pub = localStorage.getItem("public_key");
-
-    if (!priv || !pub) {
-        showAlert("Primero carga o crea una wallet.");
-        return;
-    }
-
-    const privSpan = document.getElementById("privateKey");
-    const pubSpan = document.getElementById("publicKey");
-
-    privSpan.classList.remove("hidden");
-    pubSpan.classList.remove("hidden");
-
-    setTimeout(() => {
-        privSpan.classList.add("hidden");
-        pubSpan.classList.add("hidden");
-    }, 10000);
-
-
 };
 
 // Navegación
@@ -304,15 +404,28 @@ document.getElementById("btnShowKeys").onclick = () => {
             const publicKey = key.getPublic("hex");
             const address = sha256(publicKey);
 
-            localStorage.setItem("private_key", priv.trim());
-            localStorage.setItem("public_key", publicKey);
-            localStorage.setItem("address", address);
+            activePrivateKey = priv.trim();
+            renderWallet({ address, public_key: publicKey });
+            persistPublicWallet({ address, public_key: publicKey });
 
-            alert("Wallet importada correctamente.");
+            alert("Wallet importada correctamente. La clave privada quedo solo en memoria temporal de esta pagina.");
         } catch (e) {
             alert("Clave privada inválida.");
         }
     };
+
+document.getElementById("btnDownloadBackup").onclick = downloadBackup;
+
+document.getElementById("btnAcknowledgeBackup").onclick = () => {
+    const confirmed = confirm("Confirma que ya guardaste tu clave privada. Cuando cierres esta ventana ya no volvera a mostrarse.");
+
+    if (!confirmed) {
+        return;
+    }
+
+    closeBackupModal();
+    showAlert("Respaldo cerrado. Si no guardaste la clave privada, no podras recuperarla desde el sistema.");
+};
 
 </script>
 

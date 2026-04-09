@@ -21,7 +21,7 @@ WORKDIR /app
 ENV PYTHONPATH="/app"
 
 # Dependencias Python del servicio
-RUN pip install --no-cache-dir flask flask-cors requests ecdsa
+RUN pip install --no-cache-dir flask flask-cors requests ecdsa psycopg2-binary
 
 # ============================================================
 # PUERTOS EXPUESTOS

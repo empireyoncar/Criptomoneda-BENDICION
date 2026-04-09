@@ -1,39 +1,133 @@
+import hashlib
 import json
 import os
-import hashlib
 import uuid
 
-DB_FILE ="/app/database.json"
+from psycopg2.extras import Json
 
-# Crear archivo si no existe
-if not os.path.exists(DB_FILE):
-    with open(DB_FILE, "w") as f:
-        json.dump({"users": []}, f)
+from users_db import db_transaction, run_query
+
+DB_FILE = "/app/database.json"
+
+
+def _default_kyc_state():
+    return {
+        "id_document": {"file": None, "status": "pending"},
+        "address_document": {"file": None, "status": "pending"},
+        "selfie": {"file": None, "status": "pending"},
+        "phone_verification": {"status": "pending"},
+        "overall_status": "pending",
+    }
+
+
+def _normalize_user(user):
+    return {
+        "id": str(user.get("id", "")),
+        "fullname": user.get("fullname", ""),
+        "birthdate": user.get("birthdate"),
+        "country": user.get("country"),
+        "address": user.get("address"),
+        "phone": user.get("phone"),
+        "email": user.get("email", ""),
+        "password": user.get("password", ""),
+        "role": user.get("role", "user"),
+        "wallets": list(user.get("wallets") or []),
+        "kyc": user.get("kyc") if isinstance(user.get("kyc"), dict) else _default_kyc_state(),
+    }
+
+
+def _row_to_user(row):
+    return _normalize_user(row)
+
+
+def _read_legacy_users():
+    if not os.path.exists(DB_FILE):
+        return []
+
+    with open(DB_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    return [_normalize_user(user) for user in data.get("users", [])]
+
+
+def _upsert_user(cur, user):
+    normalized = _normalize_user(user)
+    cur.execute(
+        """
+        INSERT INTO users (
+            id, fullname, birthdate, country, address, phone,
+            email, password, role, wallets, kyc
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (id)
+        DO UPDATE SET
+            fullname = EXCLUDED.fullname,
+            birthdate = EXCLUDED.birthdate,
+            country = EXCLUDED.country,
+            address = EXCLUDED.address,
+            phone = EXCLUDED.phone,
+            email = EXCLUDED.email,
+            password = EXCLUDED.password,
+            role = EXCLUDED.role,
+            wallets = EXCLUDED.wallets,
+            kyc = EXCLUDED.kyc
+        """,
+        (
+            normalized["id"],
+            normalized["fullname"],
+            normalized["birthdate"],
+            normalized["country"],
+            normalized["address"],
+            normalized["phone"],
+            normalized["email"],
+            normalized["password"],
+            normalized["role"],
+            Json(normalized["wallets"]),
+            Json(normalized["kyc"]),
+        ),
+    )
+
+
+def _replace_all_users(users):
+    normalized_users = [_normalize_user(user) for user in users]
+    ids = [user["id"] for user in normalized_users if user.get("id")]
+
+    with db_transaction() as cur:
+        if ids:
+            cur.execute("DELETE FROM users WHERE NOT (id = ANY(%s))", (ids,))
+        else:
+            cur.execute("DELETE FROM users")
+
+        for user in normalized_users:
+            _upsert_user(cur, user)
+
+
+def _migrate_legacy_users():
+    rows = run_query("SELECT COUNT(*) AS total FROM users")
+    if rows and rows[0]["total"] > 0:
+        return
+
+    legacy_users = _read_legacy_users()
+    if legacy_users:
+        _replace_all_users(legacy_users)
 
 # -----------------------------
 # CARGAR Y GUARDAR BASE DE DATOS
 # -----------------------------
 def save_db(data):
-    with open(DB_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    _replace_all_users(data.get("users", []))
 
 
 # -----------------------------
 # REGISTRO NIVEL 3
 # -----------------------------
 def register_user(fullname, birthdate, country, address, phone, email, password):
-    db = load_db()
-
-    # Verificar si ya existe el email
-    for u in db["users"]:
-        if u["email"] == email:
-            return None
+    rows = run_query("SELECT id FROM users WHERE email = %s LIMIT 1", (email,))
+    if rows:
+        return None
 
     user_id = str(uuid.uuid4())
     password_hash = hashlib.sha256(password.encode()).hexdigest()
-
-    # Crear wallet automáticamente
-    wallet_id = hashlib.sha256((user_id + email).encode()).hexdigest()
 
     new_user = {
         "id": user_id,
@@ -68,8 +162,8 @@ def register_user(fullname, birthdate, country, address, phone, email, password)
         }
     }
 
-    db["users"].append(new_user)
-    save_db(db)
+    with db_transaction() as cur:
+        _upsert_user(cur, new_user)
 
     return user_id
 
@@ -78,12 +172,14 @@ def register_user(fullname, birthdate, country, address, phone, email, password)
 # LOGIN
 # -----------------------------
 def login_user(email, password):
-    db = load_db()
     password_hash = hashlib.sha256(password.encode()).hexdigest()
 
-    for u in db["users"]:
-        if u["email"] == email and u["password"] == password_hash:
-            return u["id"]
+    rows = run_query(
+        "SELECT id FROM users WHERE email = %s AND password = %s LIMIT 1",
+        (email, password_hash),
+    )
+    if rows:
+        return rows[0]["id"]
 
     return None
 
@@ -92,33 +188,44 @@ def login_user(email, password):
 # ASOCIAR WALLET (solo 1)
 # -----------------------------
 def add_wallet_to_user(user_id, address):
-    db = load_db()
-
-    for u in db["users"]:
-        if u["id"] == user_id:
-            if len(u["wallets"]) == 0:
-                u["wallets"].append(address)
-                save_db(db)
-                return True
-            else:
-                return False  # ya tiene una wallet
-
+    user = get_user_by_id(user_id)
+    if user:
+        wallets = list(user.get("wallets") or [])
+        if len(wallets) == 0:
+            wallets.append(address)
+            user["wallets"] = wallets
+            with db_transaction() as cur:
+                _upsert_user(cur, user)
+            return True
+        return False
     return False
 
 def load_db():
-    print("USANDO DATABASE.PY DESDE:", os.path.abspath(__file__))
-    with open(DB_FILE, "r") as f:
-        return json.load(f)
+    rows = run_query(
+        """
+        SELECT id, fullname, birthdate, country, address, phone,
+               email, password, role, wallets, kyc
+        FROM users
+        ORDER BY created_at ASC, id ASC
+        """
+    )
+    return {"users": [_row_to_user(row) for row in rows]}
 
 # -----------------------------
 # OBTENER USUARIO POR ID
 # -----------------------------
 def get_user_by_id(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            return u
-    return None
+    rows = run_query(
+        """
+        SELECT id, fullname, birthdate, country, address, phone,
+               email, password, role, wallets, kyc
+        FROM users
+        WHERE id = %s
+        LIMIT 1
+        """,
+        (str(user_id),),
+    )
+    return _row_to_user(rows[0]) if rows else None
 
 
 # -----------------------------
@@ -145,12 +252,9 @@ def get_user_data(user_id):
 # OBTENER WALLET DEL USUARIO
 # -----------------------------
 def get_user_wallet(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            if len(u["wallets"]) > 0:
-                return u["wallets"][0]
-            return None
+    user = get_user_by_id(user_id)
+    if user and len(user.get("wallets") or []) > 0:
+        return user["wallets"][0]
     return None
 
 
@@ -164,15 +268,14 @@ def save_kyc_document(user_id, doc_type, filename):
     - address_document
     - selfie
     """
-    db = load_db()
-
-    for u in db["users"]:
-        if u["id"] == user_id:
-            if doc_type in u["kyc"]:
-                u["kyc"][doc_type]["file"] = filename
-                u["kyc"][doc_type]["status"] = "submitted"
-                save_db(db)
-                return True
+    user = get_user_by_id(user_id)
+    if user:
+        if doc_type in user["kyc"]:
+            user["kyc"][doc_type]["file"] = filename
+            user["kyc"][doc_type]["status"] = "submitted"
+            with db_transaction() as cur:
+                _upsert_user(cur, user)
+            return True
 
     return False
 
@@ -181,8 +284,8 @@ def save_kyc_document(user_id, doc_type, filename):
 # VERIFICAR SI ES ADMIN
 # -----------------------------
 def is_admin(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id and u.get("role") == "admin":
-            return True
-    return False
+    user = get_user_by_id(user_id)
+    return bool(user and user.get("role") == "admin")
+
+
+_migrate_legacy_users()

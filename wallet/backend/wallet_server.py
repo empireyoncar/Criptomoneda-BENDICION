@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
-from wallet_manager import create_wallet_for_user, load_wallets, load_db
-from wallet import generate_wallet
+from wallet_manager import create_wallet_for_user, get_user_wallet as get_user_wallet_address, get_wallet_by_address
 
 app = Flask(__name__)
 
@@ -10,18 +9,10 @@ app = Flask(__name__)
 # ============================================================
 @app.get("/user_wallet/<user_id>")
 def get_user_wallet(user_id):
-    db = load_db()
-
-    # Buscar usuario
-    for u in db["users"]:
-        if str(u["id"]) == str(user_id):
-            # Si no tiene wallets asociadas
-            if not u.get("wallets") or len(u["wallets"]) == 0:
-                return jsonify({"wallet": None})
-            # Devolver la primera wallet asociada
-            return jsonify({"wallet": u["wallets"][0]})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
+    wallet = get_user_wallet_address(user_id)
+    if not wallet:
+        return jsonify({"wallet": None})
+    return jsonify({"wallet": wallet})
 
 
 # ============================================================
@@ -29,15 +20,12 @@ def get_user_wallet(user_id):
 # ============================================================
 @app.get("/wallet_info/<address>")
 def wallet_info(address):
-    wallets = load_wallets()
-
-    for w in wallets["wallets"]:
-        if w["address"] == address:
-            return jsonify({
-                "address": w["address"],
-                "public_key_hex": w["public_key_hex"],
-                "private_key_hex": w["private_key_hex"]
-            })
+    wallet = get_wallet_by_address(address)
+    if wallet:
+        return jsonify({
+            "address": wallet["address"],
+            "public_key": wallet["public_key"]
+        })
 
     return jsonify({"error": "Wallet no encontrada"}), 404
 
@@ -55,9 +43,16 @@ def api_generate_wallet():
     user_id = data["user_id"]
 
     # Crear wallet real y guardarla
-    wallet = create_wallet_for_user(user_id)
+    try:
+        wallet = create_wallet_for_user(user_id)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 409
 
-    return jsonify(wallet)
+    return jsonify({
+        "address": wallet["address"],
+        "public_key": wallet["public_key_hex"],
+        "private_key": wallet["private_key_hex"]
+    })
 
 
 # ============================================================

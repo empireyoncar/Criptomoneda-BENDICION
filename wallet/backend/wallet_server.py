@@ -35,8 +35,8 @@ def wallet_info(address):
         if w["address"] == address:
             return jsonify({
                 "address": w["address"],
-                "public_key": w["public_key"],
-                "private_key": w["private_key"]
+                "public_key_hex": w["public_key_hex"],
+                "private_key_hex": w["private_key_hex"]
             })
 
     return jsonify({"error": "Wallet no encontrada"}), 404

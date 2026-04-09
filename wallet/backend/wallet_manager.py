@@ -35,8 +35,8 @@ def create_wallet_for_user(user_id):
     wallets = load_wallets()
     wallets["wallets"].append({
         "user_id": user_id,
-        "private_key": wallet["private_key"],
-        "public_key": wallet["public_key"],
+        "private_key_hex": wallet["private_key_hex"],
+        "public_key_hex": wallet["public_key_hex"],
         "address": wallet["address"]
     })
     save_wallets(wallets)

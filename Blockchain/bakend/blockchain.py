@@ -1,8 +1,7 @@
 import sys
 import time
-import json
 sys.path.insert(0, "/app/criptografia")
-from blockchain_crypto import hash_bloque, hash_transaccion
+from blockchain_crypto import hash_bloque
 from blockchain_blocks import load_state, save_state, rotate_if_needed
 
 # Unidades mínimas: 1 moneda = 100 millones de unidades

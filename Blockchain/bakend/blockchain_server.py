@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from blockchain import Blockchain
 import sys
-import json
 
 # Import signature verification
 sys.path.insert(0, "/app/criptografia")
@@ -225,6 +224,41 @@ def mint():
 
     return jsonify({"message": "Transacción de mint creada correctamente"})
 
+# ============================================================
+#   INICIALIZAR SUMINISTRO (10,000 monedas a treasury)
+# ============================================================
+@app.route("/initialize_supply", methods=["POST"])
+def initialize_supply():
+    """
+    ONE-TIME: Create 10,000 initial BENDICION tokens.
+    Stores them in SYSTEM treasury address.
+    
+    Treasury address: "0x00000000000000000000000000000000TREASURY"
+    Amount: 10,000 * 100,000,000 satichis = 1,000,000,000,000
+    """
+    # Check if already initialized
+    treasury_address = "0x00000000000000000000000000000000TREASURY"
+    if blockchain.get_balance(treasury_address) > 0:
+        return jsonify({"error": "Supply already initialized"}), 400
+    
+    # Create 10,000 monedas = 1,000,000,000,000 satichis
+    total_supply_satichis = 10_000 * 100_000_000
+    
+    ok = blockchain.add_transaction("SYSTEM", treasury_address, total_supply_satichis)
+    
+    if not ok:
+        return jsonify({"error": "Failed to create initial supply"}), 400
+    
+    # Auto-commit to seal it
+    block = blockchain.commit_pending_transactions()
+    
+    return jsonify({
+        "message": "Initial supply created",
+        "treasury_address": treasury_address,
+        "total_monedas": 10_000,
+        "total_satichis": total_supply_satichis,
+        "block_index": block.index if block else None
+    })
 
 # ============================================================
 #   CREAR BLOQUE

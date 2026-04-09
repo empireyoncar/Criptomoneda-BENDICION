@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>KYC Rechazado</title>
+  <style>
+    body { background:#0b0e11; color:#eaecef; font-family:Arial, sans-serif; margin:0; padding:0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .box { width:520px; background:#181a20; border-radius:14px; padding:28px; box-shadow:0 0 22px rgba(0,0,0,.45); }
+    h1 { margin:0 0 12px 0; color:#ef4444; }
+    .muted { color:#9aa4af; }
+    ul { margin:12px 0 0 20px; }
+    li { margin-bottom:8px; }
+    button { margin-top:18px; width:100%; padding:11px 14px; border:none; border-radius:8px; background:#f0b90b; color:#111; font-weight:700; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>KYC Rechazado</h1>
+    <p class="muted">Tu solicitud de verificacion fue rechazada por los siguientes motivos:</p>
+    <ul id="reasons">
+      <li>Revisando motivos...</li>
+    </ul>
+    <button onclick="window.location.href='/CriptoBendicion/kyc/'">Volver a KYC y corregir</button>
+  </div>
+
+<script>
+  const API = "/CriptoBendicion/kyc_api";
+  const userId = localStorage.getItem("user_id") || "";
+
+  async function loadReasons() {
+    const ul = document.getElementById("reasons");
+    if (!userId) {
+      ul.innerHTML = "<li>No hay sesion activa.</li>";
+      return;
+    }
+
+    const res = await fetch(`${API}/status/${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      ul.innerHTML = `<li>${data.error || 'No se pudo leer estado KYC.'}</li>`;
+      return;
+    }
+
+    const reasons = data.kyc?.rejection_reasons || [];
+    if (!Array.isArray(reasons) || !reasons.length) {
+      ul.innerHTML = "<li>Faltan datos o no se registraron motivos.</li>";
+      return;
+    }
+
+    ul.innerHTML = reasons.map((r) => `<li>${r}</li>`).join("");
+  }
+
+  loadReasons();
+</script>
+</body>
+</html>

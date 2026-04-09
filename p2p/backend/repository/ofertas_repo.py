@@ -8,6 +8,12 @@ from typing import Any
 from p2p_db import db_transaction, run_query
 
 
+def get_offer(offer_id: str) -> dict[str, Any] | None:
+    """Get an offer by id."""
+    rows = run_query("SELECT * FROM p2p_offers WHERE id = %s", (offer_id,))
+    return rows[0] if rows else None
+
+
 def create_offer(data: dict[str, Any]) -> dict[str, Any]:
     """Create a new P2P offer."""
     rows = run_query(

@@ -3,3 +3,4 @@ flask-cors
 flask-sock
 psycopg2-binary
 PyJWT
+requests

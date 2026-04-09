@@ -200,6 +200,14 @@
     <button id="btnGoAdminDON">Ir al Admin DON</button>
   </section>
 
+  <!-- ADMIN KYC -->
+  <section class="box">
+    <h2>Panel Administrador KYC</h2>
+    <p>Gestiona solicitudes KYC (solo acceso desde IP interna autorizada).</p>
+
+    <button id="btnGoAdminKYC">Ir al Admin KYC</button>
+  </section>
+
 </div>
 
 <script>
@@ -282,6 +290,10 @@
 };
   document.getElementById("btnGoAdminDON").onclick = () => {
     window.location.href = "http://192.168.1.178:5009/don/admin";
+  };
+
+  document.getElementById("btnGoAdminKYC").onclick = () => {
+    window.location.href = "http://192.168.1.178/CriptoBendicion/kyc/admin";
   };
 
 

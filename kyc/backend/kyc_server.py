@@ -1,207 +1,179 @@
-# ============================================================
-#   REGISTRO NIVEL 3
-# ============================================================
-@app.route("/crypto/register", methods=["POST"])
-def register():
-    data = request.json
+from __future__ import annotations
 
-    fullname = data.get("fullname")
-    birthdate = data.get("birthdate")
-    country = data.get("country")
-    address = data.get("address")
-    phone = data.get("phone")
-    email = data.get("email")
-    password = data.get("password")
+from typing import Any
 
-    if not fullname or not birthdate or not country or not address or not email or not password:
-        return jsonify({"error": "Faltan datos obligatorios"}), 400
+from flask import Flask, jsonify, request, send_file
+from flask_cors import CORS
 
-    user_id = register_user(fullname, birthdate, country, address, phone, email, password)
+import kyc
+import os
 
-    if not user_id:
-        return jsonify({"error": "El email ya está registrado"}), 400
-
-    return jsonify({"message": "Usuario registrado correctamente", "user_id": user_id})
+app = Flask(__name__)
+CORS(app)
+ALLOWED_ADMIN_IP = os.getenv("KYC_ADMIN_ALLOWED_IP", "192.168.1.178").strip()
 
 
-# ============================================================
-#   SUBIR DOCUMENTO KYC
-# ============================================================
-@app.route("/crypto/upload_kyc_step", methods=["POST"])
-def upload_kyc_step():
-    user_id = request.form.get("user_id")
-    step = request.form.get("step")
-    file = request.files.get("file")
-
-    if step not in ["id_document", "address_document", "selfie"]:
-        return jsonify({"error": "Paso KYC inválido"}), 400
-
-    if not file:
-        return jsonify({"error": "Archivo no recibido"}), 400
-
-    filename = secure_filename(file.filename)
-    path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(path)
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"][step]["file"] = filename
-            u["kyc"][step]["status"] = "submitted"
-            save_db(db)
-            return jsonify({"message": "Archivo subido", "step": step})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
+def _ok(payload: dict[str, Any], code: int = 200):
+    return jsonify(payload), code
 
 
-# ============================================================
-#   ACTUALIZAR ESTADO KYC
-# ============================================================
-@app.route("/crypto/update_kyc_status", methods=["POST"])
-def update_kyc_status():
-    data = request.json
-    user_id = data.get("user_id")
-    step = data.get("step")
-    status = data.get("status")
-
-    if step not in ["id_document", "address_document", "selfie", "phone_verification"]:
-        return jsonify({"error": "Paso inválido"}), 400
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"][step]["status"] = status
-            save_db(db)
-            return jsonify({"message": "Estado actualizado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
+def _error(message: str, code: int = 400):
+    return jsonify({"success": False, "error": message}), code
 
 
-# ============================================================
-#   OBTENER ESTADO KYC
-# ============================================================
-@app.route("/crypto/get_kyc_status/<user_id>", methods=["GET"])
-def get_kyc_status(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            return jsonify(u["kyc"])
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-# ============================================================
-#   ACTUALIZAR ESTADO KYC
-# ============================================================
-@app.route("/crypto/update_kyc_status", methods=["POST"])
-def update_kyc_status():
-    data = request.json
-    user_id = data.get("user_id")
-    step = data.get("step")
-    status = data.get("status")
-
-    if step not in ["id_document", "address_document", "selfie", "phone_verification"]:
-        return jsonify({"error": "Paso inválido"}), 400
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"][step]["status"] = status
-            save_db(db)
-            return jsonify({"message": "Estado actualizado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-# ============================================================
-#   OBTENER ESTADO KYC
-# ============================================================
-@app.route("/crypto/get_kyc_status/<user_id>", methods=["GET"])
-def get_kyc_status(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            return jsonify(u["kyc"])
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-# ============================================================
-#   ADMIN APRUEBA KYC
-# ============================================================
-@app.route("/crypto/admin/kyc/approve_step", methods=["POST"])
-@require_admin
-def admin_approve_step():
-    data = request.json
-    user_id = data.get("user_id")
-    step = data.get("step")
-
-    if step not in ["id_document", "address_document", "selfie", "phone_verification"]:
-        return jsonify({"error": "Paso inválido"}), 400
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"][step]["status"] = "approved"
-
-            steps = u["kyc"]
-            if all(
-                steps[s]["status"] == "approved"
-                for s in ["id_document", "address_document", "selfie"]
-            ) and steps["phone_verification"]["status"] == "approved":
-                u["kyc"]["overall_status"] = "approved"
-
-            save_db(db)
-            return jsonify({"message": "Paso aprobado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
-
-# ============================================================
-#   KYC
-# ============================================================
-
-# --- Obtener documentos KYC
-@app.route("/admin/kyc/docs/<user_id>", methods=["GET"])
-@require_admin
-def admin_kyc_docs(user_id):
-    db = load_db()
-    for u in db["users"]:
-        if str(u["id"]) == str(user_id):
-            return jsonify(u.get("kyc", {}))
-    return jsonify({"error": "Usuario no encontrado"}), 404
+def _json_body() -> dict[str, Any]:
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        raise ValueError("Payload JSON invalido")
+    return body
 
 
-# --- Aprobar KYC
-@app.route("/admin/kyc/approve", methods=["POST"])
-@require_admin
-def admin_approve_kyc():
-    data = request.json
-    user_id = data.get("user_id")
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"]["status"] = "approved"
-            save_db(db)
-            return jsonify({"message": "KYC aprobado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
+def _client_ip() -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return (request.remote_addr or "").strip()
 
 
-# --- Rechazar KYC
-@app.route("/admin/kyc/reject", methods=["POST"])
-@require_admin
-def admin_reject_kyc():
-    data = request.json
-    user_id = data.get("user_id")
-
-    db = load_db()
-    for u in db["users"]:
-        if u["id"] == user_id:
-            u["kyc"]["status"] = "rejected"
-            save_db(db)
-            return jsonify({"message": "KYC rechazado"})
-
-    return jsonify({"error": "Usuario no encontrado"}), 404
+def _require_internal_admin_ip() -> None:
+    ip = _client_ip()
+    normalized = ip.replace("::ffff:", "")
+    if normalized != ALLOWED_ADMIN_IP:
+        raise PermissionError("Acceso admin permitido solo desde IP interna autorizada")
 
 
-# ============================================================
-#   INICIAR SERVIDOR
-# ============================================================
+@app.get("/health")
+def health():
+    return _ok({"success": True, "service": "kyc_api", "status": "ok"})
+
+
+@app.get("/status/<user_id>")
+def get_status(user_id: str):
+    try:
+        status = kyc.get_kyc_status(user_id)
+        return _ok({"success": True, "kyc": status})
+    except ValueError as exc:
+        return _error(str(exc), 404)
+    except Exception as exc:
+        return _error(f"Error interno: {exc}", 500)
+
+
+@app.post("/upload")
+def upload_step_document():
+    try:
+        user_id = str(request.form.get("user_id", "")).strip()
+        step = str(request.form.get("step", "")).strip()
+        file_obj = request.files.get("file")
+        if not user_id:
+            raise ValueError("user_id es requerido")
+        status = kyc.save_kyc_document(user_id=user_id, step=step, file_storage=file_obj)
+        return _ok({"success": True, "kyc": status})
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al subir documento: {exc}", 500)
+
+
+@app.post("/phone/submit")
+def submit_phone_step():
+    try:
+        payload = _json_body()
+        user_id = str(payload.get("user_id", "")).strip()
+        if not user_id:
+            raise ValueError("user_id es requerido")
+        status = kyc.submit_phone_verification(user_id)
+        return _ok({"success": True, "kyc": status})
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al actualizar telefono: {exc}", 500)
+
+
+@app.post("/finish")
+def finish_kyc():
+    try:
+        payload = _json_body()
+        user_id = str(payload.get("user_id", "")).strip()
+        if not user_id:
+            raise ValueError("user_id es requerido")
+        status = kyc.finish_kyc_submission(user_id)
+        return _ok({"success": True, "kyc": status})
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al finalizar KYC: {exc}", 500)
+
+
+@app.get("/docs/<user_id>/<path:filename>")
+def get_doc(user_id: str, filename: str):
+    try:
+        file_path = kyc.get_document_path(user_id, filename)
+        return send_file(file_path)
+    except ValueError as exc:
+        return _error(str(exc), 404)
+    except Exception as exc:
+        return _error(f"Error interno al leer documento: {exc}", 500)
+
+
+@app.get("/admin/requests")
+def admin_list_requests():
+    try:
+        _require_internal_admin_ip()
+        rows = kyc.list_kyc_requests()
+        return _ok({"success": True, "requests": rows})
+    except PermissionError as exc:
+        return _error(str(exc), 403)
+    except Exception as exc:
+        return _error(f"Error interno al listar solicitudes: {exc}", 500)
+
+
+@app.get("/admin/request/<user_id>")
+def admin_get_request(user_id: str):
+    try:
+        _require_internal_admin_ip()
+        detail = kyc.get_user_kyc_detail(user_id)
+        return _ok({"success": True, "request": detail})
+    except PermissionError as exc:
+        return _error(str(exc), 403)
+    except ValueError as exc:
+        return _error(str(exc), 404)
+    except Exception as exc:
+        return _error(f"Error interno al leer solicitud: {exc}", 500)
+
+
+@app.post("/admin/decision")
+def admin_decision():
+    try:
+        _require_internal_admin_ip()
+        payload = _json_body()
+        user_id = str(payload.get("user_id", "")).strip()
+        decision = str(payload.get("decision", "")).strip().lower()
+        admin_id = str(payload.get("admin_id", "")).strip()
+        reasons_payload = payload.get("reasons", [])
+
+        reasons: list[str]
+        if isinstance(reasons_payload, list):
+            reasons = [str(x) for x in reasons_payload]
+        elif isinstance(reasons_payload, str):
+            reasons = [line.strip() for line in reasons_payload.split("\n") if line.strip()]
+        else:
+            reasons = []
+
+        reviewed = kyc.review_kyc_request(
+            user_id=user_id,
+            decision=decision,
+            reasons=reasons,
+            admin_id=admin_id,
+        )
+        return _ok({"success": True, "kyc": reviewed})
+    except PermissionError as exc:
+        return _error(str(exc), 403)
+    except ValueError as exc:
+        return _error(str(exc), 400)
+    except Exception as exc:
+        return _error(f"Error interno al revisar KYC: {exc}", 500)
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5008, debug=True)
+    kyc.ensure_storage()
+    app.run(host="0.0.0.0", port=5015, debug=True)

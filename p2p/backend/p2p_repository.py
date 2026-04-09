@@ -20,6 +20,7 @@ Single database connection managed by p2p_db module.
 from repository.ofertas_repo import (
     cancel_offer,
     create_offer,
+    get_offer,
     list_active_offers,
     take_offer,
 )
@@ -69,6 +70,7 @@ from repository.chat_repo import (
 # Public API: all functions available as before
 __all__ = [
     # Offers
+    "get_offer",
     "create_offer",
     "list_active_offers",
     "take_offer",

@@ -34,6 +34,10 @@
     .limitBox { font-size:12px; color:#b3bcc7; margin-top:4px; }
     .ratingBadge { display:inline-block; margin-top:6px; color:#f4d35e; font-size:12px; }
     .termsSmall { display:block; color:#9aa4af; font-size:11px; margin-top:6px; line-height:1.35; }
+    .chainStatus { margin-top:8px; font-size:13px; }
+    .chainStatus.ok { color:#16a34a; }
+    .chainStatus.down { color:#d64b4b; }
+    .chainStatus.checking { color:#f0b90b; }
   </style>
 </head>
 <body>
@@ -43,6 +47,7 @@
       <div>
         <h1>Mercado P2P - BENDICION (BEN)</h1>
         <div class="muted">Usuario: <span id="userId">-</span></div>
+        <div id="blockchainStatus" class="chainStatus checking">Conexion a la blockchain: verificando...</div>
       </div>
       <div class="topbarLinks">
         <a class="home-btn" href="/CriptoBendicion/home">Ir a Home</a>
@@ -151,6 +156,28 @@
     } catch (_error) {
       btn.className = "online-orders-btn gray";
       btn.textContent = "Ordenes online";
+    }
+  }
+
+  async function checkBlockchainConnection() {
+    const statusEl = document.getElementById("blockchainStatus");
+    statusEl.className = "chainStatus checking";
+    statusEl.textContent = "Conexion a la blockchain: verificando...";
+    try {
+      const res = await fetch(`${API}/health/blockchain`);
+      const data = await res.json();
+      const ok = Boolean(data && data.blockchain && data.blockchain.ok);
+      if (res.ok && ok) {
+        statusEl.className = "chainStatus ok";
+        statusEl.textContent = "Conexion a la blockchain: OK";
+      } else {
+        const msg = data?.blockchain?.error || "sin respuesta";
+        statusEl.className = "chainStatus down";
+        statusEl.textContent = `Conexion a la blockchain: FALLA (${msg})`;
+      }
+    } catch (_error) {
+      statusEl.className = "chainStatus down";
+      statusEl.textContent = "Conexion a la blockchain: FALLA";
     }
   }
 
@@ -312,8 +339,10 @@
 
   document.getElementById("btnReload").onclick = loadOffers;
   document.getElementById("btnCreate").onclick = createOffer;
+  checkBlockchainConnection();
   refreshOnlineOrdersButton();
   loadMyOffers();
+  window.setInterval(checkBlockchainConnection, 30000);
   window.setInterval(loadOffers, 8000);
   window.setInterval(refreshOnlineOrdersButton, 12000);
   window.setInterval(loadMyOffers, 15000);

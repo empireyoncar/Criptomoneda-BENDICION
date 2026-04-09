@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir \
     flask-cors \
     flask-sock \
     psycopg2-binary \
-    PyJWT
+    PyJWT \
+    requests
 
 EXPOSE 5012 5013

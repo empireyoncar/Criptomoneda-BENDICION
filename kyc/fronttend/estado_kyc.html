@@ -1,200 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Estado de Verificación KYC – BENDICIÓN</title>
-
+  <meta charset="UTF-8" />
+  <title>Estado KYC</title>
   <style>
-    body {
-      background: #0b0e11;
-      color: white;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: auto;
-      background: #181a20;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-
-    h1 {
-      text-align: center;
-      color: #f0b90b;
-      margin-bottom: 20px;
-    }
-
-    .step {
-      background: #2b3139;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-
-    h2 {
-      color: #f0b90b;
-      margin: 0 0 10px 0;
-    }
-
-    .status {
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    .badge {
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-      text-transform: capitalize;
-    }
-
-    .pending { background: #555; }
-    .submitted { background: #007bff; }
-    .approved { background: #1e7e34; }
-    .rejected { background: #c82333; }
-
-    .preview {
-      margin-top: 10px;
-      width: 120px;
-      height: 120px;
-      overflow: hidden;
-      border-radius: 6px;
-      background: black;
-      display: none;
-    }
-
-    .preview img {
-      width: 100%;
-      height: auto;
-    }
-
-    .message {
-      text-align: center;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      font-size: 16px;
-    }
-
-    .approved-box {
-      background: #1e7e34;
-    }
-
-    .pending-box {
-      background: #555;
-    }
-
-    .rejected-box {
-      background: #c82333;
-    }
-
+    body { background:#0b0e11; color:#eaecef; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    .wrap { max-width:800px; margin:0 auto; }
+    .card { background:#181a20; border-radius:12px; padding:18px; margin-bottom:14px; }
+    h1,h2 { color:#f0b90b; margin:0 0 10px 0; }
+    .muted { color:#9aa4af; font-size:13px; }
+    .progress { height:12px; background:#2b3139; border-radius:8px; overflow:hidden; }
+    .bar { height:100%; width:0%; background:#f0b90b; transition:width .3s ease; }
+    .row { display:flex; justify-content:space-between; border-bottom:1px solid #2b3139; padding:10px 0; }
+    .badge { padding:4px 8px; border-radius:6px; font-size:12px; font-weight:700; text-transform:capitalize; }
+    .pending { background:#4b5563; }
+    .submitted { background:#2563eb; }
+    .approved { background:#15803d; }
+    .rejected { background:#b91c1c; }
+    button { border:none; border-radius:8px; padding:10px 14px; font-weight:700; cursor:pointer; }
+    .btn { background:#f0b90b; color:#0b0e11; }
+    .btn-sec { background:#2b3139; color:#eaecef; }
+    .hidden { display:none; }
+    ul { margin:8px 0 0 18px; }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Estado de tu KYC</h1>
+      <div class="muted">Usuario: <span id="userId">-</span></div>
+      <div class="progress" style="margin-top:10px;"><div id="bar" class="bar"></div></div>
+      <div class="muted" style="margin-top:8px;">Progreso: <span id="pct">0%</span></div>
+      <div class="muted">Estado general: <span id="overall" class="badge pending">pending</span></div>
+    </div>
 
-<div class="container">
+    <div class="card">
+      <h2>Pasos</h2>
+      <div class="row"><div>Documento de identidad</div><div id="s1" class="badge pending">pending</div></div>
+      <div class="row"><div>Comprobante de domicilio</div><div id="s2" class="badge pending">pending</div></div>
+      <div class="row"><div>Selfie</div><div id="s3" class="badge pending">pending</div></div>
+      <div class="row"><div>Verificacion telefono</div><div id="s4" class="badge pending">pending</div></div>
+    </div>
 
-  <h1>Estado de tu Verificación KYC</h1>
+    <div id="decisionBox" class="card hidden">
+      <h2>Decision disponible</h2>
+      <p class="muted">Tu revision ya finalizo. Pulsa para ver la decision final.</p>
+      <button id="btnDecision" class="btn">Ver decision</button>
+      <div id="reasons" class="hidden">
+        <h2>Motivos de rechazo</h2>
+        <ul id="reasonsList"></ul>
+      </div>
+    </div>
 
-  <div id="stepsContainer">
-    <!-- Se llena con JS -->
+    <div class="card">
+      <button class="btn-sec" onclick="window.location.href='/CriptoBendicion/kyc/'">Volver a KYC</button>
+    </div>
   </div>
-
-  <div id="finalMessage" class="message pending-box">
-    Cargando estado...
-  </div>
-
-</div>
 
 <script>
-const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
-const user_id = localStorage.getItem("user_id");
+  const API = "/CriptoBendicion/kyc_api";
+  const userId = localStorage.getItem("user_id") || "";
+  document.getElementById("userId").textContent = userId || "sin sesion";
 
-if (!user_id) {
-  alert("No se encontró tu sesión. Inicia sesión nuevamente.");
-}
-
-// Utilidad para badge
-function badge(status) {
-  return `<span class="badge ${status}">${status}</span>`;
-}
-
-// Crear bloque de paso
-function createStep(title, stepKey, stepData) {
-  let html = `
-    <div class="step">
-      <h2>${title}</h2>
-      <p class="status">Estado: ${badge(stepData.status)}</p>
-  `;
-
-  if (stepData.file) {
-    html += `
-      <div class="preview" style="display:block;">
-        <img src="kyc_docs/${stepData.file}">
-      </div>
-    `;
-  } else {
-    html += `<p class="status">Sin archivo</p>`;
+  function setBadge(el, status) {
+    el.className = `badge ${status || 'pending'}`;
+    el.textContent = status || "pending";
   }
 
-  html += `</div>`;
-  return html;
-}
+  async function loadStatus() {
+    if (!userId) {
+      alert("Debes iniciar sesion.");
+      return;
+    }
 
-// Cargar estado KYC
-async function loadKYC() {
-  const res = await fetch(`${API}/get_kyc_status/${user_id}`);
-  const kyc = await res.json();
+    const res = await fetch(`${API}/status/${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo cargar el estado");
+      return;
+    }
 
-  if (kyc.error) {
-    alert(kyc.error);
-    return;
+    const k = data.kyc;
+    const progress = Number(k.progress || 0);
+
+    document.getElementById("bar").style.width = `${progress}%`;
+    document.getElementById("pct").textContent = `${progress}%`;
+
+    setBadge(document.getElementById("overall"), k.overall_status);
+    setBadge(document.getElementById("s1"), k.id_document?.status);
+    setBadge(document.getElementById("s2"), k.address_document?.status);
+    setBadge(document.getElementById("s3"), k.selfie?.status);
+    setBadge(document.getElementById("s4"), k.phone_verification?.status);
+
+    const decisionBox = document.getElementById("decisionBox");
+    const btnDecision = document.getElementById("btnDecision");
+    const reasons = document.getElementById("reasons");
+    const reasonsList = document.getElementById("reasonsList");
+
+    if (k.decision_ready) {
+      decisionBox.classList.remove("hidden");
+      if (k.overall_status === "approved") {
+        btnDecision.onclick = () => { window.location.href = "/CriptoBendicion/kyc/aprobado"; };
+      } else {
+        btnDecision.onclick = () => { window.location.href = "/CriptoBendicion/kyc/rechzado"; };
+        const items = Array.isArray(k.rejection_reasons) ? k.rejection_reasons : [];
+        if (items.length) {
+          reasons.classList.remove("hidden");
+          reasonsList.innerHTML = items.map((r) => `<li>${r}</li>`).join("");
+        }
+      }
+    }
   }
 
-  const container = document.getElementById("stepsContainer");
-  container.innerHTML = "";
-
-  container.innerHTML += createStep("Documento de identidad", "id_document", kyc.id_document);
-  container.innerHTML += createStep("Comprobante de domicilio", "address_document", kyc.address_document);
-  container.innerHTML += createStep("Selfie actual", "selfie", kyc.selfie);
-
-  // Paso 4 (sin archivo)
-  container.innerHTML += `
-    <div class="step">
-      <h2>Verificación de teléfono</h2>
-      <p class="status">Estado: ${badge(kyc.phone_verification.status)}</p>
-      <p class="status">Este paso se completa enviando tus datos por WhatsApp.</p>
-    </div>
-  `;
-
-  // Mensaje final
-  const finalBox = document.getElementById("finalMessage");
-
-  if (kyc.overall_status === "approved") {
-    finalBox.className = "message approved-box";
-    finalBox.textContent = "🎉 Tu KYC ha sido aprobado. Ya puedes usar todas las funciones.";
-  }
-  else if (["rejected"].includes(kyc.id_document.status) ||
-           ["rejected"].includes(kyc.address_document.status) ||
-           ["rejected"].includes(kyc.selfie.status) ||
-           ["rejected"].includes(kyc.phone_verification.status)) {
-
-    finalBox.className = "message rejected-box";
-    finalBox.textContent = "❌ Uno o más pasos fueron rechazados. Vuelve a subir los documentos.";
-  }
-  else {
-    finalBox.className = "message pending-box";
-    finalBox.textContent = "⏳ Tu verificación está en revisión. Por favor espera.";
-  }
-}
-
-loadKYC();
+  loadStatus();
+  window.setInterval(loadStatus, 15000);
 </script>
-
 </body>
 </html>

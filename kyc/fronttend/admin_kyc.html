@@ -1,319 +1,164 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Panel Admin KYC – BENDICIÓN</title>
+  <meta charset="UTF-8" />
+  <title>Admin KYC</title>
   <style>
-    body {
-      background: #0b0e11;
-      color: white;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
-
-    h1 {
-      text-align: center;
-      color: #f0b90b;
-      margin-bottom: 20px;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      display: flex;
-      gap: 20px;
-    }
-
-    .panel {
-      background: #181a20;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      flex: 1;
-      min-height: 300px;
-    }
-
-    h2 {
-      color: #f0b90b;
-      margin-top: 0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #2b3139;
-    }
-
-    tr:hover {
-      background: #2b3139;
-      cursor: pointer;
-    }
-
-    .badge {
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-    }
-
-    .pending { background: #555; }
-    .submitted { background: #007bff; }
-    .approved { background: #1e7e34; }
-    .rejected { background: #c82333; }
-
-    button {
-      padding: 6px 10px;
-      margin: 2px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: bold;
-    }
-
-    .btn-approve {
-      background: #1e7e34;
-      color: white;
-    }
-
-    .btn-reject {
-      background: #c82333;
-      color: white;
-    }
-
-    .file-link {
-      color: #f0b90b;
-      text-decoration: none;
-      font-size: 12px;
-    }
-
-    .file-link:hover {
-      text-decoration: underline;
-    }
-
-    .small {
-      font-size: 12px;
-      color: #aaa;
-    }
+    body { background:#0b0e11; color:#eaecef; font-family:Arial, sans-serif; margin:0; padding:20px; }
+    .wrap { max-width:1220px; margin:0 auto; display:grid; grid-template-columns:1.15fr 1fr; gap:14px; }
+    .panel { background:#181a20; border-radius:12px; padding:16px; }
+    h1,h2 { color:#f0b90b; margin:0 0 10px 0; }
+    table { width:100%; border-collapse:collapse; }
+    th,td { text-align:left; padding:8px; border-bottom:1px solid #2b3139; font-size:13px; }
+    tr:hover { background:#222834; cursor:pointer; }
+    .badge { padding:4px 8px; border-radius:6px; font-size:12px; font-weight:700; text-transform:capitalize; }
+    .pending { background:#4b5563; }
+    .in_review { background:#0ea5e9; }
+    .approved { background:#15803d; }
+    .rejected { background:#b91c1c; }
+    .step { border:1px solid #2b3139; border-radius:8px; padding:10px; margin-bottom:10px; }
+    .actions { display:flex; gap:8px; margin-top:10px; }
+    button { border:none; border-radius:8px; padding:9px 12px; font-weight:700; cursor:pointer; }
+    .btn-ok { background:#16a34a; color:#fff; }
+    .btn-no { background:#dc2626; color:#fff; }
+    .muted { color:#9aa4af; font-size:12px; }
+    textarea { width:100%; min-height:90px; background:#0f1115; color:#eaecef; border:1px solid #2b3139; border-radius:8px; padding:8px; }
+    a.file { color:#f0b90b; text-decoration:none; }
   </style>
 </head>
 <body>
-
-<h1>Panel Admin – Verificación KYC</h1>
-
-<div class="container">
-  <!-- Panel de usuarios -->
-  <div class="panel">
-    <h2>Usuarios</h2>
-    <p class="small">Haz clic en un usuario para ver su KYC.</p>
-    <table id="usersTable">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>País</th>
-          <th>Estado KYC</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rellenado por JS -->
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Panel de detalle KYC -->
-  <div class="panel">
-    <h2>Detalle KYC</h2>
-    <p id="selectedUser" class="small">Ningún usuario seleccionado.</p>
-
-    <div id="kycDetails" style="display:none;">
-      <table>
-        <tr>
-          <th>Paso</th>
-          <th>Archivo</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-        <tr>
-          <td>Documento de identidad</td>
-          <td id="file_id_document"></td>
-          <td><span id="status_id_document" class="badge"></span></td>
-          <td>
-            <button class="btn-approve" onclick="approveStep('id_document')">Aprobar</button>
-            <button class="btn-reject" onclick="rejectStep('id_document')">Rechazar</button>
-          </td>
-        </tr>
-        <tr>
-          <td>Comprobante de domicilio</td>
-          <td id="file_address_document"></td>
-          <td><span id="status_address_document" class="badge"></span></td>
-          <td>
-            <button class="btn-approve" onclick="approveStep('address_document')">Aprobar</button>
-            <button class="btn-reject" onclick="rejectStep('address_document')">Rechazar</button>
-          </td>
-        </tr>
-        <tr>
-          <td>Selfie</td>
-          <td id="file_selfie"></td>
-          <td><span id="status_selfie" class="badge"></span></td>
-          <td>
-            <button class="btn-approve" onclick="approveStep('selfie')">Aprobar</button>
-            <button class="btn-reject" onclick="rejectStep('selfie')">Rechazar</button>
-          </td>
-        </tr>
-        <tr>
-          <td>Verificación teléfono</td>
-          <td class="small">WhatsApp</td>
-          <td><span id="status_phone_verification" class="badge"></span></td>
-          <td>
-            <button class="btn-approve" onclick="approveStep('phone_verification')">Aprobar</button>
-            <button class="btn-reject" onclick="rejectStep('phone_verification')">Rechazar</button>
-          </td>
-        </tr>
-        <tr>
-          <td><strong>Estado general</strong></td>
-          <td></td>
-          <td><span id="status_overall" class="badge"></span></td>
-          <td></td>
-        </tr>
+  <h1>Panel Admin KYC</h1>
+  <div class="wrap">
+    <div class="panel">
+      <h2>Solicitudes</h2>
+      <table id="tb">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Pais</th>
+            <th>Estado KYC</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
       </table>
+      <div class="muted" style="margin-top:8px;">Acceso permitido solo desde IP interna 192.168.x.x.</div>
+    </div>
+
+    <div class="panel">
+      <h2>Detalle solicitud</h2>
+      <div id="meta" class="muted">Selecciona un usuario</div>
+      <div id="detail"></div>
+      <h2>Motivos de rechazo (uno por linea)</h2>
+      <textarea id="reasons" placeholder="Documento borroso\nNombre no coincide\nComprobante vencido"></textarea>
+      <div class="actions">
+        <button class="btn-ok" onclick="decide('approved')">Aprobar solicitud</button>
+        <button class="btn-no" onclick="decide('rejected')">Rechazar solicitud</button>
+      </div>
     </div>
   </div>
-</div>
 
 <script>
-const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
-const admin_id = localStorage.getItem("user_id"); // asumiendo que el admin también hace login normal
+  const API = "/CriptoBendicion/kyc_api";
+  const adminId = localStorage.getItem("user_id") || "admin-local";
+  let selectedUserId = "";
 
-let currentUserId = null;
-
-// Utilidad para badge
-function setBadge(el, status) {
-  el.className = "badge " + (status || "pending");
-  el.textContent = status || "pending";
-}
-
-// Cargar lista de usuarios
-async function loadUsers() {
-  if (!admin_id) {
-    alert("No se encontró admin_id en localStorage.user_id");
-    return;
+  function badge(status) {
+    return `<span class="badge ${status || 'pending'}">${status || 'pending'}</span>`;
   }
 
-  const res = await fetch(`${API}/CriptoBendicion/admin_api/users?user_id=${admin_id}`);
-  const data = await res.json();
-
-  if (data.error) {
-    alert(data.error);
-    return;
-  }
-
-  const tbody = document.querySelector("#usersTable tbody");
-  tbody.innerHTML = "";
-
-  data.forEach(u => {
-    const tr = document.createElement("tr");
-    tr.onclick = () => selectUser(u);
-
-    const kycStatus = u.kyc && u.kyc.overall_status ? u.kyc.overall_status : "pending";
-
-    tr.innerHTML = `
-      <td>${u.fullname}</td>
-      <td>${u.email}</td>
-      <td>${u.country}</td>
-      <td><span class="badge ${kycStatus}">${kycStatus}</span></td>
+  function stepRow(title, key, step) {
+    const file = step && step.file
+      ? `<a class="file" target="_blank" href="${API}/docs/${encodeURIComponent(selectedUserId)}/${encodeURIComponent(step.file)}">${step.file}</a>`
+      : "Sin archivo";
+    return `
+      <div class="step">
+        <div><strong>${title}</strong></div>
+        <div class="muted">Estado: ${badge(step?.status)}</div>
+        <div class="muted">Archivo: ${file}</div>
+      </div>
     `;
-    tbody.appendChild(tr);
-  });
-}
-
-// Seleccionar usuario y cargar su KYC
-async function selectUser(user) {
-  currentUserId = user.id;
-  document.getElementById("selectedUser").textContent =
-    `Usuario seleccionado: ${user.fullname} (${user.email})`;
-
-  const res = await fetch(`${API}/get_kyc_status/${currentUserId}`);
-  const kyc = await res.json();
-
-  if (kyc.error) {
-    alert(kyc.error);
-    return;
   }
 
-  document.getElementById("kycDetails").style.display = "block";
+  async function loadRequests() {
+    const res = await fetch(`${API}/admin/requests`);
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudieron cargar solicitudes");
+      return;
+    }
 
-  // Archivos
-  setFileCell("file_id_document", kyc.id_document);
-  setFileCell("file_address_document", kyc.address_document);
-  setFileCell("file_selfie", kyc.selfie);
+    const tbody = document.querySelector("#tb tbody");
+    tbody.innerHTML = "";
 
-  // Estados
-  setBadge(document.getElementById("status_id_document"), kyc.id_document.status);
-  setBadge(document.getElementById("status_address_document"), kyc.address_document.status);
-  setBadge(document.getElementById("status_selfie"), kyc.selfie.status);
-  setBadge(document.getElementById("status_phone_verification"), kyc.phone_verification.status);
-  setBadge(document.getElementById("status_overall"), kyc.overall_status);
-}
-
-function setFileCell(cellId, stepObj) {
-  const td = document.getElementById(cellId);
-  if (stepObj && stepObj.file) {
-    // Asumiendo que sirves kyc_docs como estático en /kyc_docs/
-    td.innerHTML = `<a class="file-link" href="kyc_docs/${stepObj.file}" target="_blank">${stepObj.file}</a>`;
-  } else {
-    td.textContent = "Sin archivo";
-  }
-}
-
-// Aprobar paso
-async function approveStep(step) {
-  if (!currentUserId) return;
-
-  const res = await fetch(`${API}/admin/kyc/approve_step?user_id=${admin_id}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: currentUserId, step })
-  });
-
-  const data = await res.json();
-  if (data.error) {
-    alert(data.error);
-    return;
+    (data.requests || []).forEach((u) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${u.id}</td>
+        <td>${u.fullname || '-'}</td>
+        <td>${u.email || '-'}</td>
+        <td>${u.country || '-'}</td>
+        <td>${badge(u.overall_status)}</td>
+      `;
+      tr.onclick = () => loadDetail(u.id);
+      tbody.appendChild(tr);
+    });
   }
 
-  // Recargar detalle
-  selectUser({ id: currentUserId, fullname: "", email: "" });
-}
+  async function loadDetail(userId) {
+    selectedUserId = userId;
+    const res = await fetch(`${API}/admin/request/${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo cargar detalle");
+      return;
+    }
 
-// Rechazar paso
-async function rejectStep(step) {
-  if (!currentUserId) return;
+    const r = data.request;
+    document.getElementById("meta").textContent = `${r.user_id} | ${r.fullname || '-'} | ${r.email || '-'} | ${r.country || '-'} | ${r.overall_status}`;
 
-  const res = await fetch(`${API}/update_kyc_status`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ user_id: currentUserId, step, status: "rejected" })
-  });
-
-  const data = await res.json();
-  if (data.error) {
-    alert(data.error);
-    return;
+    const detail = document.getElementById("detail");
+    detail.innerHTML = "";
+    detail.innerHTML += stepRow("Documento de identidad", "id_document", r.id_document);
+    detail.innerHTML += stepRow("Comprobante de domicilio", "address_document", r.address_document);
+    detail.innerHTML += stepRow("Selfie", "selfie", r.selfie);
+    detail.innerHTML += `<div class="step"><strong>Verificacion telefono</strong><div class="muted">Estado: ${badge(r.phone_verification?.status)}</div></div>`;
   }
 
-  // Recargar detalle
-  selectUser({ id: currentUserId, fullname: "", email: "" });
-}
+  async function decide(decision) {
+    if (!selectedUserId) {
+      alert("Selecciona primero un usuario");
+      return;
+    }
 
-// Inicial
-loadUsers();
+    const reasonsRaw = document.getElementById("reasons").value || "";
+    const reasons = reasonsRaw.split("\n").map((x) => x.trim()).filter(Boolean);
+
+    const res = await fetch(`${API}/admin/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: selectedUserId,
+        decision,
+        reasons,
+        admin_id: adminId,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo aplicar decision");
+      return;
+    }
+
+    alert(`Solicitud ${decision === 'approved' ? 'aprobada' : 'rechazada'} correctamente`);
+    await loadDetail(selectedUserId);
+    await loadRequests();
+  }
+
+  loadRequests();
+  window.setInterval(loadRequests, 20000);
 </script>
-
 </body>
 </html>

@@ -9,6 +9,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 import p2p
+from blockchain_client import BlockchainError, get_connection_status
 from p2p_db import health_check
 
 app = Flask(__name__)
@@ -53,7 +54,21 @@ def _is_online(user_id: str) -> bool:
 
 @app.get("/health")
 def api_health():
-    return _ok({"success": True, "db": health_check()})
+    blockchain = {"ok": False, "error": "No verificado"}
+    try:
+        blockchain = get_connection_status()
+    except BlockchainError as exc:
+        blockchain = {"ok": False, "error": str(exc)}
+    return _ok({"success": True, "db": health_check(), "blockchain": blockchain})
+
+
+@app.get("/health/blockchain")
+def api_health_blockchain():
+    try:
+        status = get_connection_status()
+        return _ok({"success": True, "blockchain": status})
+    except BlockchainError as exc:
+        return _ok({"success": False, "blockchain": {"ok": False, "error": str(exc)}}, 503)
 
 
 @app.get("/offers")

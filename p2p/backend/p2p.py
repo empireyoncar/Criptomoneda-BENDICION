@@ -6,11 +6,11 @@ while the implementation is now split by domain.
 
 from __future__ import annotations
 
-from calificaciones import submit_rating
-from chat import list_chat_messages, send_chat_message
-from disputas import get_dispute_detail, list_disputes, open_dispute, resolve_dispute
-from ofertas import cancel_offer, create_offer, list_offers, take_offer
-from ordenes import (
+from rules.calificaciones import submit_rating
+from rules.chat import list_chat_messages, send_chat_message
+from rules.disputas import get_dispute_detail, list_disputes, open_dispute, resolve_dispute
+from rules.ofertas import cancel_offer, create_offer, list_offers, take_offer
+from rules.ordenes import (
     add_escrow_event,
     get_order_detail,
     is_order_participant,
@@ -20,8 +20,8 @@ from ordenes import (
     release_order,
     validate_order_status,
 )
-from reputacionperfil import get_reputation, update_profile
-from timeoutcancelacion import get_timeout_status, submit_timeout_vote
+from rules.reputacionperfil import get_reputation, update_profile
+from rules.timeoutcancelacion import get_timeout_status, submit_timeout_vote
 
 __all__ = [
     "add_escrow_event",

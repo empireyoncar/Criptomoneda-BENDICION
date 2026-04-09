@@ -159,6 +159,43 @@ services:
     restart: always
     networks:
       - bendicion_net
+
+  # ============================================================
+  # KYC (API)
+  # Puerto: 5015
+  # ============================================================
+  kyc_api:
+    build: ./kyc/backend
+    command: python kyc_server.py
+    ports:
+      - "5015:5015"
+    volumes:
+      - ./kyc/backend:/app
+      - ./usuarios/backend/database.json:/app/database.json
+    restart: always
+    networks:
+      - bendicion_net
+
+  # ============================================================
+  # KYC (WEB)
+  # Puerto: 5016
+  # ============================================================
+  kyc_web:
+    build: ./kyc/backend
+    command: python kyc_webserver.py
+    environment:
+      KYC_FRONTEND_DIR: /fronttend
+    ports:
+      - "5016:5016"
+    volumes:
+      - ./kyc/backend:/app
+      - ./kyc/fronttend:/fronttend
+    restart: always
+    networks:
+      - bendicion_net
+    depends_on:
+      - kyc_api
+
   # ============================================================
   # STAKING (API)
   # Puerto: 5006

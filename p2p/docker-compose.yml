@@ -36,6 +36,8 @@ services:
       P2P_DB_USER: p2p_user
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
+      BLOCKCHAIN_URL: http://host.docker.internal:5004
+      P2P_ESCROW_WALLET: P2P_ESCROW
     ports:
       - "5012:5012"
     volumes:
@@ -60,6 +62,8 @@ services:
       P2P_DB_USER: p2p_user
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
+      BLOCKCHAIN_URL: http://host.docker.internal:5004
+      P2P_ESCROW_WALLET: P2P_ESCROW
     ports:
       - "5013:5013"
     volumes:
@@ -87,6 +91,8 @@ services:
       P2P_DB_USER: p2p_user
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
+      BLOCKCHAIN_URL: http://host.docker.internal:5004
+      P2P_ESCROW_WALLET: P2P_ESCROW
     ports:
       - "5014:5014"
     volumes:

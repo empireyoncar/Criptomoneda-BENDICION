@@ -2,7 +2,7 @@
 
 import sys
 import json
-from ecdsa import SigningKey, VerifyingKey, SECP256k1
+from ecdsa import SigningKey, SECP256k1
 
 sys.path.insert(0, "/app/criptografia")
 from blockchain_crypto import hash_sha256

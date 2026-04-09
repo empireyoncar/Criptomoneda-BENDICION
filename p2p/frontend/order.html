@@ -275,8 +275,15 @@
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(payload)
     });
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("application/json")) {
+      const rawText = await res.text();
+      const preview = rawText.slice(0, 120).replace(/\s+/g, " ").trim();
+      throw new Error(`Respuesta no JSON del servidor (${res.status}). Posible ruta incorrecta. ${preview}`);
+    }
+
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Error");
+    if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
     return data;
   }
 
@@ -409,7 +416,7 @@
       }
       try {
         const comment = document.getElementById("ratingComment").value.trim();
-        await post(`/orders/${orderId}/rate`, {
+        await post(`/orders/${orderId}/ratings`, {
           from_user_id: userId,
           score: userScore,
           comment: comment

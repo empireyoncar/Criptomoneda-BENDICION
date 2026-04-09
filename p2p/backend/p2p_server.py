@@ -159,8 +159,8 @@ def api_orders_online():
 def api_orders_online_status():
     try:
         user_id = str(request.args.get("user_id", "")).strip()
-        orders = p2p.list_user_orders(user_id=user_id, role="seller", limit=100)
-        active = [o for o in orders if o.get("status") in {"pending_payment", "paid", "disputed"}]
+        orders = p2p.list_user_orders(user_id=user_id, role="participant", limit=100)
+        active = [o for o in orders if o.get("status") in {"pending_payment", "paid", "disputed", "released"}]
         color = "gray"
         if any(o.get("status") == "paid" for o in active):
             color = "white"

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Ordenes Online - Vendedor P2P</title>
+  <title>Ordenes Online P2P</title>
   <style>
     body{font-family:Arial,sans-serif;background:#0b0e11;color:#eaecef;margin:0;padding:20px;}
     .wrap{max-width:1100px;margin:0 auto;}
@@ -33,8 +33,8 @@
   <div class="card">
     <div class="topbar">
       <div>
-        <h1>Ordenes online del vendedor</h1>
-        <div class="muted">Da seguimiento en tiempo real, chat con comprador y estado de pago.</div>
+        <h1>Ordenes online</h1>
+        <div class="muted">Seguimiento en tiempo real para comprador y vendedor.</div>
       </div>
       <a class="marketBtn" href="/CriptoBendicion/p2p/">Ir a mercado P2P</a>
     </div>
@@ -46,7 +46,7 @@
       <thead>
         <tr>
           <th>Orden</th>
-          <th>Comprador</th>
+          <th>Tu rol / Contraparte</th>
           <th>Estado</th>
           <th>Tiempo restante</th>
           <th>Datos de pago</th>
@@ -102,7 +102,7 @@
   }
 
   async function loadOrders() {
-    const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=seller&limit=100`);
+    const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=participant&limit=100`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "No se pudo cargar ordenes");
 
@@ -116,11 +116,15 @@
       await maybePromptTimeout(order, timeout);
       ordersCache.set(order.id, {order, timeout});
 
+      const isSeller = order.seller_id === userId;
+      const myRole = isSeller ? "Vendedor" : "Comprador";
+      const counterparty = isSeller ? order.buyer_id : order.seller_id;
+      const canRelease = isSeller && order.status === "paid";
       const disputeEnabled = order.status !== "pending_payment" || (timeout && timeout.dispute_unlocked);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${escapeHtml(order.id)}</td>
-        <td>${escapeHtml(order.buyer_id)}</td>
+        <td>${escapeHtml(myRole)} / ${escapeHtml(counterparty)}</td>
         <td><span class="status ${escapeHtml(order.status)}">${escapeHtml(order.status)}</span></td>
         <td class="timer" data-timer="${escapeHtml(order.id)}">${formatTimer(order.expires_at, order.status)}</td>
         <td>
@@ -128,8 +132,9 @@
           <span class="muted">${escapeHtml(order.payment_provider || "-")} | ${escapeHtml(order.account_reference || "-")}</span>
         </td>
         <td>
-          <button class="btn btn-chat" data-chat="${escapeHtml(order.id)}">Chat con comprador</button><br>
-          <button class="btn btn-release" data-release="${escapeHtml(order.id)}" ${order.status === "paid" ? "" : "disabled"}>Liberar criptos</button><br>
+          <button class="btn btn-chat" data-chat="${escapeHtml(order.id)}">Abrir chat</button><br>
+          <button class="btn btn-chat" data-order="${escapeHtml(order.id)}">Ver detalle</button><br>
+          <button class="btn btn-release" data-release="${escapeHtml(order.id)}" ${canRelease ? "" : "disabled"}>Liberar criptos</button><br>
           <button class="btn btn-dispute ${disputeEnabled ? "active" : ""}" data-dispute="${escapeHtml(order.id)}" ${disputeEnabled ? "" : "disabled"}>Abrir disputa</button>
         </td>
       `;
@@ -138,7 +143,7 @@
 
     if (!orders.length) {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td colspan="6" class="muted">No tienes ordenes online activas como vendedor.</td>`;
+      tr.innerHTML = `<td colspan="6" class="muted">No tienes ordenes online activas.</td>`;
       body.appendChild(tr);
     }
 
@@ -146,6 +151,13 @@
       btn.onclick = () => {
         const orderId = btn.getAttribute("data-chat");
         window.location.href = `/CriptoBendicion/p2p/chat/${orderId}`;
+      };
+    });
+
+    body.querySelectorAll("[data-order]").forEach((btn) => {
+      btn.onclick = () => {
+        const orderId = btn.getAttribute("data-order");
+        window.location.href = `/CriptoBendicion/p2p/order/${orderId}`;
       };
     });
 

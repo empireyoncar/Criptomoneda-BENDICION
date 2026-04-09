@@ -381,39 +381,5 @@ def api_cancel_offer(offer_id: str):
         return _error(f"Error interno al cancelar oferta: {exc}", 500)
 
 
-@app.post("/demo/create-example-order")
-def api_demo_create_example_order():
-    """Create a demo offer and immediately take it to produce a valid order."""
-    try:
-        payload = _json_body()
-        seller_id = payload.get("seller_id", "seller_demo")
-        buyer_id = payload.get("buyer_id", "buyer_demo")
-
-        offer = p2p.create_offer(
-            {
-                "user_id": seller_id,
-                "country": payload.get("country", "Espana"),
-                "side": "sell",
-                "asset": "BEN",
-                "fiat_currency": payload.get("fiat_currency", "EUR"),
-                "payment_method": payload.get("payment_method", "Bizum"),
-                "payment_provider": payload.get("payment_provider", "BBVA"),
-                "account_reference": payload.get("account_reference", "600123456"),
-                "account_holder": payload.get("account_holder", "Titular Demo"),
-                "price": float(payload.get("price", 1.0)),
-                "amount_total": float(payload.get("amount_total", 100.0)),
-                "min_limit": float(payload.get("min_limit", 10.0)),
-                "max_limit": float(payload.get("max_limit", 300.0)),
-                "completion_time_minutes": int(payload.get("completion_time_minutes", 30)),
-                "terms": payload.get("terms", "Demo de orden P2P BEN"),
-            }
-        )
-
-        order = p2p.take_offer(offer["id"], buyer_id, float(payload.get("take_amount", 25.0)))
-        return _ok({"success": True, "offer": offer, "order": order}, 201)
-    except Exception as exc:
-        return _error(f"No se pudo crear la orden de ejemplo: {exc}", 500)
-
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5012, debug=True)

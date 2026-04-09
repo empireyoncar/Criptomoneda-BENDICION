@@ -69,7 +69,6 @@
       </div>
       <div style="align-self:end;">
         <button id="btnReload">Actualizar</button>
-        <button id="btnCreateDemoOrder">Crear orden de ejemplo</button>
       </div>
     </div>
 
@@ -266,40 +265,6 @@
     window.location.href = "/CriptoBendicion/p2p/order/" + data.order.id;
   }
 
-  async function createDemoOrder() {
-    const payload = {
-      seller_id: "vendedor_demo",
-      buyer_id: userId,
-      country: "Venezuela",
-      payment_method: "Transferencia",
-      payment_provider: "Banesco",
-      account_reference: "04141234567",
-      account_holder: "Juan Perez",
-      fiat_currency: "USD",
-      price: 1.25,
-      amount_total: 120,
-      min_limit: 1,
-      max_limit: 2000,
-      completion_time_minutes: 30,
-      take_amount: 20
-    };
-
-    const res = await fetch(API + "/demo/create-example-order", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      alert(data.error || "No se pudo crear la orden de ejemplo");
-      return;
-    }
-
-    alert("Orden de ejemplo creada: " + data.order.id);
-    window.location.href = "/CriptoBendicion/p2p/order/" + data.order.id;
-  }
-
   async function loadMyOffers() {
     const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=seller&limit=50`);
     const data = await res.json();
@@ -347,7 +312,6 @@
 
   document.getElementById("btnReload").onclick = loadOffers;
   document.getElementById("btnCreate").onclick = createOffer;
-  document.getElementById("btnCreateDemoOrder").onclick = createDemoOrder;
   refreshOnlineOrdersButton();
   loadMyOffers();
   window.setInterval(loadOffers, 8000);

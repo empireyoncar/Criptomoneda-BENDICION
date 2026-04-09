@@ -1,7 +1,12 @@
+import sys
 import time
 import json
-from hashlib import sha256
+sys.path.insert(0, "/app/criptografia")
+from blockchain_crypto import hash_bloque, hash_transaccion
 from blockchain_blocks import load_state, save_state, rotate_if_needed
+
+# Unidades mínimas: 1 moneda = 100 millones de unidades
+UNIDADES_MINIMAS = 100_000_000
 
 
 class Block:
@@ -13,13 +18,13 @@ class Block:
         self.hash = self.calculate_hash()
 
     def calculate_hash(self):
-        block_string = json.dumps({
+        block_data = {
             "index": self.index,
             "timestamp": self.timestamp,
             "transactions": self.transactions,
             "previous_hash": self.previous_hash
-        }, sort_keys=True).encode()
-        return sha256(block_string).hexdigest()
+        }
+        return hash_bloque(block_data)
 
 
 class Blockchain:
@@ -38,8 +43,9 @@ class Blockchain:
             self.chain.append(block)
 
         self.pending_transactions = pending
-        self.wallets = wallets
-        self.locked_balances = locked
+        self.wallets = wallets  # Now stores integers (satichis)
+        self.locked_balances = locked  # Now stores integers
+        self.account_nonces = {}  # Track nonce per address
 
         if len(self.chain) == 0:
             self.create_genesis_block()
@@ -66,30 +72,54 @@ class Blockchain:
 
     def create_wallet(self, address):
         if address not in self.wallets:
-            self.wallets[address] = 0.0
+            self.wallets[address] = 0
         if address not in self.locked_balances:
-            self.locked_balances[address] = 0.0
+            self.locked_balances[address] = 0
+        if address not in self.account_nonces:
+            self.account_nonces[address] = 0
 
     def get_balance(self, address):
-        return float(self.wallets.get(address, 0.0))
+        """Get balance in satichis (integers)."""
+        return int(self.wallets.get(address, 0))
+
+    def get_nonce(self, address):
+        """Get next nonce for account (0-based)."""
+        return int(self.account_nonces.get(address, 0))
 
     def _get_locked_balance(self, address):
-        return float(self.locked_balances.get(address, 0.0))
+        """Get locked balance in satichis (integers)."""
+        return int(self.locked_balances.get(address, 0))
 
     def _lock_amount(self, address, amount):
+        """Lock amount in satichis (integers)."""
         if address not in self.locked_balances:
-            self.locked_balances[address] = 0.0
-        self.locked_balances[address] += float(amount)
+            self.locked_balances[address] = 0
+        self.locked_balances[address] += int(amount)
 
     def _unlock_amount(self, address, amount):
+        """Unlock amount in satichis (integers)."""
         if address not in self.locked_balances:
-            self.locked_balances[address] = 0.0
-        self.locked_balances[address] -= float(amount)
+            self.locked_balances[address] = 0
+        self.locked_balances[address] -= int(amount)
         if self.locked_balances[address] < 0:
-            self.locked_balances[address] = 0.0
+            self.locked_balances[address] = 0
 
-    def add_transaction(self, sender, receiver, amount, tx_id=None, metadata=None):
-        amount = float(amount)
+    def add_transaction(self, sender, receiver, amount, tx_id=None, metadata=None, nonce=None):
+        """
+        Add transaction to pending pool.
+        
+        Args:
+            sender: address
+            receiver: address  
+            amount: satichis (integers)
+            tx_id: optional transaction ID
+            metadata: optional metadata
+            nonce: optional nonce (if not SYSTEM)
+            
+        Returns:
+            True if added, False if rejected
+        """
+        amount = int(amount)
 
         self.create_wallet(sender)
         self.create_wallet(receiver)
@@ -97,8 +127,14 @@ class Blockchain:
         if amount <= 0:
             return False
 
+        # Validate nonce for non-system transactions
+        if sender != "SYSTEM" and nonce is not None:
+            current_nonce = self.get_nonce(sender)
+            if nonce != current_nonce:
+                return False  # Nonce mismatch = reject
+
         if sender != "SYSTEM":
-            confirmed = self.wallets[sender]
+            confirmed = self.get_balance(sender)
             locked = self._get_locked_balance(sender)
             available = confirmed - locked
             if available < amount:
@@ -109,6 +145,8 @@ class Blockchain:
             tx["tx_id"] = str(tx_id)
         if metadata is not None:
             tx["metadata"] = metadata
+        if nonce is not None and sender != "SYSTEM":
+            tx["nonce"] = nonce
 
         if sender != "SYSTEM":
             self._lock_amount(sender, amount)
@@ -116,9 +154,15 @@ class Blockchain:
         self.pending_transactions.append(tx)
 
         save_state(self.export_chain(), self.pending_transactions, self.wallets, self.locked_balances)
+        
+        # Auto-commit if 1000 TX reached
+        if len(self.pending_transactions) >= 1000:
+            self.commit_pending_transactions()
+        
         return True
 
     def commit_pending_transactions(self):
+        """Seal pending transactions into a new block."""
         if not self.pending_transactions:
             return None
 
@@ -133,11 +177,13 @@ class Blockchain:
         for tx in self.pending_transactions:
             sender = tx["from"]
             receiver = tx["to"]
-            amount = float(tx["amount"])
+            amount = int(tx["amount"])
 
             if sender != "SYSTEM":
                 self._unlock_amount(sender, amount)
                 self.wallets[sender] -= amount
+                # Increment nonce for sender after successful TX
+                self.account_nonces[sender] = self.get_nonce(sender) + 1
 
             self.wallets[receiver] += amount
 

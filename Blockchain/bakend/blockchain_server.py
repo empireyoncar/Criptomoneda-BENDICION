@@ -79,17 +79,28 @@ def get_tx(hash_value):
 
 
 # ============================================================
-#   BALANCE + SALDO BLOQUEADO
+#   BALANCE + SALDO BLOQUEADO + NONCE
 # ============================================================
 @app.route("/wallet/<address>", methods=["GET"])
 def wallet_info(address):
-    balance = blockchain.get_balance(address)
-    locked = blockchain._get_locked_balance(address)
+    balance = blockchain.get_balance(address)  # satichis
+    locked = blockchain._get_locked_balance(address)  # satichis
+    nonce = blockchain.get_nonce(address)
     return jsonify({
         "address": address,
-        "balance": balance,
-        "locked": locked
+        "balance": balance,  # in satichis
+        "locked": locked,    # in satichis
+        "nonce": nonce
     })
+
+
+# ============================================================
+#   OBTENER NONCE ACTUAL DE UNA CUENTA
+# ============================================================
+@app.route("/wallet/<address>/nonce", methods=["GET"])
+def get_nonce(address):
+    nonce = blockchain.get_nonce(address)
+    return jsonify({"address": address, "nonce": nonce})
 
 
 # ============================================================
@@ -106,7 +117,7 @@ def wallet_history(address):
 
 
 # ============================================================
-#   TRANSACCIÓN SIN FIRMA (MODO SIMPLE)
+#   TRANSACCIÓN CON NONCE VALIDATION
 # ============================================================
 @app.route("/send_tx", methods=["POST"])
 def send_tx():
@@ -121,13 +132,20 @@ def send_tx():
     amount = tx.get("amount")
     tx_id = tx.get("tx_id")
     metadata = tx.get("metadata")
+    nonce = tx.get("nonce")
 
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
 
-    ok = blockchain.add_transaction(sender, receiver, amount, tx_id=tx_id, metadata=metadata)
+    # Amount should be in satichis (integers)
+    try:
+        amount = int(amount)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Amount must be an integer (satichis)"}), 400
+
+    ok = blockchain.add_transaction(sender, receiver, amount, tx_id=tx_id, metadata=metadata, nonce=nonce)
     if not ok:
-        return jsonify({"error": "Saldo insuficiente"}), 400
+        return jsonify({"error": "Saldo insuficiente o nonce inválido"}), 400
 
     return jsonify({"message": "Transacción añadida", "tx_id": tx_id})
 
@@ -156,9 +174,9 @@ def mint():
         return jsonify({"error": "Faltan parámetros"}), 400
 
     try:
-        amount = float(amount)
+        amount = int(amount)
     except:
-        return jsonify({"error": "Cantidad inválida"}), 400
+        return jsonify({"error": "Cantidad inválida (debe ser entero en satichis)"}), 400
 
     # Transacción especial del sistema
     ok = blockchain.add_transaction("SYSTEM", address, amount)

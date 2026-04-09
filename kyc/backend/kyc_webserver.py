@@ -1,6 +1,6 @@
 """Web server for KYC frontend pages."""
 
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_cors import CORS
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -10,6 +10,13 @@ CORS(app)
 app.jinja_loader = ChoiceLoader([
     FileSystemLoader("/app/kyc/fronttend"),
 ])
+
+
+def _get_client_ip():
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.remote_addr or ""
 
 @app.route("/kyc")
 @app.route("/kyc/")
@@ -40,6 +47,9 @@ def kyc_telefono():
 
 @app.route("/kyc/admin")
 def admin_kyc_page():
+    client_ip = _get_client_ip()
+    if not client_ip.startswith("192.168."):
+        return "Acceso permitido solo desde la red interna", 403
     return render_template("admin_kyc.html")
 
 

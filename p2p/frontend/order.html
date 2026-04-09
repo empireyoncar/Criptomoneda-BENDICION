@@ -73,45 +73,6 @@
     </div>
     <div class="helper" id="timeoutHint">La disputa estara bloqueada hasta que termine el cronometro.</div>
 
-    <div id="successMessage" style="display:none;background:#0f5f3d;border:1px solid #0f9d58;border-radius:8px;padding:12px;margin-top:12px;color:#a7f3d0;font-weight:bold;text-align:center;">
-      ✓ Ha finalizado con éxito el trading. Ambos usuarios deben calificar.
-    </div>
-
-    <div id="ratingSection" style="display:none;background:#11151b;border:1px solid #2b3139;border-radius:8px;padding:16px;margin-top:12px;">
-      <h3 style="margin-top:0;">Califica tu experiencia</h3>
-      
-      <div style="margin:12px 0;">
-        <label style="display:block;margin-bottom:8px;font-weight:bold;font-size:13px;color:#9aa4af;">Puntuación (1-5 estrellas):</label>
-        <div id="starsContainer" style="display:flex;gap:8px;font-size:24px;cursor:pointer;">
-          <span id="star1" class="rStar" data-value="1" style="cursor:pointer;opacity:0.4;">★</span>
-          <span id="star2" class="rStar" data-value="2" style="cursor:pointer;opacity:0.4;">★</span>
-          <span id="star3" class="rStar" data-value="3" style="cursor:pointer;opacity:0.4;">★</span>
-          <span id="star4" class="rStar" data-value="4" style="cursor:pointer;opacity:0.4;">★</span>
-          <span id="star5" class="rStar" data-value="5" style="cursor:pointer;opacity:0.4;">★</span>
-        </div>
-        <div id="starValue" style="margin-top:8px;font-size:12px;color:#9aa4af;">Selecciona puntuación</div>
-      </div>
-
-      <div style="margin:12px 0;">
-        <label style="display:block;margin-bottom:8px;font-weight:bold;font-size:13px;color:#9aa4af;">Comentario predefinido:</label>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">
-          <button class="rPredefinedBtn" data-text="Excelente" style="padding:8px 12px;background:#2b3139;color:#eaecef;border:1px solid #2b3139;border-radius:6px;cursor:pointer;font-size:12px;">Excelente</button>
-          <button class="rPredefinedBtn" data-text="Servicial" style="padding:8px 12px;background:#2b3139;color:#eaecef;border:1px solid #2b3139;border-radius:6px;cursor:pointer;font-size:12px;">Servicial</button>
-          <button class="rPredefinedBtn" data-text="Rápido" style="padding:8px 12px;background:#2b3139;color:#eaecef;border:1px solid #2b3139;border-radius:6px;cursor:pointer;font-size:12px;">Rápido</button>
-          <button class="rPredefinedBtn" data-text="Transparente" style="padding:8px 12px;background:#2b3139;color:#eaecef;border:1px solid #2b3139;border-radius:6px;cursor:pointer;font-size:12px;">Transparente</button>
-          <button class="rPredefinedBtn" data-text="Recomendable" style="padding:8px 12px;background:#2b3139;color:#eaecef;border:1px solid #2b3139;border-radius:6px;cursor:pointer;font-size:12px;">Recomendable</button>
-        </div>
-      </div>
-
-      <div style="margin:12px 0;">
-        <label style="display:block;margin-bottom:8px;font-weight:bold;font-size:13px;color:#9aa4af;">Comentario personalizado:</label>
-        <textarea id="ratingComment" placeholder="(Opcional) Comentario adicional" style="width:100%;min-height:80px;padding:10px;border-radius:6px;border:1px solid #2b3139;background:#0f1115;color:#eaecef;font-family:Arial,sans-serif;box-sizing:border-box;"></textarea>
-      </div>
-
-      <button id="btnSubmitRating" class="btn-active" style="width:100%;margin-top:12px;padding:12px;">Enviar Calificación</button>
-      <div id="ratingStatus" style="margin-top:8px;font-size:12px;color:#9aa4af;text-align:center;"></div>
-    </div>
-
     <div class="legend">
       <p><strong>Leyenda del boton Liberar Criptos</strong></p>
       <span class="legendItem"><span class="dot dot-red"></span>Rojo: esperando que el comprador marque He Pagado</span>
@@ -308,7 +269,6 @@
     document.getElementById("amount").textContent = order.amount || "-";
     document.getElementById("totalFiat").textContent = order.total_fiat || "-";
     updateActionButtons();
-    setupRating();
     renderCountdown();
     await refreshPresence();
     await refreshTimeoutState();
@@ -328,7 +288,6 @@
             if (data.order.status !== order.status) {
               order = data.order;
               updateActionButtons();
-              setupRating();
               document.getElementById("orderStatus").textContent = order.status;
             }
           }
@@ -367,75 +326,6 @@
   document.getElementById("btnChat").onclick = () => {
     window.location.href = `/CriptoBendicion/p2p/chat/${orderId}`;
   };
-
-  let userScore = 0;
-  let selectedPredefined = "";
-
-  function updateStarsDisplay() {
-    const stars = document.querySelectorAll(".rStar");
-    stars.forEach((star) => {
-      const value = parseInt(star.dataset.value);
-      star.style.opacity = value <= userScore ? "1" : "0.4";
-      star.style.color = value <= userScore ? "#f0b90b" : "#eaecef";
-    });
-    document.getElementById("starValue").textContent = userScore > 0 ? `${userScore} ${userScore === 1 ? "estrella" : "estrellas"} seleccionadas` : "Selecciona puntuación";
-  }
-
-  function setupRating() {
-    const isBuyer = order && order.buyer_id === userId;
-    const isSeller = order && order.seller_id === userId;
-    const ratingSection = document.getElementById("ratingSection");
-    const successMessage = document.getElementById("successMessage");
-
-    if (order && (order.status === "released" || order.status === "completed")) {
-      successMessage.style.display = "block";
-      if ((isBuyer || isSeller) && order.status === "completed") {
-        ratingSection.style.display = "block";
-      } else if (order.status === "released") {
-        ratingSection.style.display = "block";
-      }
-    } else {
-      successMessage.style.display = "none";
-      ratingSection.style.display = "none";
-    }
-
-    document.querySelectorAll(".rStar").forEach((star) => {
-      star.onclick = () => {
-        userScore = parseInt(star.dataset.value);
-        updateStarsDisplay();
-      };
-    });
-
-    document.querySelectorAll(".rPredefinedBtn").forEach((btn) => {
-      btn.onclick = () => {
-        selectedPredefined = btn.dataset.text;
-        const textarea = document.getElementById("ratingComment");
-        textarea.value = selectedPredefined;
-      };
-    });
-
-    document.getElementById("btnSubmitRating").onclick = async () => {
-      if (userScore === 0) {
-        alert("Por favor selecciona una puntuación.");
-        return;
-      }
-      try {
-        const comment = document.getElementById("ratingComment").value.trim();
-        await post(`/orders/${orderId}/ratings`, {
-          from_user_id: userId,
-          score: userScore,
-          comment: comment
-        });
-        alert("Calificación enviada correctamente.");
-        userScore = 0;
-        updateStarsDisplay();
-        document.getElementById("ratingComment").value = "";
-        await loadOrder();
-      } catch (e) {
-        alert("Error al enviar calificación: " + e.message);
-      }
-    };
-  }
 
   let orderRefreshInterval = null;
 

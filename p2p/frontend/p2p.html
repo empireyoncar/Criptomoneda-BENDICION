@@ -33,6 +33,7 @@
     .amountSmall { font-size:12px; color:#b3bcc7; }
     .limitBox { font-size:12px; color:#b3bcc7; margin-top:4px; }
     .ratingBadge { display:inline-block; margin-top:6px; color:#f4d35e; font-size:12px; }
+    .termsSmall { display:block; color:#9aa4af; font-size:11px; margin-top:6px; line-height:1.35; }
   </style>
 </head>
 <body>
@@ -203,7 +204,10 @@
           <div class="amountSmall">${formatAmount(o.amount_available)} BEN</div>
           <div class="limitBox">${formatLimit(o.min_limit, o.max_limit, o.fiat_currency)}</div>
         </td>
-        <td>${o.payment_method}</td>
+        <td>
+          ${o.payment_method}
+          <span class="termsSmall">Terminos: ${o.terms ? o.terms : "Sin terminos especificos"}</span>
+        </td>
         <td><button class="${action.className}" data-id="${o.id}">${action.label}</button></td>
       `;
       tr.querySelector("button").onclick = () => takeOffer(o.id);

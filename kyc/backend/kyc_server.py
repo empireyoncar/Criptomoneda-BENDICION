@@ -6,11 +6,9 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 
 import kyc
-import os
 
 app = Flask(__name__)
 CORS(app)
-ALLOWED_ADMIN_IP = os.getenv("KYC_ADMIN_ALLOWED_IP", "192.168.1.178").strip()
 
 
 def _ok(payload: dict[str, Any], code: int = 200):
@@ -26,20 +24,6 @@ def _json_body() -> dict[str, Any]:
     if not isinstance(body, dict):
         raise ValueError("Payload JSON invalido")
     return body
-
-
-def _client_ip() -> str:
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return (request.remote_addr or "").strip()
-
-
-def _require_internal_admin_ip() -> None:
-    ip = _client_ip()
-    normalized = ip.replace("::ffff:", "")
-    if normalized != ALLOWED_ADMIN_IP:
-        raise PermissionError("Acceso admin permitido solo desde IP interna autorizada")
 
 
 @app.get("/health")
@@ -118,11 +102,8 @@ def get_doc(user_id: str, filename: str):
 @app.get("/admin/requests")
 def admin_list_requests():
     try:
-        _require_internal_admin_ip()
         rows = kyc.list_kyc_requests()
         return _ok({"success": True, "requests": rows})
-    except PermissionError as exc:
-        return _error(str(exc), 403)
     except Exception as exc:
         return _error(f"Error interno al listar solicitudes: {exc}", 500)
 
@@ -130,11 +111,8 @@ def admin_list_requests():
 @app.get("/admin/request/<user_id>")
 def admin_get_request(user_id: str):
     try:
-        _require_internal_admin_ip()
         detail = kyc.get_user_kyc_detail(user_id)
         return _ok({"success": True, "request": detail})
-    except PermissionError as exc:
-        return _error(str(exc), 403)
     except ValueError as exc:
         return _error(str(exc), 404)
     except Exception as exc:
@@ -144,7 +122,6 @@ def admin_get_request(user_id: str):
 @app.post("/admin/decision")
 def admin_decision():
     try:
-        _require_internal_admin_ip()
         payload = _json_body()
         user_id = str(payload.get("user_id", "")).strip()
         decision = str(payload.get("decision", "")).strip().lower()
@@ -166,8 +143,6 @@ def admin_decision():
             admin_id=admin_id,
         )
         return _ok({"success": True, "kyc": reviewed})
-    except PermissionError as exc:
-        return _error(str(exc), 403)
     except ValueError as exc:
         return _error(str(exc), 400)
     except Exception as exc:

@@ -183,11 +183,13 @@ services:
   kyc_web:
     build: ./kyc/backend
     command: python kyc_webserver.py
+    environment:
+      KYC_FRONTEND_DIR: /fronttend
     ports:
       - "5016:5016"
     volumes:
       - ./kyc/backend:/app
-      - ./kyc/fronttend:/app/kyc/fronttend
+      - ./kyc/fronttend:/fronttend
     restart: always
     networks:
       - bendicion_net

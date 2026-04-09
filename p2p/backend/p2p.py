@@ -288,6 +288,10 @@ def submit_rating(order_id: str, from_user_id: str, score: int, comment: str = "
     if order["status"] not in {"released", "refunded", "completed"}:
         raise ValueError("Solo se puede calificar una orden finalizada")
 
+    existing = repo.get_order_rating_by_user(order_id, from_user_id)
+    if existing:
+        raise ValueError("Ya calificaste esta orden")
+
     if from_user_id == order["buyer_id"]:
         to_user_id = order["seller_id"]
     elif from_user_id == order["seller_id"]:
@@ -295,7 +299,14 @@ def submit_rating(order_id: str, from_user_id: str, score: int, comment: str = "
     else:
         raise PermissionError("No participaste en esta orden")
 
-    return repo.add_rating(order_id, from_user_id, to_user_id, score_int, comment)
+    rating = repo.add_rating(order_id, from_user_id, to_user_id, score_int, comment)
+
+    # Keep order closed after rating while still allowing the other participant
+    # to submit their own rating later (status 'completed' is accepted above).
+    if order["status"] != "completed":
+        repo.update_order_status(order_id, "completed")
+
+    return rating
 
 
 def get_reputation(user_id: str) -> dict[str, Any]:

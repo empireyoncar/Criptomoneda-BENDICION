@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calificacion P2P BEN</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0b0e11; color: #eaecef; margin: 0; padding: 20px; }
+    .card { background: #181a20; border-radius: 10px; padding: 16px; max-width: 760px; margin: 0 auto; }
+    .muted { color: #9aa4af; }
+    .stars { display: flex; gap: 8px; font-size: 28px; cursor: pointer; margin: 10px 0; }
+    .star { opacity: 0.35; color: #eaecef; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .chip { padding: 8px 12px; background: #2b3139; color: #eaecef; border: 1px solid #2b3139; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    textarea { width: 100%; min-height: 110px; box-sizing: border-box; padding: 10px; border-radius: 6px; border: 1px solid #2b3139; background: #0f1115; color: #eaecef; }
+    button { margin-top: 12px; width: 100%; padding: 12px; border: none; border-radius: 6px; background: #f0b90b; color: #000; font-weight: bold; cursor: pointer; }
+    button[disabled] { background: #2b3139; color: #9aa4af; cursor: not-allowed; }
+    .ok { background: #0f5f3d; border: 1px solid #0f9d58; border-radius: 8px; padding: 10px; color: #a7f3d0; margin-top: 10px; display: none; }
+    .row { display: flex; gap: 10px; align-items: center; margin-top: 10px; }
+    .back { display: inline-block; text-decoration: none; color: #eaecef; background: #2b3139; border-radius: 6px; padding: 10px 12px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Califica tu experiencia</h1>
+    <p class="muted">Orden: <span id="orderId">{{ order_id }}</span></p>
+    <p class="muted">Usuario actual: <span id="userId">-</span></p>
+    <p class="muted">Calificando a: <strong id="targetUser">-</strong></p>
+
+    <label>Puntuacion (1-5 estrellas):</label>
+    <div class="stars" id="stars">
+      <span class="star" data-value="1">★</span>
+      <span class="star" data-value="2">★</span>
+      <span class="star" data-value="3">★</span>
+      <span class="star" data-value="4">★</span>
+      <span class="star" data-value="5">★</span>
+    </div>
+    <div class="muted" id="starValue">Selecciona puntuacion</div>
+
+    <label style="display:block;margin-top:12px;">Comentario preescrito (agrega sin reemplazar):</label>
+    <div class="chips" id="chips"></div>
+
+    <label style="display:block;margin-top:12px;">Comentario personalizado:</label>
+    <textarea id="comment" placeholder="Escribe tu comentario o usa los botones de ayuda."></textarea>
+
+    <button id="btnSubmit">Enviar calificacion y cerrar orden</button>
+    <div id="okMsg" class="ok">Calificacion enviada. Cerrando orden...</div>
+
+    <div class="row">
+      <a class="back" href="/CriptoBendicion/p2p/">Volver al mercado</a>
+    </div>
+  </div>
+
+<script>
+  const API = "/CriptoBendicion/p2p_api";
+  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  const orderId = document.getElementById("orderId").textContent.trim();
+  document.getElementById("userId").textContent = userId;
+
+  const PRESET_WORDS = [
+    "excelente",
+    "atento",
+    "rapido",
+    "amable",
+    "al menos cumple",
+    "lento",
+    "pesimo",
+    "no es muy atento"
+  ];
+
+  let userScore = 0;
+  let order = null;
+
+  function setStars() {
+    document.querySelectorAll(".star").forEach((star) => {
+      const value = parseInt(star.dataset.value, 10);
+      star.style.opacity = value <= userScore ? "1" : "0.35";
+      star.style.color = value <= userScore ? "#f0b90b" : "#eaecef";
+    });
+    document.getElementById("starValue").textContent = userScore > 0
+      ? `${userScore} ${userScore === 1 ? "estrella" : "estrellas"} seleccionadas`
+      : "Selecciona puntuacion";
+  }
+
+  function addPresetWord(word) {
+    const textarea = document.getElementById("comment");
+    const current = textarea.value.trim();
+    if (!current) {
+      textarea.value = word;
+      return;
+    }
+
+    const exists = current.toLowerCase().split(",").map((t) => t.trim()).includes(word.toLowerCase());
+    if (!exists) {
+      textarea.value = `${current}, ${word}`;
+    }
+  }
+
+  function mountPresetButtons() {
+    const chips = document.getElementById("chips");
+    chips.innerHTML = "";
+    PRESET_WORDS.forEach((word) => {
+      const btn = document.createElement("button");
+      btn.className = "chip";
+      btn.type = "button";
+      btn.textContent = word;
+      btn.onclick = () => addPresetWord(word);
+      chips.appendChild(btn);
+    });
+  }
+
+  async function post(path, payload) {
+    const res = await fetch(API + path, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(payload)
+    });
+
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.includes("application/json")) {
+      const rawText = await res.text();
+      const preview = rawText.slice(0, 120).replace(/\s+/g, " ").trim();
+      throw new Error(`Respuesta no JSON del servidor (${res.status}). ${preview}`);
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Error HTTP ${res.status}`);
+    return data;
+  }
+
+  async function loadOrder() {
+    const res = await fetch(`${API}/orders/${orderId}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar la orden");
+
+    order = data.order;
+    if (!["released", "refunded", "completed"].includes(order.status)) {
+      window.location.href = `/CriptoBendicion/p2p/order/${orderId}`;
+      return;
+    }
+
+    const targetUser = order.buyer_id === userId ? order.seller_id : order.seller_id === userId ? order.buyer_id : "-";
+    document.getElementById("targetUser").textContent = targetUser;
+  }
+
+  document.querySelectorAll(".star").forEach((star) => {
+    star.onclick = () => {
+      userScore = parseInt(star.dataset.value, 10);
+      setStars();
+    };
+  });
+
+  document.getElementById("btnSubmit").onclick = async () => {
+    if (userScore < 1 || userScore > 5) {
+      alert("Selecciona una puntuacion de 1 a 5 estrellas.");
+      return;
+    }
+
+    try {
+      await post(`/orders/${orderId}/ratings`, {
+        from_user_id: userId,
+        score: userScore,
+        comment: document.getElementById("comment").value.trim()
+      });
+
+      document.getElementById("okMsg").style.display = "block";
+      document.getElementById("btnSubmit").disabled = true;
+      window.setTimeout(() => {
+        window.location.href = "/CriptoBendicion/p2p/";
+      }, 900);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  mountPresetButtons();
+  setStars();
+  loadOrder().catch((e) => alert(e.message));
+</script>
+</body>
+</html>

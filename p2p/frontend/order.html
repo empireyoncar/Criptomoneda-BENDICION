@@ -293,6 +293,11 @@
     if (!res.ok) throw new Error(data.error || "No se pudo cargar la orden");
 
     order = data.order;
+    const isParticipant = order && (order.buyer_id === userId || order.seller_id === userId);
+    if (isParticipant && (order.status === "released" || order.status === "refunded")) {
+      window.location.href = `/CriptoBendicion/p2p/calificacion/${orderId}`;
+      return;
+    }
     document.getElementById("orderStatus").textContent = order.status;
     document.getElementById("country").textContent = order.country || "-";
     document.getElementById("paymentMethod").textContent = order.payment_method || "-";
@@ -345,7 +350,7 @@
     try {
       await post(`/orders/${orderId}/release`, {seller_id: userId});
       alert("Criptos liberados correctamente.");
-      await loadOrder();
+      window.location.href = `/CriptoBendicion/p2p/calificacion/${orderId}`;
     } catch (e) { alert(e.message); }
   };
 

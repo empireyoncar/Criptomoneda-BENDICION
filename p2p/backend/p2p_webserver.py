@@ -28,6 +28,11 @@ def p2p_chat(order_id: str):
     return render_template("chat.html", order_id=order_id)
 
 
+@app.route("/p2p/calificacion/<order_id>")
+def p2p_calificacion(order_id: str):
+    return render_template("calificacion.html", order_id=order_id)
+
+
 @app.route("/p2p/reputation")
 def p2p_reputation():
     return render_template("reputacion.html")

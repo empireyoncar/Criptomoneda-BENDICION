@@ -1,9 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from blockchain import Blockchain
-from hashlib import sha256
-from ecdsa import VerifyingKey, SECP256k1
+import sys
 import json
+
+# Import signature verification
+sys.path.insert(0, "/app/criptografia")
+from firma_digital import verificar_firma
+from blockchain_crypto import hash_sha256
 
 app = Flask(__name__)
 CORS(app)
@@ -72,7 +76,7 @@ def get_block(hash_value):
 def get_tx(hash_value):
     for b in blockchain.chain:
         for tx in b.transactions:
-            tx_hash = sha256(json.dumps(tx, sort_keys=True).encode()).hexdigest()
+            tx_hash = hash_sha256(json.dumps(tx, sort_keys=True))
             if tx_hash == hash_value:
                 return jsonify(tx)
     return jsonify({"error": "Transacción no encontrada"}), 404
@@ -117,7 +121,7 @@ def wallet_history(address):
 
 
 # ============================================================
-#   TRANSACCIÓN CON NONCE VALIDATION
+#   TRANSACCIÓN CON NONCE + FIRMA ECDSA VALIDATION
 # ============================================================
 @app.route("/send_tx", methods=["POST"])
 def send_tx():
@@ -133,6 +137,8 @@ def send_tx():
     tx_id = tx.get("tx_id")
     metadata = tx.get("metadata")
     nonce = tx.get("nonce")
+    public_key = tx.get("public_key")
+    signature = tx.get("signature")
 
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
@@ -142,6 +148,36 @@ def send_tx():
         amount = int(amount)
     except (ValueError, TypeError):
         return jsonify({"error": "Amount must be an integer (satichis)"}), 400
+
+    # SYSTEM transactions don't need signature
+    if sender != "SYSTEM":
+        # Validate public_key and signature presence
+        if not public_key or not signature:
+            return jsonify({"error": "TX from user must include public_key and signature"}), 400
+
+        # Verify that address matches public_key
+        derived_address = hash_sha256(public_key)
+        if derived_address != sender:
+            return jsonify({"error": "Public key does not match sender address"}), 403
+
+        # Prepare TX payload for signature verification (without signature field)
+        tx_for_verification = {
+            "from": sender,
+            "to": receiver,
+            "amount": amount,
+            "nonce": nonce
+        }
+        if tx_id:
+            tx_for_verification["tx_id"] = str(tx_id)
+        if metadata is not None:
+            tx_for_verification["metadata"] = metadata
+
+        # Verify ECDSA signature
+        try:
+            if not verificar_firma(tx_for_verification, signature, public_key):
+                return jsonify({"error": "Invalid signature"}), 403
+        except Exception as e:
+            return jsonify({"error": f"Signature verification failed: {str(e)}"}), 403
 
     ok = blockchain.add_transaction(sender, receiver, amount, tx_id=tx_id, metadata=metadata, nonce=nonce)
     if not ok:

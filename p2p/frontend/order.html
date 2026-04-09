@@ -255,7 +255,7 @@
 
     order = data.order;
     const isParticipant = order && (order.buyer_id === userId || order.seller_id === userId);
-    if (isParticipant && (order.status === "released" || order.status === "refunded")) {
+    if (isParticipant && (order.status === "released" || order.status === "refunded" || order.status === "completed")) {
       window.location.href = `/CriptoBendicion/p2p/calificacion/${orderId}`;
       return;
     }
@@ -287,6 +287,11 @@
           if (res.ok && data.order) {
             if (data.order.status !== order.status) {
               order = data.order;
+              const isParticipant = order && (order.buyer_id === userId || order.seller_id === userId);
+              if (isParticipant && (order.status === "released" || order.status === "refunded" || order.status === "completed")) {
+                window.location.href = `/CriptoBendicion/p2p/calificacion/${orderId}`;
+                return;
+              }
               updateActionButtons();
               document.getElementById("orderStatus").textContent = order.status;
             }

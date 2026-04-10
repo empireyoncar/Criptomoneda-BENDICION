@@ -23,3 +23,9 @@ CREATE INDEX IF NOT EXISTS idx_don_transactions_user_from
 
 CREATE INDEX IF NOT EXISTS idx_don_transactions_user_to
     ON don_transactions (user_to);
+
+CREATE TABLE IF NOT EXISTS don_settings (
+    setting_key TEXT PRIMARY KEY,
+    setting_value NUMERIC(30, 8) NOT NULL,
+    updated_timestamp BIGINT NOT NULL DEFAULT 0
+);

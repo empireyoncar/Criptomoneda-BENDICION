@@ -62,8 +62,10 @@ def _send_signed_escrow_tx(to_wallet: str, amount: float, tx_id: str, metadata: 
         "metadata": metadata or {},
         "nonce": nonce,
     }
+    # Sign first, then add public_key/signature to payload for transmission
+    signature = _sign_payload(escrow_private_key, tx)
     tx["public_key"] = escrow_public_key
-    tx["signature"] = _sign_payload(escrow_private_key, tx)
+    tx["signature"] = signature
 
     send_result = _post_json("/send_tx", {"tx": tx})
     commit_result = _post_json("/commit", {})

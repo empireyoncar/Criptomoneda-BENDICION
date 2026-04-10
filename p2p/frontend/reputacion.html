@@ -66,9 +66,16 @@
   </div>
 </div>
 
+<script src="/CriptoBendicion/p2p/seguridad/guard.js"></script>
 <script>
   const API = "/CriptoBendicion/p2p_api";
-  const currentUserId = localStorage.getItem("user_id") || "usuario_demo";
+  const currentUserId = window.SEGURIDAD_GUARD
+    ? window.SEGURIDAD_GUARD.requireLogin({ loginPath: "/CriptoBendicion/login" })
+    : String(localStorage.getItem("user_id") || "").trim();
+  if (!currentUserId) {
+    window.location.href = "/CriptoBendicion/login";
+    throw new Error("Sesion requerida");
+  }
   const params = new URLSearchParams(window.location.search);
   const initialUserId = params.get("user_id") || currentUserId;
 

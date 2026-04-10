@@ -1,6 +1,6 @@
 """Web server for P2P frontend pages."""
 
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from flask_cors import CORS
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -51,6 +51,12 @@ def p2p_disputas():
 @app.route("/p2p/panel-disputas")
 def p2p_panel_disputas():
     return render_template("paneldisputas.html")
+
+
+@app.route("/p2p/seguridad/guard.js")
+@app.route("/CriptoBendicion/p2p/seguridad/guard.js")
+def p2p_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
 
 
 if __name__ == "__main__":

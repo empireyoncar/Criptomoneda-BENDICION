@@ -134,8 +134,15 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+<script src="/CriptoBendicion/p2p/seguridad/guard.js"></script>
 <script>
-  const userId = localStorage.getItem("user_id") || "usuario_demo";
+  const userId = window.SEGURIDAD_GUARD
+    ? window.SEGURIDAD_GUARD.requireLogin({ loginPath: "/CriptoBendicion/login" })
+    : String(localStorage.getItem("user_id") || "").trim();
+  if (!userId) {
+    window.location.href = "/CriptoBendicion/login";
+    throw new Error("Sesion requerida");
+  }
   document.getElementById("userId").textContent = userId;
   document.getElementById("myReputationLink").href = `/CriptoBendicion/p2p/reputation?user_id=${encodeURIComponent(userId)}`;
 

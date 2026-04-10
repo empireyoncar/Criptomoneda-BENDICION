@@ -58,9 +58,21 @@
   </div>
 </div>
 
+<script src="/CriptoBendicion/p2p/seguridad/guard.js"></script>
 <script>
   const API = "/CriptoBendicion/p2p_api";
-  const adminId = localStorage.getItem("user_id") || "001";
+  const adminId = window.SEGURIDAD_GUARD
+    ? window.SEGURIDAD_GUARD.requireAdmin({
+        userLoginPath: "/CriptoBendicion/login",
+        adminLoginPath: "/CriptoBendicion/admin/login",
+        allowedAdminIds: ["001", "jonatan salazar"],
+      })
+    : String(localStorage.getItem("user_id") || "").trim();
+  const adminIdNormalized = String(adminId || "").trim().toLowerCase();
+  if (!adminId || !["001", "jonatan salazar"].includes(adminIdNormalized)) {
+    window.location.href = "/CriptoBendicion/admin/login";
+    throw new Error("Sesion admin requerida");
+  }
   document.getElementById("adminId").textContent = adminId;
   const orderId = new URLSearchParams(window.location.search).get("order_id") || "";
   document.getElementById("orderId").textContent = orderId || "(sin orden)";

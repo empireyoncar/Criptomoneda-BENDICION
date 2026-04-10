@@ -102,6 +102,28 @@
             margin-top: 22px;
         }
 
+        .page-links {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin: 18px 0 20px;
+        }
+
+        .page-link {
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.03);
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .page-link strong {
+            display: block;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
+
         .btn, .ghost-btn {
             border: none;
             border-radius: 14px;
@@ -335,6 +357,7 @@
         @media (max-width: 1080px) {
             .hero, .content-grid, .stats-grid { grid-template-columns: 1fr; }
             .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .page-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (max-width: 720px) {
@@ -342,6 +365,7 @@
             .hero-main, .hero-side, .section-card, .helper-card, .stat-card { padding: 18px; }
             .mini-grid { grid-template-columns: 1fr; }
             .history-table { display: block; overflow-x: auto; }
+            .page-links { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -400,6 +424,25 @@
             <div id="statAccruedDon" class="value">0</div>
             <div class="hint">Estimación proporcional según el avance actual.</div>
         </div>
+    </section>
+
+    <section class="page-links">
+        <a class="page-link" href="/CriptoBendicion/staking/stake_activos">
+            <strong>stake_activos.html</strong>
+            Vista centrada en stakes abiertos, progreso y capital bloqueado.
+        </a>
+        <a class="page-link" href="/CriptoBendicion/staking/historial">
+            <strong>historial.html</strong>
+            Cierres, cancelaciones y recompensas históricas.
+        </a>
+        <a class="page-link" href="/CriptoBendicion/staking/radar_rapido">
+            <strong>radar_rapido.html</strong>
+            Lectura ejecutiva del estado general del usuario.
+        </a>
+        <a class="page-link" href="/CriptoBendicion/staking/calendario_salida">
+            <strong>calendario_salida.html</strong>
+            Orden temporal de liberación para planificar liquidez.
+        </a>
     </section>
 
     <section class="content-grid">

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Stakes Activos - Bendición</title>
+    <style>
+        :root { --bg:#0a0d10; --panel:rgba(19,24,30,.9); --text:#eef2f6; --muted:#95a1ad; --line:rgba(255,255,255,.08); --gold:#f0b90b; --green:#63d471; }
+        * { box-sizing:border-box; }
+        body { margin:0; font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif; color:var(--text); background:linear-gradient(180deg,#0a0d10 0%,#10151b 100%); }
+        .shell { width:min(1180px,calc(100% - 32px)); margin:0 auto; padding:28px 0 40px; }
+        .nav,.panel { background:var(--panel); border:1px solid var(--line); border-radius:22px; }
+        .nav { padding:16px; display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px; }
+        .nav a { color:var(--muted); text-decoration:none; padding:10px 14px; border-radius:12px; }
+        .nav a.active { background:rgba(240,185,11,.14); color:var(--gold); font-weight:700; }
+        .hero,.panel { padding:22px; }
+        .hero { margin-bottom:18px; }
+        h1,h2 { margin:0 0 10px; color:var(--gold); }
+        p { margin:0; color:var(--muted); line-height:1.6; }
+        .stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-bottom:18px; }
+        .stat .value { font-size:30px; font-weight:800; margin-top:8px; }
+        .list { display:grid; gap:14px; }
+        .stake { padding:18px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
+        .top { display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; }
+        .pill { padding:6px 10px; border-radius:999px; background:rgba(99,212,113,.14); color:var(--green); font-size:12px; font-weight:700; }
+        .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:12px; }
+        .cell { padding:12px; border-radius:14px; background:rgba(255,255,255,.03); }
+        .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+        .mini { margin-top:6px; font-size:18px; font-weight:800; }
+        .progress-bar { width:100%; height:12px; border-radius:999px; overflow:hidden; background:rgba(255,255,255,.07); }
+        .progress { height:100%; background:linear-gradient(90deg,var(--gold),#ffe289); }
+        .meta { display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:8px; }
+        .empty { padding:22px; text-align:center; color:var(--muted); border:1px dashed var(--line); border-radius:18px; }
+        @media (max-width:900px) { .stats,.grid { grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <nav class="nav">
+        <a href="/CriptoBendicion/staking/dashboard">Dashboard</a>
+        <a class="active" href="/CriptoBendicion/staking/stake_activos">Stakes activos</a>
+        <a href="/CriptoBendicion/staking/historial">Historial</a>
+        <a href="/CriptoBendicion/staking/radar_rapido">Radar rapido</a>
+        <a href="/CriptoBendicion/staking/calendario_salida">Calendario salida</a>
+    </nav>
+
+    <section class="panel hero">
+        <h1>Stakes activos</h1>
+        <p>Aqui ves tus posiciones abiertas con progreso, salida estimada y rendimiento esperado.</p>
+    </section>
+
+    <section class="stats" id="stats"></section>
+    <section class="panel"><div id="activeList" class="list"></div></section>
+</div>
+
+<script>
+const API_STAKING = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api";
+function uid(){ return localStorage.getItem("user_id"); }
+function n(v,d=0){ return Number(v||0).toLocaleString("es-ES",{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function dt(v){ return v ? new Date(v).toLocaleString("es-ES") : "-"; }
+function rem(ts){ const r = Number(ts)-Math.floor(Date.now()/1000); if(r<=0)return"Listo para cerrar"; const d=Math.floor(r/86400),h=Math.floor((r%86400)/3600),m=Math.floor((r%3600)/60); return d>0?`${d}d ${h}h restantes`:`${h}h ${m}m restantes`; }
+async function j(url,msg){ const res=await fetch(url); const raw=await res.text(); let data={}; if(raw){ data=JSON.parse(raw); } if(!res.ok) throw new Error(data.error||msg); return data; }
+async function init(){ const userId=uid(); if(!userId){ location.href="/CriptoBendicion/login"; return; } const data=await j(`${API_STAKING}/Staking/user/${userId}`,"No se pudieron cargar stakes activos"); render(data.stakes||[]); }
+function render(stakes){ const totalLocked=stakes.reduce((s,x)=>s+Number(x.amount||0),0); const totalProjected=stakes.reduce((s,x)=>s+Number(x.reward_total||0),0); const totalAccrued=stakes.reduce((s,x)=>s+Number(x.reward_acumulada||0),0); document.getElementById("stats").innerHTML=`<div class="panel stat"><div class="label">Posiciones activas</div><div class="value">${n(stakes.length)}</div></div><div class="panel stat"><div class="label">BEND bloqueado</div><div class="value">${n(totalLocked)}</div></div><div class="panel stat"><div class="label">DON estimado</div><div class="value">${n(totalProjected,4)}</div><div style="color:var(--muted);margin-top:8px;">Acumulado: ${n(totalAccrued,4)}</div></div>`; const list=document.getElementById("activeList"); if(!stakes.length){ list.innerHTML='<div class="empty">No tienes stakes activos.</div>'; return; } list.innerHTML=stakes.map((stake,i)=>`<article class="stake"><div class="top"><div><div style="font-size:18px;font-weight:800;">Stake ${i+1}: ${n(stake.amount)} BEND</div><div style="color:var(--muted);font-size:13px;">${stake.stake_id}</div></div><span class="pill">Activo</span></div><div class="grid"><div class="cell"><div class="label">Duracion</div><div class="mini">${stake.days} dias</div></div><div class="cell"><div class="label">DON total</div><div class="mini">${n(stake.reward_total,4)}</div></div><div class="cell"><div class="label">DON acumulado</div><div class="mini">${n(stake.reward_acumulada,4)}</div></div><div class="cell"><div class="label">Salida</div><div class="mini" style="font-size:15px;">${dt(stake.end_date)}</div></div></div><div class="meta"><span>${rem(stake.end_timestamp)}</span><span>${n(stake.progress_percent,2)}%</span></div><div class="progress-bar"><div class="progress" style="width:${stake.progress_percent}%"></div></div></article>`).join(""); }
+init().catch(err=>{ document.getElementById("activeList").innerHTML=`<div class="empty">${err.message||err}</div>`; });
+</script>
+</body>
+</html>

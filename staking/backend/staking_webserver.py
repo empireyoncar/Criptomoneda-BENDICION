@@ -32,6 +32,26 @@ def staking_dashboard_page():
     return render_template("staking_dashboard.html")
 
 
+@app.route("/staking/stake_activos")
+def staking_active_page():
+    return render_template("stake_activos.html")
+
+
+@app.route("/staking/historial")
+def staking_history_page():
+    return render_template("historial.html")
+
+
+@app.route("/staking/radar_rapido")
+def staking_radar_page():
+    return render_template("radar_rapido.html")
+
+
+@app.route("/staking/calendario_salida")
+def staking_calendar_page():
+    return render_template("calendario_salida.html")
+
+
 # ============================================================
 # Servidor
 # ============================================================

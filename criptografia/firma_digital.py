@@ -7,6 +7,7 @@ import secrets
 import threading
 import time
 from typing import Any
+from hashlib import sha256
 
 from ecdsa import BadSignatureError, SECP256k1, SigningKey, VerifyingKey
 
@@ -52,7 +53,16 @@ def verificar_firma(tx_data: dict[str, Any], firma: str, public_key: str) -> boo
         except Exception:
             # Backward compatibility: wallet module stores raw secp256k1 hex keys.
             vk = VerifyingKey.from_string(bytes.fromhex(public_key), curve=SECP256k1)
-        return vk.verify(bytes.fromhex(firma), _canonical_json(tx_data))
+        signature_bytes = bytes.fromhex(firma)
+        payload_bytes = _canonical_json(tx_data)
+
+        # Preferred path: frontend signs SHA256(payload) digest.
+        digest = sha256(payload_bytes).digest()
+        if vk.verify_digest(signature_bytes, digest):
+            return True
+
+        # Legacy compatibility: old code signs raw canonical payload bytes.
+        return vk.verify(signature_bytes, payload_bytes)
     except (BadSignatureError, ValueError):
         return False
     except Exception:

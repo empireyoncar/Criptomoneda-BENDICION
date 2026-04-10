@@ -2,18 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard de Staking - Bendición</title>
-
+    <title>Dashboard de Staking - Bendicion</title>
     <style>
         :root {
-            --bg: #0a0d10;
             --panel: rgba(19, 24, 30, 0.9);
             --text: #eef2f6;
             --muted: #95a1ad;
             --line: rgba(255, 255, 255, 0.08);
             --gold: #f0b90b;
-            --green: #63d471;
-            --red: #ff6b6b;
             --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
         }
 
@@ -36,19 +32,19 @@
             padding: 28px 0 40px;
         }
 
-        .hero {
-            display: grid;
-            grid-template-columns: 1.6fr 1fr;
-            gap: 18px;
-            margin-bottom: 20px;
-        }
-
         .panel {
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 22px;
             box-shadow: var(--shadow);
             backdrop-filter: blur(14px);
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
         }
 
         .hero-main {
@@ -82,13 +78,13 @@
             text-transform: uppercase;
         }
 
-        .hero h1 {
+        h1 {
             margin: 16px 0 10px;
             font-size: clamp(30px, 4vw, 44px);
             line-height: 1.05;
         }
 
-        .hero p {
+        p {
             margin: 0;
             max-width: 640px;
             color: var(--muted);
@@ -102,35 +98,12 @@
             margin-top: 22px;
         }
 
-        .page-links {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin: 18px 0 20px;
-        }
-
-        .page-link {
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            background: rgba(255,255,255,0.03);
-            text-decoration: none;
-            color: var(--text);
-        }
-
-        .page-link strong {
-            display: block;
-            color: var(--gold);
-            margin-bottom: 6px;
-        }
-
         .btn, .ghost-btn {
             border: none;
             border-radius: 14px;
             padding: 12px 16px;
             cursor: pointer;
             font-weight: 700;
-            transition: transform 0.2s ease, background 0.2s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -147,8 +120,6 @@
             color: var(--text);
             border: 1px solid var(--line);
         }
-
-        .btn:hover, .ghost-btn:hover { transform: translateY(-1px); }
 
         .hero-side {
             padding: 22px;
@@ -193,151 +164,27 @@
         .stat-card .value { margin-top: 10px; font-size: 30px; font-weight: 800; }
         .stat-card .hint { margin-top: 8px; color: var(--muted); font-size: 13px; }
 
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1.4fr 0.9fr;
-            gap: 18px;
-        }
-
-        .section-card, .helper-card { padding: 22px; }
-
-        .section-head {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            margin-bottom: 14px;
-        }
-
-        .section-head h2 { margin: 0; color: var(--gold); font-size: 22px; }
-        .section-subtitle { color: var(--muted); font-size: 14px; }
-
-        .empty-state {
-            padding: 24px;
-            border: 1px dashed var(--line);
-            border-radius: 18px;
-            color: var(--muted);
-            text-align: center;
-        }
-
-        .stake-list { display: grid; gap: 14px; }
-
-        .stake-item {
-            padding: 18px;
-            border-radius: 18px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-            border: 1px solid var(--line);
-        }
-
-        .stake-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
-            margin-bottom: 14px;
-        }
-
-        .stake-title { font-size: 18px; font-weight: 800; }
-
-        .pill {
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .pill.active { background: rgba(99, 212, 113, 0.14); color: var(--green); }
-        .pill.finished { background: rgba(240, 185, 11, 0.14); color: var(--gold); }
-        .pill.cancelled { background: rgba(255, 107, 107, 0.14); color: var(--red); }
-
-        .mini-grid {
+        .page-links {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
-            margin-bottom: 14px;
+            margin: 18px 0 20px;
         }
 
-        .mini-cell {
-            padding: 12px;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.03);
-        }
-
-        .mini-cell .mini-value { font-size: 18px; font-weight: 800; margin-top: 6px; }
-
-        .progress-wrap { display: grid; gap: 8px; }
-        .progress-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
-
-        .progress-bar {
-            width: 100%;
-            height: 12px;
-            border-radius: 999px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.07);
-        }
-
-        .progress {
-            height: 100%;
-            width: 0;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--gold), #ffe289);
-            transition: width 0.8s ease;
-        }
-
-        .timeline { display: grid; gap: 12px; }
-
-        .timeline-item {
-            display: grid;
-            grid-template-columns: 10px 1fr;
-            gap: 12px;
-            align-items: start;
-        }
-
-        .timeline-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-top: 6px;
-            background: var(--gold);
-            box-shadow: 0 0 0 6px rgba(240, 185, 11, 0.12);
-        }
-
-        .timeline-body {
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .timeline-body:last-child { border-bottom: none; padding-bottom: 0; }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            overflow: hidden;
-        }
-
-        .history-table th, .history-table td {
-            padding: 12px 10px;
-            border-bottom: 1px solid var(--line);
-            text-align: left;
-            font-size: 14px;
-        }
-
-        .history-table th {
-            color: var(--gold);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-        }
-
-        .helper-tip {
+        .page-link {
             padding: 14px;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--line);
+            background: rgba(255, 255, 255, 0.03);
+            text-decoration: none;
+            color: var(--text);
         }
 
-        .helper-tip strong { display: block; margin-bottom: 6px; color: var(--gold); }
+        .page-link strong {
+            display: block;
+            color: var(--gold);
+            margin-bottom: 6px;
+        }
 
         #toast {
             position: fixed;
@@ -355,28 +202,24 @@
         .toast-err { background: #451a1a; color: #ffc1c1; }
 
         @media (max-width: 1080px) {
-            .hero, .content-grid, .stats-grid { grid-template-columns: 1fr; }
-            .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .hero, .stats-grid { grid-template-columns: 1fr; }
             .page-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
         @media (max-width: 720px) {
             .shell { width: min(100% - 20px, 100%); }
-            .hero-main, .hero-side, .section-card, .helper-card, .stat-card { padding: 18px; }
-            .mini-grid { grid-template-columns: 1fr; }
-            .history-table { display: block; overflow-x: auto; }
+            .hero-main, .hero-side, .stat-card { padding: 18px; }
             .page-links { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-
 <div class="shell">
     <section class="hero">
         <div class="panel hero-main">
             <div class="eyebrow">Panel de Rendimiento</div>
             <h1>Tu staking, explicado de un vistazo.</h1>
-            <p>Revisa cuántos BEND tienes bloqueados, cuánto DON estimado generas y qué stakes están más cerca de liberarse.</p>
+            <p>Revisa cuantos BEND tienes bloqueados, cuanto DON estimado generas y que stakes estan mas cerca de liberarse.</p>
             <div class="hero-actions">
                 <a href="/CriptoBendicion/staking/panelstaking" class="btn">Crear nuevo staking</a>
                 <button id="btnRefresh" class="ghost-btn">Actualizar panel</button>
@@ -394,10 +237,10 @@
             </div>
             <div class="wallet-line">
                 <span class="label">Recompensas DON</span>
-                <span id="walletRewards" class="value-strong">0 DON</span>
+                <span id="walletRewards" class="value-strong">0,0000 DON</span>
             </div>
             <div class="wallet-line">
-                <span class="label">Próximo desbloqueo</span>
+                <span class="label">Proximo desbloqueo</span>
                 <span id="nextUnlock" class="value-strong">Sin stakes activos</span>
             </div>
         </div>
@@ -422,7 +265,7 @@
         <div class="panel stat-card">
             <div class="label">DON acumulado</div>
             <div id="statAccruedDon" class="value">0</div>
-            <div class="hint">Estimación proporcional según el avance actual.</div>
+            <div class="hint">Estimacion proporcional segun el avance actual.</div>
         </div>
     </section>
 
@@ -433,7 +276,7 @@
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/historial">
             <strong>historial.html</strong>
-            Cierres, cancelaciones y recompensas históricas.
+            Cierres, cancelaciones y recompensas historicas.
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/radar_rapido">
             <strong>radar_rapido.html</strong>
@@ -441,63 +284,8 @@
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/calendario_salida">
             <strong>calendario_salida.html</strong>
-            Orden temporal de liberación para planificar liquidez.
+            Orden temporal de liberacion para planificar liquidez.
         </a>
-    </section>
-
-    <section class="content-grid">
-        <div class="panel section-card">
-            <div class="section-head">
-                <div>
-                    <h2>Stakes activos</h2>
-                    <div class="section-subtitle">Cada posición muestra progreso, fecha de salida y recompensa esperada.</div>
-                </div>
-            </div>
-            <div id="activeStakes" class="stake-list"></div>
-        </div>
-
-        <div style="display:grid; gap:18px;">
-            <div class="panel helper-card">
-                <div class="section-head">
-                    <div>
-                        <h2>Radar rápido</h2>
-                        <div class="section-subtitle">Pistas útiles para tomar decisiones.</div>
-                    </div>
-                </div>
-                <div class="helper-tip">
-                    <strong>Próximo vencimiento</strong>
-                    <div id="tipNextMaturity">Aún no tienes stakes activos.</div>
-                </div>
-                <div class="helper-tip">
-                    <strong>Intensidad de bloqueo</strong>
-                    <div id="tipLockingRatio">Sin datos suficientes todavía.</div>
-                </div>
-                <div class="helper-tip">
-                    <strong>Observación operativa</strong>
-                    <div>Los BEND stakeados se transfieren a la wallet administrativa del sistema mientras la posición está activa.</div>
-                </div>
-            </div>
-
-            <div class="panel helper-card">
-                <div class="section-head">
-                    <div>
-                        <h2>Calendario de salida</h2>
-                        <div class="section-subtitle">Qué stake vence antes y cuál después.</div>
-                    </div>
-                </div>
-                <div id="timeline" class="timeline"></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="panel section-card" style="margin-top:20px;">
-        <div class="section-head">
-            <div>
-                <h2>Historial</h2>
-                <div class="section-subtitle">Cierres terminados o cancelados con sus fechas y recompensas.</div>
-            </div>
-        </div>
-        <div id="historyWrap"></div>
     </section>
 </div>
 
@@ -514,9 +302,7 @@ function showToast(msg, type = "ok") {
     toast.textContent = msg;
     toast.className = type === "ok" ? "toast-ok" : "toast-err";
     toast.style.display = "block";
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 3200);
+    setTimeout(() => { toast.style.display = "none"; }, 3200);
 }
 
 function getUserId() {
@@ -535,20 +321,6 @@ function formatDate(isoLike) {
         return "-";
     }
     return new Date(isoLike).toLocaleString("es-ES");
-}
-
-function formatDuration(endTimestamp) {
-    const remaining = Number(endTimestamp) - Math.floor(Date.now() / 1000);
-    if (remaining <= 0) {
-        return "Listo para cerrar";
-    }
-    const days = Math.floor(remaining / 86400);
-    const hours = Math.floor((remaining % 86400) / 3600);
-    if (days > 0) {
-        return `${days}d ${hours}h restantes`;
-    }
-    const minutes = Math.floor((remaining % 3600) / 60);
-    return `${hours}h ${minutes}m restantes`;
 }
 
 async function fetchJson(url, fallbackMessage) {
@@ -598,32 +370,7 @@ async function loadWalletInfo(address, userId) {
     return { walletInfo, donInfo };
 }
 
-function renderTimeline(activeStakes) {
-    const timeline = document.getElementById("timeline");
-    timeline.innerHTML = "";
-
-    const sorted = [...activeStakes].sort((a, b) => a.end_timestamp - b.end_timestamp).slice(0, 4);
-    if (!sorted.length) {
-        timeline.innerHTML = '<div class="empty-state">Cuando tengas stakes activos aparecerán aquí ordenados por vencimiento.</div>';
-        return;
-    }
-
-    sorted.forEach((stake) => {
-        const item = document.createElement("div");
-        item.className = "timeline-item";
-        item.innerHTML = `
-            <div class="timeline-dot"></div>
-            <div class="timeline-body">
-                <div style="font-weight:800; margin-bottom:4px;">${formatNumber(stake.amount, 0)} BEND · ${stake.days} días</div>
-                <div style="color:var(--muted); margin-bottom:6px;">Vence ${formatDate(stake.end_date)}</div>
-                <div style="font-size:13px; color:var(--text);">${formatDuration(stake.end_timestamp)} · DON total ${formatNumber(stake.reward_total, 4)}</div>
-            </div>
-        `;
-        timeline.appendChild(item);
-    });
-}
-
-function renderStats(activeStakes, walletBalance) {
+function renderStats(activeStakes) {
     const activeCount = activeStakes.length;
     const totalLocked = activeStakes.reduce((sum, stake) => sum + Number(stake.amount || 0), 0);
     const totalProjected = activeStakes.reduce((sum, stake) => sum + Number(stake.reward_total || 0), 0);
@@ -634,104 +381,7 @@ function renderStats(activeStakes, walletBalance) {
     document.getElementById("statLockedBend").textContent = formatNumber(totalLocked, 0);
     document.getElementById("statProjectedDon").textContent = formatNumber(totalProjected, 4);
     document.getElementById("statAccruedDon").textContent = formatNumber(totalAccrued, 4);
-
     document.getElementById("nextUnlock").textContent = nextStake ? formatDate(nextStake.end_date) : "Sin stakes activos";
-    document.getElementById("tipNextMaturity").textContent = nextStake
-        ? `El stake ${nextStake.stake_id.slice(0, 8)} vence ${formatDuration(nextStake.end_timestamp)}.`
-        : "No hay posiciones abiertas en este momento.";
-
-    const totalWallet = Number(walletBalance || 0) + totalLocked;
-    const ratio = totalWallet > 0 ? (totalLocked / totalWallet) * 100 : 0;
-    document.getElementById("tipLockingRatio").textContent = activeCount > 0
-        ? `${formatNumber(ratio, 2)}% de tu BEND total visible está comprometido en staking.`
-        : "Tu liquidez está completamente libre; aún no hay capital bloqueado.";
-
-    renderTimeline(activeStakes);
-}
-
-function renderActiveStakes(activeStakes) {
-    const container = document.getElementById("activeStakes");
-    container.innerHTML = "";
-
-    if (!activeStakes.length) {
-        container.innerHTML = '<div class="empty-state">Todavía no tienes stakes activos. Crea uno nuevo para empezar a generar DON.</div>';
-        return;
-    }
-
-    activeStakes.forEach((stake, index) => {
-        const card = document.createElement("article");
-        card.className = "stake-item";
-        card.innerHTML = `
-            <div class="stake-top">
-                <div>
-                    <div class="stake-title">Stake ${index + 1}: ${formatNumber(stake.amount, 0)} BEND</div>
-                    <div class="section-subtitle mono">${stake.stake_id}</div>
-                </div>
-                <span class="pill active">Activo</span>
-            </div>
-            <div class="mini-grid">
-                <div class="mini-cell">
-                    <div class="label">Duración</div>
-                    <div class="mini-value">${stake.days} días</div>
-                </div>
-                <div class="mini-cell">
-                    <div class="label">DON total</div>
-                    <div class="mini-value">${formatNumber(stake.reward_total, 4)}</div>
-                </div>
-                <div class="mini-cell">
-                    <div class="label">DON acumulado</div>
-                    <div class="mini-value">${formatNumber(stake.reward_acumulada, 4)}</div>
-                </div>
-                <div class="mini-cell">
-                    <div class="label">Salida</div>
-                    <div class="mini-value" style="font-size:15px;">${formatDate(stake.end_date)}</div>
-                </div>
-            </div>
-            <div class="progress-wrap">
-                <div class="progress-meta">
-                    <span>${formatDuration(stake.end_timestamp)}</span>
-                    <span>${formatNumber(stake.progress_percent, 2)}%</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress" style="width:${stake.progress_percent}%"></div>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-}
-
-function renderHistory(history) {
-    const wrap = document.getElementById("historyWrap");
-    if (!history.length) {
-        wrap.innerHTML = '<div class="empty-state">Aún no hay stakes cerrados o cancelados para mostrar historial.</div>';
-        return;
-    }
-
-    const rows = history.map((item) => `
-        <tr>
-            <td>${formatNumber(item.amount, 0)} BEND</td>
-            <td>${item.days} días</td>
-            <td>${formatNumber(item.total_reward, 4)} DON</td>
-            <td><span class="pill ${item.status === "finished" ? "finished" : "cancelled"}">${item.status}</span></td>
-            <td>${formatDate(item.final_date || item.end_date)}</td>
-        </tr>
-    `).join("");
-
-    wrap.innerHTML = `
-        <table class="history-table">
-            <thead>
-                <tr>
-                    <th>Monto</th>
-                    <th>Plazo</th>
-                    <th>DON total</th>
-                    <th>Estado</th>
-                    <th>Cierre</th>
-                </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-        </table>
-    `;
 }
 
 async function initDashboard() {
@@ -741,18 +391,12 @@ async function initDashboard() {
             return;
         }
 
-        const [{ walletInfo }, activeData, historyData] = await Promise.all([
+        const [, activeData] = await Promise.all([
             loadWalletInfo(user.address, user.userId),
             fetchJson(`${API_STAKING}/Staking/user/${user.userId}`, "No se pudieron cargar los stakes activos"),
-            fetchJson(`${API_STAKING}/Staking/history/${user.userId}`, "No se pudo cargar el historial de staking"),
         ]);
 
-        const activeStakes = activeData.stakes || [];
-        const history = historyData.history || [];
-
-        renderStats(activeStakes, walletInfo.balance);
-        renderActiveStakes(activeStakes);
-        renderHistory(history);
+        renderStats(activeData.stakes || []);
     } catch (error) {
         console.error(error);
         showToast(error.message || "No se pudo cargar el dashboard", "err");
@@ -766,6 +410,5 @@ document.getElementById("btnRefresh").addEventListener("click", () => {
 
 initDashboard();
 </script>
-
 </body>
 </html>

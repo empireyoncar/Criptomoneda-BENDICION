@@ -27,6 +27,7 @@
     .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .warn { color:#f97316; font-size:13px; margin-top:8px; }
   </style>
+  <script src="/CriptoBendicion/kyc/seguridad/guard.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -90,9 +91,9 @@
 
 <script>
   const API = "/CriptoBendicion/kyc_api";
-  const userId = localStorage.getItem("user_id") || "";
+  const userId = window.SEGURIDAD_GUARD.requireLogin();
 
-  document.getElementById("userId").textContent = userId || "sin sesion";
+  document.getElementById("userId").textContent = userId;
 
   function paintStatus(step, status) {
     const el = document.getElementById(`st_${step}`);

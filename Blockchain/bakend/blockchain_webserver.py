@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
@@ -23,6 +23,12 @@ def blockchain_page():
 @app.route("/CriptoBendicion/blockchainweb/bendicion")
 def bendicion_page():
     return render_template("blockchainbendicion.html")
+
+@app.route("/blockchain/seguridad/guard.js")
+@app.route("/CriptoBendicion/blockchain/seguridad/guard.js")
+def blockchain_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
 
 # ============================================================
 # Servidor

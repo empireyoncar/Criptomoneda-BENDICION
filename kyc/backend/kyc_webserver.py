@@ -1,6 +1,6 @@
 """Web server for KYC frontend pages."""
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 from flask_cors import CORS
 from jinja2 import ChoiceLoader, FileSystemLoader
 
@@ -51,6 +51,12 @@ def admin_kyc_page():
     if not client_ip.startswith("192.168."):
         return "Acceso permitido solo desde la red interna", 403
     return render_template("admin_kyc.html")
+
+
+@app.route("/kyc/seguridad/guard.js")
+@app.route("/CriptoBendicion/kyc/seguridad/guard.js")
+def kyc_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
 
 
 if __name__ == "__main__":

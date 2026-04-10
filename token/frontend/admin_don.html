@@ -120,6 +120,7 @@
       background: #2b3139;
     }
   </style>
+  <script src="/CriptoBendicion/don/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -248,13 +249,8 @@
     return "/CriptoBendicion/admin/";
   }
 
-  const adminUserId = localStorage.getItem("user_id");
-  if (!adminUserId) {
-    alert("Debes iniciar sesión como administrador.");
-    window.location.href = "/CriptoBendicion/admin/login";
-  } else {
-    document.getElementById("user_id").textContent = adminUserId;
-  }
+  const adminUserId = window.SEGURIDAD_GUARD.requireAdmin({ allowedAdminIds: ["001", "jonatan salazar"] });
+  document.getElementById("user_id").textContent = adminUserId;
 
   document.getElementById("btnBackAdmin").onclick = () => {
     window.location.href = resolveCentralAdminUrl();

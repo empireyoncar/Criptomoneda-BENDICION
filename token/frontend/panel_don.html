@@ -118,6 +118,7 @@
       background: #2b3139;
     }
   </style>
+  <script src="/CriptoBendicion/don/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -202,13 +203,8 @@
   };
     
   // Mostrar ID del usuario
-    let userId = localStorage.getItem("user_id");
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "/CriptoBendicion/login.html";
-    } else {
-        document.getElementById("userId").textContent = userId;
-    }
+    const userId = window.SEGURIDAD_GUARD.requireLogin();
+    document.getElementById("userId").textContent = userId;
 
   // Cargar valor de DON
   async function loadDonValue() {

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
@@ -20,6 +20,12 @@ def wallet_page():
 @app.route("/wallet/envio")
 def envio_page():
     return render_template("envio.html")
+
+@app.route("/wallet/seguridad/guard.js")
+@app.route("/CriptoBendicion/wallet/seguridad/guard.js")
+def wallet_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
 
 # ============================================================
 # Servidor

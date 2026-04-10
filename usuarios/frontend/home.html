@@ -86,6 +86,7 @@
             color: var(--text);
         }
     </style>
+    <script src="/CriptoBendicion/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -200,13 +201,8 @@
 
 <script>
     // Seguridad: exigir login
-    let userId = localStorage.getItem("user_id");
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "login";
-    } else {
-        document.getElementById("userId").textContent = userId;
-    }
+    const userId = window.SEGURIDAD_GUARD.requireLogin();
+    document.getElementById("userId").textContent = userId;
 
     // 🔥 LOGOUT: limpiar todo y volver al login
     document.getElementById("logoutBtn").onclick = () => {

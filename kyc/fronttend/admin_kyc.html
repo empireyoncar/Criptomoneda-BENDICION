@@ -27,6 +27,7 @@
     textarea { width:100%; min-height:90px; background:#0f1115; color:#eaecef; border:1px solid #2b3139; border-radius:8px; padding:8px; }
     a.file { color:#f0b90b; text-decoration:none; }
   </style>
+  <script src="/CriptoBendicion/kyc/seguridad/guard.js"></script>
 </head>
 <body>
   <div class="topbar">
@@ -66,7 +67,7 @@
 
 <script>
   const API = "/CriptoBendicion/kyc_api";
-  const adminId = localStorage.getItem("user_id") || "admin-local";
+  const adminId = window.SEGURIDAD_GUARD.requireAdmin({ allowedAdminIds: ["001", "jonatan salazar"] });
   let selectedUserId = "";
 
   function goCentralAdmin() {

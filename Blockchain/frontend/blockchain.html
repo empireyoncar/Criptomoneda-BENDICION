@@ -169,6 +169,7 @@
             border: 1px solid var(--success);
         }
     </style>
+    <script src="/CriptoBendicion/blockchain/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -264,11 +265,7 @@
     }
 
     /* 🔐 LOGIN */
-    let userId = localStorage.getItem("user_id");
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "login";
-    }
+    const userId = window.SEGURIDAD_GUARD.requireLogin();
 
     /* 🟦 ESTADO GENERAL */
     document.getElementById("btnStatus").onclick = async () => {

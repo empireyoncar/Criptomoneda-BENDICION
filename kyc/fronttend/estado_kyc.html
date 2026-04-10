@@ -23,6 +23,7 @@
     .hidden { display:none; }
     ul { margin:8px 0 0 18px; }
   </style>
+  <script src="/CriptoBendicion/kyc/seguridad/guard.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -59,8 +60,8 @@
 
 <script>
   const API = "/CriptoBendicion/kyc_api";
-  const userId = localStorage.getItem("user_id") || "";
-  document.getElementById("userId").textContent = userId || "sin sesion";
+  const userId = window.SEGURIDAD_GUARD.requireLogin();
+  document.getElementById("userId").textContent = userId;
 
   function setBadge(el, status) {
     el.className = `badge ${status || 'pending'}`;

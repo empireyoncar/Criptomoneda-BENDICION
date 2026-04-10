@@ -124,6 +124,7 @@
             color: #f3a6a6;
         }
     </style>
+    <script src="/CriptoBendicion/staking/seguridad/guard.js"></script>
 </head>
 <body>
 
@@ -201,13 +202,8 @@ if (!address || !publicKey) {
 // -------------------------
 //   LOGIN OBLIGATORIO
 // -------------------------
-let userId = localStorage.getItem("user_id");
-if (!userId) {
-    alert("Debes iniciar sesión primero.");
-    window.location.href = "/CriptoBendicion/login";
-} else {
-    userIdEl.textContent = userId;
-}
+const userId = window.SEGURIDAD_GUARD.requireLogin();
+userIdEl.textContent = userId;
 
 // -------------------------
 //   VER BALANCE

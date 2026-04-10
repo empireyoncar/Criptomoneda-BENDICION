@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, send_file
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
@@ -45,6 +45,12 @@ def don_admin_history():
         return "Acceso permitido solo desde la red interna", 403
 
     return render_template("admin_don_history.html")
+
+@app.route("/don/seguridad/guard.js")
+@app.route("/CriptoBendicion/don/seguridad/guard.js")
+def don_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
 
 # ============================================================
 # Servidor

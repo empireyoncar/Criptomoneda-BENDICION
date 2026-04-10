@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, Blueprint
+from flask import Flask, render_template, jsonify, Blueprint, send_file
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
@@ -50,6 +50,12 @@ def staking_radar_page():
 @app.route("/staking/calendario_salida")
 def staking_calendar_page():
     return render_template("calendario_salida.html")
+
+
+@app.route("/staking/seguridad/guard.js")
+@app.route("/CriptoBendicion/staking/seguridad/guard.js")
+def staking_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
 
 
 # ============================================================

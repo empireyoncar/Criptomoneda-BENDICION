@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
@@ -21,6 +21,12 @@ def login_page():
 @app.route("/register")
 def register_page():
     return render_template("register.html")
+
+@app.route("/seguridad/guard.js")
+@app.route("/CriptoBendicion/seguridad/guard.js")
+def usuarios_security_guard_js():
+    return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

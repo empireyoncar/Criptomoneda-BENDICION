@@ -196,6 +196,7 @@
             border: 1px solid var(--success);
         }
     </style>
+    <script src="/CriptoBendicion/wallet/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -347,13 +348,8 @@
     }
 
     // Seguridad: exigir login y wallet
-    let userId = localStorage.getItem("user_id");
-    if (!userId) {
-        alert("Debes iniciar sesión primero.");
-        window.location.href = "/CriptoBendicion/login";
-    } else {
-        document.getElementById("userId").textContent = userId;
-    }
+    const userId = window.SEGURIDAD_GUARD.requireLogin();
+    document.getElementById("userId").textContent = userId;
 
     const address = localStorage.getItem("address");
 

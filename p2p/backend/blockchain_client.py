@@ -54,16 +54,24 @@ def _get_wallet_nonce(address: str) -> int:
 def _send_signed_escrow_tx(to_wallet: str, amount: float, tx_id: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
     escrow_wallet, escrow_public_key, escrow_private_key = _resolve_escrow_credentials()
     nonce = _get_wallet_nonce(escrow_wallet)
-    tx = {
+    
+    # Build tx_for_signing exactly as blockchain_server will build tx_for_verification
+    tx_for_signing = {
         "from": escrow_wallet,
         "to": to_wallet,
-        "amount": float(amount),
-        "tx_id": tx_id,
-        "metadata": metadata or {},
-        "nonce": nonce,
+        "amount": int(amount),
+        "nonce": int(nonce),
     }
-    # Sign first, then add public_key/signature to payload for transmission
-    signature = _sign_payload(escrow_private_key, tx)
+    if tx_id:
+        tx_for_signing["tx_id"] = str(tx_id)
+    if metadata is not None:
+        tx_for_signing["metadata"] = metadata
+    
+    # Sign this exact payload
+    signature = _sign_payload(escrow_private_key, tx_for_signing)
+    
+    # Build transmission payload with signature for blockchain
+    tx = dict(tx_for_signing)
     tx["public_key"] = escrow_public_key
     tx["signature"] = signature
 

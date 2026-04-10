@@ -229,6 +229,8 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
+  const DON_API_BASE = "/CriptoBendicion/don_api";
+
   const adminUserId = localStorage.getItem("user_id");
   if (!adminUserId) {
     alert("Debes iniciar sesión como administrador.");
@@ -240,7 +242,10 @@
   // Cargar balance del usuario
     async function loadBalance() {
         try {
-      let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${adminUserId}`);
+      let res = await fetch(`${DON_API_BASE}/don/balance/${adminUserId}`);
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}`);
+            }
             let data = await res.json();
             document.getElementById("balance").textContent = data.balance;
         } catch (err) {
@@ -258,20 +263,28 @@ document.getElementById("btnMint").onclick = async () => {
         return;
     }
 
-    let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/add", {
+    let res = await fetch(`${DON_API_BASE}/don/add`, {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({user_id: user, amount: amount})
     });
 
+    if (!res.ok) {
+      const raw = await res.text();
+      throw new Error(raw || `HTTP ${res.status}`);
+    }
+
     let data = await res.json();
-    alert("DON generado correctamente");
+    alert(`DON generado correctamente. TX: ${data.tx_id || "-"}`);
 };
 
   // Cargar valor actual
   async function loadDonValue() {
       try {
-          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/price");
+        let res = await fetch(`${DON_API_BASE}/price`);
+        if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+        }
           let data = await res.json();
           document.getElementById("donValue").textContent = data.don_value;
       } catch (err) {
@@ -285,11 +298,16 @@ document.getElementById("btnMint").onclick = async () => {
   document.getElementById("btnUpdateValue").onclick = async () => {
       let value = parseFloat(document.getElementById("newDonValue").value);
 
-      let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/price/update", {
+        let res = await fetch(`${DON_API_BASE}/price/update`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({don_value: value})
       });
+
+        if (!res.ok) {
+          const raw = await res.text();
+          throw new Error(raw || `HTTP ${res.status}`);
+        }
 
       let data = await res.json();
       alert("Nuevo valor establecido: " + data.new_value);
@@ -297,7 +315,10 @@ document.getElementById("btnMint").onclick = async () => {
   };
 async function loadSupply() {
     try {
-        let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/total_supply");
+        let res = await fetch(`${DON_API_BASE}/don/total_supply`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
         let data = await res.json();
 
         document.getElementById("totalSupply").textContent = data.total_supply;
@@ -324,11 +345,15 @@ loadSupply();
         }
 
         try {
-          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/transfer", {
+          let res = await fetch(`${DON_API_BASE}/don/transfer`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({from_user: fromUser, to_user: toUser, amount: amount})
           });
+          if (!res.ok) {
+            const raw = await res.text();
+            throw new Error(raw || `HTTP ${res.status}`);
+          }
           let data = await res.json();
           if (data.success) {
             alert(`Transferencia realizada correctamente.\nTX: ${data.tx_id}`);
@@ -354,11 +379,15 @@ loadSupply();
         }
 
         try {
-          let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/burn", {
+          let res = await fetch(`${DON_API_BASE}/don/burn`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({user_id: user, amount: amount})
           });
+          if (!res.ok) {
+            const raw = await res.text();
+            throw new Error(raw || `HTTP ${res.status}`);
+          }
           let data = await res.json();
           if (data.success) {
             alert(`DON quemado correctamente.\nTX: ${data.tx_id}`);

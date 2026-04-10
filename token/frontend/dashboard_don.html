@@ -170,6 +170,8 @@
 </div>
 
 <script>
+  const DON_API_BASE = "/CriptoBendicion/don_api";
+
     // Navegación al panel
     document.getElementById("btnGoPanel").onclick = () => {
         window.location.href = "/CriptoBendicion/don/panel";
@@ -178,7 +180,10 @@
     // Cargar valor de DON
     async function loadDonValue() {
         try {
-            let res = await fetch("/CriptoBendicion/don_api/price");
+        let res = await fetch(`${DON_API_BASE}/price`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
             let data = await res.json();
             document.getElementById("donValue").textContent = data.don_value;
         } catch (err) {

@@ -187,6 +187,8 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
+  const DON_API_BASE = "/CriptoBendicion/don_api";
+
   // Navegación
   document.getElementById("btnGoDashboard").onclick = () => {
       window.location.href = "/CriptoBendicion/don/dashboard";
@@ -204,7 +206,10 @@
   // Cargar valor de DON
   async function loadDonValue() {
       try {
-          let res = await fetch("/CriptoBendicion/don_api/price");
+        let res = await fetch(`${DON_API_BASE}/price`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
           let data = await res.json();
           document.getElementById("donValue").textContent = data.don_value;
       } catch (err) {
@@ -214,7 +219,10 @@
   // Cargar balance del usuario
     async function loadBalance() {
         try {
-            let res = await fetch(`https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/balance/${userId}`);
+        let res = await fetch(`${DON_API_BASE}/don/balance/${userId}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
             let data = await res.json();
             document.getElementById("balance").textContent = data.balance;
         } catch (err) {
@@ -226,15 +234,28 @@ document.getElementById("btnTransfer").onclick = async () => {
     let to = document.getElementById("toUser").value;
     let amount = parseFloat(document.getElementById("amount").value);
 
-    let res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/don_api/don/transfer", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({from_user: userId, to_user: to, amount: amount})
+  try {
+    let res = await fetch(`${DON_API_BASE}/don/transfer`, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({from_user: userId, to_user: to, amount: amount})
     });
 
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
     let data = await res.json();
+    if (!data.success) {
+      alert(data.error || "No se pudo transferir DON");
+      return;
+    }
+
     alert("Transferencia realizada");
     loadBalance(); // ← recargar balance
+  } catch (err) {
+    alert("Error de conexión al transferir DON.");
+  }
 };
 
   // ACTUALIZAR BALANCE

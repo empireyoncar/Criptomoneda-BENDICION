@@ -53,6 +53,31 @@ services:
       retries: 10
 
   # ============================================================
+  # BASE DE DATOS DE STAKING (POSTGRESQL)
+  # Puerto: 5547
+  # ============================================================
+  staking_db:
+    image: postgres:16
+    command: postgres -p 5547
+    environment:
+      POSTGRES_DB: staking_db
+      POSTGRES_USER: staking_user
+      POSTGRES_PASSWORD: staking_password
+    ports:
+      - "5547:5547"
+    volumes:
+      - staking_postgres_data:/var/lib/postgresql/data
+      - ./staking/backend/staking_schema.sql:/docker-entrypoint-initdb.d/01_staking_schema.sql:ro
+    restart: always
+    networks:
+      - bendicion_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staking_user -d staking_db -p 5547"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ============================================================
   # BACKEND DE USUARIOS (API)
   # Puerto: 5001
   # ============================================================
@@ -297,6 +322,12 @@ services:
   staking_api:
     build: ./staking/backend
     command: sh -c "python backend/staking_server.py & python backend/staking_recompensa.py"
+    environment:
+      STAKING_DB_HOST: staking_db
+      STAKING_DB_PORT: 5547
+      STAKING_DB_NAME: staking_db
+      STAKING_DB_USER: staking_user
+      STAKING_DB_PASSWORD: staking_password
     ports:
       - "5006:5006"
     volumes:
@@ -306,8 +337,12 @@ services:
     networks:
       - bendicion_net
     depends_on:
-      - don_api
-      - wallet_api
+      don_api:
+        condition: service_started
+      wallet_api:
+        condition: service_started
+      staking_db:
+        condition: service_healthy
 
   # ============================================================
   # STAKING (WEB)
@@ -338,3 +373,4 @@ networks:
 volumes:
   wallet_postgres_data:
   users_postgres_data:
+  staking_postgres_data:

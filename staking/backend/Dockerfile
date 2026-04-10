@@ -3,7 +3,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Dependencias Python del servicio
-RUN pip install --no-cache-dir flask flask-cors requests
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Exponer puertos
 EXPOSE 5006

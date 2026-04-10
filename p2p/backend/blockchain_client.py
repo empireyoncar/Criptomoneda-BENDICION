@@ -54,17 +54,31 @@ def _post_json(path: str, payload: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def hold_in_escrow(from_wallet: str, amount: float, tx_id: str, metadata: dict[str, Any] | None = None) -> dict[str, Any]:
+def hold_in_escrow(
+    from_wallet: str,
+    amount: float,
+    tx_id: str,
+    metadata: dict[str, Any] | None = None,
+    public_key: str | None = None,
+    signature: str | None = None,
+    nonce: int | None = None,
+) -> dict[str, Any]:
     """Move funds from seller wallet to escrow wallet."""
-    tx_payload = {
-        "tx": {
-            "from": from_wallet,
-            "to": ESCROW_WALLET,
-            "amount": float(amount),
-            "tx_id": tx_id,
-            "metadata": metadata or {},
-        }
+    tx = {
+        "from": from_wallet,
+        "to": ESCROW_WALLET,
+        "amount": float(amount),
+        "tx_id": tx_id,
+        "metadata": metadata or {},
     }
+    if public_key:
+        tx["public_key"] = public_key
+    if signature:
+        tx["signature"] = signature
+    if nonce is not None:
+        tx["nonce"] = int(nonce)
+
+    tx_payload = {"tx": tx}
     send_result = _post_json("/send_tx", tx_payload)
     commit_result = _post_json("/commit", {})
     return {"send": send_result, "commit": commit_result}

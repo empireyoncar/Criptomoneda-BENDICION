@@ -132,12 +132,107 @@
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/elliptic/6.5.4/elliptic.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 <script>
   const userId = localStorage.getItem("user_id") || "usuario_demo";
   document.getElementById("userId").textContent = userId;
   document.getElementById("myReputationLink").href = `/CriptoBendicion/p2p/reputation?user_id=${encodeURIComponent(userId)}`;
 
   const API = "/CriptoBendicion/p2p_api";
+  const API_BLOCKCHAIN = "/CriptoBendicion/blockchain";
+
+  function sortDeep(value) {
+    if (Array.isArray(value)) return value.map(sortDeep);
+    if (value && typeof value === "object") {
+      const ordered = {};
+      Object.keys(value).sort().forEach((k) => { ordered[k] = sortDeep(value[k]); });
+      return ordered;
+    }
+    return value;
+  }
+
+  function canonicalJson(obj) {
+    return JSON.stringify(sortDeep(obj));
+  }
+
+  function toFixedHex(value, length) {
+    return value.toString(16).padStart(length, "0");
+  }
+
+  function getPrivateKeyForSigning(address) {
+    const cacheKey = `tx_private_key_${address}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const entered = prompt("Introduce tu clave privada HEX para firmar la operacion P2P:");
+    if (!entered) return null;
+    const normalized = entered.trim().toLowerCase();
+    if (!/^[0-9a-f]{64}$/.test(normalized)) {
+      throw new Error("La clave privada debe tener 64 caracteres hex.");
+    }
+    sessionStorage.setItem(cacheKey, normalized);
+    return normalized;
+  }
+
+  function derivePublicKeyAndAddress(privateKeyHex) {
+    const ec = new elliptic.ec("secp256k1");
+    const key = ec.keyFromPrivate(privateKeyHex, "hex");
+    const pub = key.getPublic();
+    const publicKeyHex =
+      pub.getX().toString(16).padStart(64, "0") +
+      pub.getY().toString(16).padStart(64, "0");
+    const derivedAddress = CryptoJS.SHA256(publicKeyHex).toString();
+    return { publicKeyHex, derivedAddress };
+  }
+
+  async function getWalletNonce(address) {
+    const res = await fetch(`${API_BLOCKCHAIN}/wallet/${address}/nonce`);
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "No se pudo obtener nonce de wallet");
+    }
+    return Number(data.nonce || 0);
+  }
+
+  function signTxPayload(privateKeyHex, payload) {
+    const ec = new elliptic.ec("secp256k1");
+    const key = ec.keyFromPrivate(privateKeyHex, "hex");
+    const hashHex = CryptoJS.SHA256(canonicalJson(payload)).toString();
+    const sig = key.sign(hashHex, "hex", { canonical: true });
+    return toFixedHex(sig.r, 64) + toFixedHex(sig.s, 64);
+  }
+
+  async function buildSignedEscrowPayload(walletAddress, escrowAmount, metadata) {
+    const privateKey = getPrivateKeyForSigning(walletAddress);
+    if (!privateKey) {
+      throw new Error("Operacion cancelada: firma requerida");
+    }
+
+    const { publicKeyHex, derivedAddress } = derivePublicKeyAndAddress(privateKey);
+    if (derivedAddress !== walletAddress) {
+      throw new Error("La clave privada no corresponde a la wallet activa.");
+    }
+
+    const nonce = await getWalletNonce(walletAddress);
+    const txToSign = {
+      amount: Number(escrowAmount),
+      from: walletAddress,
+      metadata: metadata || {},
+      nonce,
+      public_key: publicKeyHex,
+      to: "P2P_ESCROW",
+    };
+
+    return {
+      public_key: publicKeyHex,
+      signature: signTxPayload(privateKey, txToSign),
+      nonce,
+      wallet_address: walletAddress,
+    };
+  }
 
   async function refreshOnlineOrdersButton() {
     const btn = document.getElementById("btnOnlineOrders");
@@ -236,14 +331,21 @@
         </td>
         <td><button class="${action.className}" data-id="${o.id}">${action.label}</button></td>
       `;
-      tr.querySelector("button").onclick = () => takeOffer(o.id);
+      tr.querySelector("button").onclick = () => takeOffer(o);
       tbody.appendChild(tr);
     });
   }
 
   async function createOffer() {
+    const walletAddress = localStorage.getItem("address") || "";
+    if (!walletAddress) {
+      alert("Debes tener wallet activa para publicar ofertas P2P.");
+      return;
+    }
+
     const payload = {
       user_id: userId,
+      wallet_address: walletAddress,
       country: document.getElementById("country").value.trim(),
       side: document.getElementById("side").value,
       asset: "BEN",
@@ -260,6 +362,27 @@
       terms: document.getElementById("terms").value.trim()
     };
 
+    if (payload.side === "sell") {
+      try {
+        const signed = await buildSignedEscrowPayload(
+          walletAddress,
+          payload.amount_total,
+          {
+            source: "p2p_create_offer_sell",
+            user_id: userId,
+            amount: Number(payload.amount_total),
+            asset: "BEN",
+          }
+        );
+        payload.public_key = signed.public_key;
+        payload.signature = signed.signature;
+        payload.nonce = signed.nonce;
+      } catch (err) {
+        alert(err.message || err);
+        return;
+      }
+    }
+
     const res = await fetch(API + "/offers", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -274,14 +397,46 @@
     await Promise.all([loadOffers(), loadMyOffers(), refreshOnlineOrdersButton()]);
   }
 
-  async function takeOffer(offerId) {
+  async function takeOffer(offer) {
     const amountRaw = prompt("Cantidad a tomar:");
     if (!amountRaw) return;
+
+    const offerId = offer.id;
+    const payload = {offer_id: offerId, taker_user_id: userId, amount: parseFloat(amountRaw)};
+
+    if (offer.side === "buy") {
+      const walletAddress = localStorage.getItem("address") || "";
+      if (!walletAddress) {
+        alert("Debes tener wallet activa para vender en una oferta de compra.");
+        return;
+      }
+
+      try {
+        const signed = await buildSignedEscrowPayload(
+          walletAddress,
+          parseFloat(amountRaw),
+          {
+            source: "p2p_take_offer_buy",
+            offer_id: offerId,
+            taker_user_id: userId,
+            amount: Number(parseFloat(amountRaw)),
+            asset: "BEN",
+          }
+        );
+        payload.seller_wallet = signed.wallet_address;
+        payload.public_key = signed.public_key;
+        payload.signature = signed.signature;
+        payload.nonce = signed.nonce;
+      } catch (err) {
+        alert(err.message || err);
+        return;
+      }
+    }
 
     const res = await fetch(API + "/orders/take", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({offer_id: offerId, taker_user_id: userId, amount: parseFloat(amountRaw)})
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (!res.ok) {

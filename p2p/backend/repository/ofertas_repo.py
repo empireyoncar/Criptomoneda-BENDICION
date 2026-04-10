@@ -19,15 +19,16 @@ def create_offer(data: dict[str, Any]) -> dict[str, Any]:
     rows = run_query(
         """
         INSERT INTO p2p_offers (
-                    user_id, country, side, asset, fiat_currency, payment_method,
+                    user_id, wallet_address, country, side, asset, fiat_currency, payment_method,
                     payment_provider, account_reference, account_holder,
                     price, amount_total, amount_available, min_limit, max_limit,
-                    completion_time_minutes, terms, status
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'active')
+                    completion_time_minutes, terms, escrow_locked, escrow_lock_tx_id, status
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'active')
         RETURNING *
         """,
         (
             data["user_id"],
+            data.get("wallet_address", ""),
             data.get("country", "N/A"),
             data["side"],
             data.get("asset", "BEN"),
@@ -43,6 +44,8 @@ def create_offer(data: dict[str, Any]) -> dict[str, Any]:
             data.get("max_limit", 0),
             data.get("completion_time_minutes", 15),
             data.get("terms", ""),
+            bool(data.get("escrow_locked", False)),
+            data.get("escrow_lock_tx_id"),
         ),
     )
     return rows[0]

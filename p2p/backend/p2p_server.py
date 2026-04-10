@@ -96,10 +96,18 @@ def api_create_offer():
 def api_take_offer():
     try:
         payload = _json_body()
+        signer_payload = {
+            "seller_wallet": payload.get("seller_wallet") or payload.get("wallet_address"),
+            "public_key": payload.get("public_key"),
+            "signature": payload.get("signature"),
+            "nonce": payload.get("nonce"),
+        }
+
         order = p2p.take_offer(
             offer_id=payload.get("offer_id", ""),
             taker_user_id=payload.get("taker_user_id", ""),
             amount=payload.get("amount"),
+            signer_payload=signer_payload,
         )
         return _ok({"success": True, "order": order}, 201)
     except (ValueError, PermissionError) as exc:

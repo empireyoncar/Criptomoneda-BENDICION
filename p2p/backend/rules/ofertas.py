@@ -35,6 +35,7 @@ def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
 
     data = {
         "user_id": user_id,
+        "wallet_address": require_non_empty(payload.get("wallet_address", ""), "wallet_address"),
         "country": require_non_empty(payload.get("country", ""), "country"),
         "side": side,
         "asset": require_non_empty(payload.get("asset", ASSET_CODE), "asset").upper(),
@@ -54,6 +55,41 @@ def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
     if data["asset"] != ASSET_CODE:
         raise ValueError(f"Solo se permite {ASSET_NAME} ({ASSET_CODE}) en este mercado")
 
+    # En ofertas de venta, bloqueamos el saldo en escrow desde el inicio.
+    if side == "sell":
+        hold_metadata = {
+            "source": "p2p_create_offer_sell",
+            "offer_creator_id": user_id,
+            "amount": float(amount_total),
+            "asset": ASSET_CODE,
+        }
+        hold_tx_id = sha256(json.dumps(hold_metadata, sort_keys=True).encode()).hexdigest()
+
+        signer_public_key = require_non_empty(payload.get("public_key", ""), "public_key")
+        signer_signature = require_non_empty(payload.get("signature", ""), "signature")
+        signer_nonce = payload.get("nonce")
+        if signer_nonce is None:
+            raise ValueError("nonce es requerido para bloquear saldo en ofertas de venta")
+
+        try:
+            hold_in_escrow(
+                from_wallet=data["wallet_address"],
+                amount=amount_total,
+                tx_id=hold_tx_id,
+                metadata=hold_metadata,
+                public_key=signer_public_key,
+                signature=signer_signature,
+                nonce=int(signer_nonce),
+            )
+        except BlockchainError as exc:
+            raise ValueError(f"No se pudo bloquear saldo en blockchain al crear oferta: {exc}") from exc
+
+        data["escrow_locked"] = True
+        data["escrow_lock_tx_id"] = hold_tx_id
+    else:
+        data["escrow_locked"] = False
+        data["escrow_lock_tx_id"] = None
+
     return repo.create_offer(data)
 
 
@@ -70,7 +106,7 @@ def list_offers(side: str | None = None, asset: str | None = None, limit: int = 
     return repo.list_active_offers(norm_side, norm_asset, limit)
 
 
-def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, Any]:
+def take_offer(offer_id: str, taker_user_id: str, amount: float, signer_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     offer_id = require_non_empty(offer_id, "offer_id")
     taker_user_id = require_non_empty(taker_user_id, "taker_user_id")
     amount = require_positive(amount, "amount")
@@ -85,42 +121,90 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, An
     if float(offer["amount_available"]) < amount:
         raise ValueError("Cantidad insuficiente en oferta")
 
+    signer_payload = signer_payload or {}
     seller_id = offer["user_id"] if offer["side"] == "sell" else taker_user_id
-    hold_metadata = {
-        "source": "p2p_take_offer",
-        "offer_id": offer_id,
-        "seller_id": seller_id,
-        "taker_user_id": taker_user_id,
-        "amount": float(amount),
-        "asset": ASSET_CODE,
-    }
-    hold_tx_id = sha256(json.dumps(hold_metadata, sort_keys=True).encode()).hexdigest()
 
-    try:
-        hold_in_escrow(seller_id, amount, tx_id=hold_tx_id, metadata=hold_metadata)
-    except BlockchainError as exc:
-        raise ValueError(f"No se pudo bloquear saldo en blockchain: {exc}") from exc
+    # Oferta sell: saldo ya bloqueado por el creador al publicar.
+    if offer["side"] == "sell":
+        if not bool(offer.get("escrow_locked")):
+            raise ValueError("La oferta de venta no tiene saldo bloqueado en escrow")
+    else:
+        # Oferta buy: el vendedor es el taker, por eso requiere firma del taker al tomar.
+        seller_wallet = signer_payload.get("seller_wallet")
+        if not seller_wallet:
+            raise ValueError("Debes indicar seller_wallet para bloquear saldo")
 
-    try:
-        return repo.take_offer(offer_id, taker_user_id, amount)
-    except Exception as exc:
-        rollback_metadata = {
-            "source": "p2p_take_offer_rollback",
+        signer_public_key = signer_payload.get("public_key")
+        signer_signature = signer_payload.get("signature")
+        signer_nonce = signer_payload.get("nonce")
+        if not signer_public_key or not signer_signature or signer_nonce is None:
+            raise ValueError("Faltan public_key, signature o nonce para bloquear saldo")
+
+        hold_metadata = {
+            "source": "p2p_take_offer_buy",
             "offer_id": offer_id,
             "seller_id": seller_id,
             "taker_user_id": taker_user_id,
             "amount": float(amount),
-            "reason": str(exc),
+            "asset": ASSET_CODE,
         }
-        rollback_tx_id = sha256(json.dumps(rollback_metadata, sort_keys=True).encode()).hexdigest()
+        hold_tx_id = sha256(json.dumps(hold_metadata, sort_keys=True).encode()).hexdigest()
+
         try:
-            refund_from_escrow(seller_id, amount, tx_id=rollback_tx_id, metadata=rollback_metadata)
-        except BlockchainError:
-            pass
+            hold_in_escrow(
+                from_wallet=str(seller_wallet),
+                amount=amount,
+                tx_id=hold_tx_id,
+                metadata=hold_metadata,
+                public_key=str(signer_public_key),
+                signature=str(signer_signature),
+                nonce=int(signer_nonce),
+            )
+        except BlockchainError as exc:
+            raise ValueError(f"No se pudo bloquear saldo en blockchain: {exc}") from exc
+
+    try:
+        return repo.take_offer(offer_id, taker_user_id, amount)
+    except Exception as exc:
+        # Solo hacemos rollback automatico cuando el hold se hizo en take_offer (side=buy).
+        if offer["side"] == "buy":
+            rollback_metadata = {
+                "source": "p2p_take_offer_rollback",
+                "offer_id": offer_id,
+                "seller_id": seller_id,
+                "taker_user_id": taker_user_id,
+                "amount": float(amount),
+                "reason": str(exc),
+            }
+            rollback_tx_id = sha256(json.dumps(rollback_metadata, sort_keys=True).encode()).hexdigest()
+            try:
+                refund_from_escrow(seller_id, amount, tx_id=rollback_tx_id, metadata=rollback_metadata)
+            except BlockchainError:
+                pass
         raise
 
 
 def cancel_offer(offer_id: str, requester_user_id: str) -> dict[str, Any]:
     offer_id = require_non_empty(offer_id, "offer_id")
     requester_user_id = require_non_empty(requester_user_id, "requester_user_id")
+    offer = repo.get_offer(offer_id)
+    if not offer:
+        raise ValueError("Oferta no encontrada")
+
+    # Si era una oferta de venta con fondos en escrow, devolvemos el remanente al vendedor.
+    if offer.get("side") == "sell" and bool(offer.get("escrow_locked")):
+        remaining = float(offer.get("amount_available") or 0)
+        if remaining > 0:
+            metadata = {
+                "source": "p2p_cancel_offer_refund",
+                "offer_id": offer_id,
+                "seller_id": offer.get("user_id"),
+                "remaining": remaining,
+            }
+            tx_id = sha256(json.dumps(metadata, sort_keys=True).encode()).hexdigest()
+            try:
+                refund_from_escrow(str(offer.get("wallet_address") or offer.get("user_id")), remaining, tx_id=tx_id, metadata=metadata)
+            except BlockchainError as exc:
+                raise ValueError(f"No se pudo devolver saldo al cancelar oferta: {exc}") from exc
+
     return repo.cancel_offer(offer_id, requester_user_id)

@@ -3,6 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE TABLE IF NOT EXISTS p2p_offers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
+  wallet_address TEXT NOT NULL DEFAULT '',
   country TEXT NOT NULL DEFAULT 'N/A',
   side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
   asset TEXT NOT NULL DEFAULT 'BEN',
@@ -18,6 +19,8 @@ CREATE TABLE IF NOT EXISTS p2p_offers (
   max_limit NUMERIC(20,8) NOT NULL DEFAULT 0,
   completion_time_minutes INT NOT NULL DEFAULT 15 CHECK (completion_time_minutes IN (10, 15, 30, 60)),
   terms TEXT NOT NULL DEFAULT '',
+  escrow_locked BOOLEAN NOT NULL DEFAULT FALSE,
+  escrow_lock_tx_id TEXT,
   status TEXT NOT NULL CHECK (status IN ('active', 'paused', 'filled', 'cancelled')) DEFAULT 'active',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -29,6 +32,10 @@ CREATE INDEX IF NOT EXISTS idx_p2p_offers_user_id ON p2p_offers(user_id);
 -- Add missing columns if they don't exist (for existing databases)
 DO $$
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+           WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='wallet_address') THEN
+    ALTER TABLE p2p_offers ADD COLUMN wallet_address TEXT NOT NULL DEFAULT '';
+  END IF;
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
                    WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='country') THEN
         ALTER TABLE p2p_offers ADD COLUMN country TEXT NOT NULL DEFAULT 'N/A';
@@ -48,6 +55,14 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
                    WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='completion_time_minutes') THEN
         ALTER TABLE p2p_offers ADD COLUMN completion_time_minutes INT NOT NULL DEFAULT 15 CHECK (completion_time_minutes IN (10, 15, 30, 60));
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+             WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='escrow_locked') THEN
+      ALTER TABLE p2p_offers ADD COLUMN escrow_locked BOOLEAN NOT NULL DEFAULT FALSE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS 
+             WHERE TABLE_NAME='p2p_offers' AND COLUMN_NAME='escrow_lock_tx_id') THEN
+      ALTER TABLE p2p_offers ADD COLUMN escrow_lock_tx_id TEXT;
     END IF;
 END$$;
 

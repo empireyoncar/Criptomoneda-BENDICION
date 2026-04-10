@@ -265,8 +265,12 @@ function toFixedHex(value, length) {
     return value.toString(16).padStart(length, "0");
 }
 
+function getSigningStorageKey() {
+    return `tx_private_key_${address}`;
+}
+
 function getPrivateKeyForSigning() {
-    const key = sessionStorage.getItem("tx_private_key");
+    const key = sessionStorage.getItem(getSigningStorageKey());
     if (key) {
         return key;
     }
@@ -281,7 +285,7 @@ function getPrivateKeyForSigning() {
         throw new Error("La clave privada debe tener 64 caracteres hex.");
     }
 
-    sessionStorage.setItem("tx_private_key", normalized);
+    sessionStorage.setItem(getSigningStorageKey(), normalized);
     return normalized;
 }
 
@@ -346,6 +350,8 @@ document.getElementById("btnStake").onclick = async () => {
 
         const signer = derivePublicKeyAndAddress(privateKeyHex);
         if (signer.derivedAddress !== wallet) {
+            sessionStorage.removeItem(getSigningStorageKey());
+            sessionStorage.removeItem("tx_private_key");
             alert(`La clave privada no corresponde a tu wallet activa. Wallet activa: ${wallet}. Wallet de la clave: ${signer.derivedAddress}`);
             return;
         }

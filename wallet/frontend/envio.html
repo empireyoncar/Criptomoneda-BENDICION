@@ -310,8 +310,12 @@
         return Number(nonceData.nonce);
     }
 
+    function getSigningStorageKey() {
+        return `tx_private_key_${address}`;
+    }
+
     function getPrivateKeyForSigning() {
-        const key = sessionStorage.getItem("tx_private_key");
+        const key = sessionStorage.getItem(getSigningStorageKey());
         if (key) {
             return key;
         }
@@ -326,7 +330,7 @@
             throw new Error("La clave privada debe tener 64 caracteres hex.");
         }
 
-        sessionStorage.setItem("tx_private_key", normalized);
+        sessionStorage.setItem(getSigningStorageKey(), normalized);
         return normalized;
     }
 
@@ -455,6 +459,7 @@ document.getElementById("btnSend").onclick = async () => {
 
     // Borrar clave de firma de sessionStorage
     document.getElementById("btnClearKey").onclick = () => {
+        sessionStorage.removeItem(getSigningStorageKey());
         sessionStorage.removeItem("tx_private_key");
         showAlert("Clave de firma borrada. La próxima transacción te pedirá la clave de nuevo.", "success");
     };

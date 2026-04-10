@@ -204,10 +204,9 @@
     const userId = window.SEGURIDAD_GUARD.requireLogin();
     document.getElementById("userId").textContent = userId;
 
-    // 🔥 LOGOUT: limpiar todo y volver al login
+    // 🔥 LOGOUT: revocar cookie y limpiar localStorage
     document.getElementById("logoutBtn").onclick = () => {
-        localStorage.clear();
-        window.location.href = "login";
+        window.SEGURIDAD_GUARD.logout("/CriptoBendicion/login");
     };
 
     // Navegacion al modulo KYC

@@ -163,6 +163,7 @@
         }
         
     </style>
+    <script src="/CriptoBendicion/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -196,8 +197,9 @@
 </div>
 
 <script>
-    // Cada vez que se abre login.html, se limpia TODO
-localStorage.clear();
+    // Al abrir login: revocar sesión previa (cookie + localStorage)
+    window.SEGURIDAD_GUARD.logout().catch(function(){});
+    localStorage.removeItem("user_id");
     /* ------------------------------
        PARTICULAS
     ------------------------------ */
@@ -242,39 +244,13 @@ localStorage.clear();
         }
 
         try {
-            const res = await fetch(`${API}/login`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: emailVal, password: passVal })
-            });
-
-            // Manejo de errores HTTP (401, 500, etc.)
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({ error: "Error en el servidor" }));
-                showAlert(err.error || "Error desconocido.");
-                return;
-            }
-
-            const data = await res.json();
-
-            if (data.error) {
-                showAlert(data.error);
-                return;
-            }
-
-            if (data.user_id) {
-                localStorage.setItem("user_id", data.user_id);
-                showAlert("Login correcto", "success");
-
-                setTimeout(() => {
-                    window.location.href = "/CriptoBendicion/home";
-                }, 800);
-            } else {
-                showAlert("Credenciales incorrectas.");
-            }
-
+            const data = await window.SEGURIDAD_GUARD.login(emailVal, passVal);
+            showAlert("Login correcto", "success");
+            setTimeout(() => {
+                window.location.href = "/CriptoBendicion/home";
+            }, 800);
         } catch (e) {
-            showAlert("No se pudo conectar con el servidor.");
+            showAlert(e.message || "No se pudo conectar con el servidor.");
             console.error("Error en login:", e);
         }
     };

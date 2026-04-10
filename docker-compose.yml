@@ -114,6 +114,7 @@ services:
       - "5002:5002"
     volumes:
       - ./wallet/backend:/app
+      - ./criptografia:/app/criptografia
       - ./usuarios/backend/database.json:/app/database.json
       - ./wallet/backend/wallets.json:/app/wallets.json
     restart: always
@@ -151,7 +152,8 @@ services:
     ports:
       - "5004:5004"
     volumes:
-      - ./Blockchain/bakend:/app
+        - ./Blockchain/bakend:/app
+        - ./criptografia:/app/criptografia
     restart: always
     networks:
       - bendicion_net

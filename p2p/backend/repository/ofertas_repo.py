@@ -105,7 +105,7 @@ def list_active_offers(side: str | None, asset: str | None, limit: int) -> list[
     return run_query(query, tuple(params))
 
 
-def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, Any]:
+def take_offer(offer_id: str, taker_user_id: str, amount: float, buyer_wallet: str, seller_wallet: str) -> dict[str, Any]:
     """Atomically lock offer, create order and append escrow hold event."""
     with db_transaction() as cur:
         cur.execute(
@@ -143,10 +143,10 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, An
         cur.execute(
             """
             INSERT INTO p2p_orders (
-              offer_id, buyer_id, seller_id, amount,
+              offer_id, buyer_id, buyer_wallet, seller_id, seller_wallet, amount,
                             unit_price, total_fiat, status, expires_at
                         ) VALUES (
-                            %s, %s, %s, %s, %s, %s, 'pending_payment',
+                            %s, %s, %s, %s, %s, %s, %s, %s, 'pending_payment',
                             NOW() + make_interval(mins => %s)
                         )
             RETURNING *
@@ -154,7 +154,9 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float) -> dict[str, An
             (
                 offer_id,
                 buyer_id,
+            buyer_wallet,
                 seller_id,
+            seller_wallet,
                 amount,
                 unit_price,
                 total_fiat,

@@ -4,3 +4,4 @@ flask-sock
 psycopg2-binary
 PyJWT
 requests
+ecdsa

@@ -13,13 +13,20 @@ ASSET_NAME = "BENDICION"
 ALLOWED_COMPLETION_MINUTES = {10, 15, 30, 60}
 
 
+def require_positive_integer_amount(value: Any, field_name: str) -> int:
+    amount = require_positive(value, field_name)
+    if not float(amount).is_integer():
+        raise ValueError(f"{field_name} debe ser entero en satichis")
+    return int(amount)
+
+
 def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
     user_id = require_non_empty(payload.get("user_id", ""), "user_id")
     side = require_non_empty(payload.get("side", ""), "side").lower()
     if side not in {"buy", "sell"}:
         raise ValueError("side debe ser buy o sell")
 
-    amount_total = require_positive(payload.get("amount_total"), "amount_total")
+    amount_total = require_positive_integer_amount(payload.get("amount_total"), "amount_total")
     price = require_positive(payload.get("price"), "price")
 
     min_limit = float(payload.get("min_limit") or 0)
@@ -106,10 +113,10 @@ def list_offers(side: str | None = None, asset: str | None = None, limit: int = 
     return repo.list_active_offers(norm_side, norm_asset, limit)
 
 
-def take_offer(offer_id: str, taker_user_id: str, amount: float, signer_payload: dict[str, Any] | None = None) -> dict[str, Any]:
+def take_offer(offer_id: str, taker_user_id: str, amount: float, current_wallet: str, signer_payload: dict[str, Any] | None = None) -> dict[str, Any]:
     offer_id = require_non_empty(offer_id, "offer_id")
     taker_user_id = require_non_empty(taker_user_id, "taker_user_id")
-    amount = require_positive(amount, "amount")
+    amount = require_positive_integer_amount(amount, "amount")
 
     offer = repo.get_offer(offer_id)
     if not offer:
@@ -121,8 +128,12 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float, signer_payload:
     if float(offer["amount_available"]) < amount:
         raise ValueError("Cantidad insuficiente en oferta")
 
+    current_wallet = require_non_empty(current_wallet, "wallet_address")
+
     signer_payload = signer_payload or {}
     seller_id = offer["user_id"] if offer["side"] == "sell" else taker_user_id
+    buyer_wallet = current_wallet if offer["side"] == "sell" else str(offer.get("wallet_address") or "")
+    seller_wallet = str(offer.get("wallet_address") or "") if offer["side"] == "sell" else ""
 
     # Oferta sell: saldo ya bloqueado por el creador al publicar.
     if offer["side"] == "sell":
@@ -164,7 +175,7 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float, signer_payload:
             raise ValueError(f"No se pudo bloquear saldo en blockchain: {exc}") from exc
 
     try:
-        return repo.take_offer(offer_id, taker_user_id, amount)
+        return repo.take_offer(offer_id, taker_user_id, amount, buyer_wallet=buyer_wallet, seller_wallet=seller_wallet)
     except Exception as exc:
         # Solo hacemos rollback automatico cuando el hold se hizo en take_offer (side=buy).
         if offer["side"] == "buy":
@@ -178,7 +189,7 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float, signer_payload:
             }
             rollback_tx_id = sha256(json.dumps(rollback_metadata, sort_keys=True).encode()).hexdigest()
             try:
-                refund_from_escrow(seller_id, amount, tx_id=rollback_tx_id, metadata=rollback_metadata)
+                refund_from_escrow(str(seller_wallet), amount, tx_id=rollback_tx_id, metadata=rollback_metadata)
             except BlockchainError:
                 pass
         raise

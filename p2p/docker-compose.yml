@@ -37,7 +37,9 @@ services:
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
       BLOCKCHAIN_URL: http://host.docker.internal:5004
-      P2P_ESCROW_WALLET: P2P_ESCROW
+      P2P_ESCROW_PRIVATE_KEY: 4bd540d1b61c21eac07b7a3c67642a28f8960ab927d2984f526c628fc630cf98
+      P2P_ESCROW_PUBLIC_KEY: 4eb135383f4fa7eb0a97394c0c62660e3dd074c9cbc2d04ded9856e50be2348480fd49854d6b357b69b2ceb8b170d5208d043580432137ee1e4a73af6b234114
+      P2P_ESCROW_WALLET: df9f6e498a481d1e97325e6ed16cd7e68c1bbe2a1a600b4fcc42736ef10430f5
     ports:
       - "5012:5012"
     volumes:
@@ -65,7 +67,9 @@ services:
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
       BLOCKCHAIN_URL: http://host.docker.internal:5004
-      P2P_ESCROW_WALLET: P2P_ESCROW
+      P2P_ESCROW_PRIVATE_KEY: 4bd540d1b61c21eac07b7a3c67642a28f8960ab927d2984f526c628fc630cf98
+      P2P_ESCROW_PUBLIC_KEY: 4eb135383f4fa7eb0a97394c0c62660e3dd074c9cbc2d04ded9856e50be2348480fd49854d6b357b69b2ceb8b170d5208d043580432137ee1e4a73af6b234114
+      P2P_ESCROW_WALLET: df9f6e498a481d1e97325e6ed16cd7e68c1bbe2a1a600b4fcc42736ef10430f5
     ports:
       - "5013:5013"
     volumes:
@@ -96,7 +100,9 @@ services:
       P2P_DB_PASSWORD: p2p_password
       P2P_JWT_SECRET: super_secret_dev_change_me
       BLOCKCHAIN_URL: http://host.docker.internal:5004
-      P2P_ESCROW_WALLET: P2P_ESCROW
+      P2P_ESCROW_PRIVATE_KEY: 4bd540d1b61c21eac07b7a3c67642a28f8960ab927d2984f526c628fc630cf98
+      P2P_ESCROW_PUBLIC_KEY: 4eb135383f4fa7eb0a97394c0c62660e3dd074c9cbc2d04ded9856e50be2348480fd49854d6b357b69b2ceb8b170d5208d043580432137ee1e4a73af6b234114
+      P2P_ESCROW_WALLET: df9f6e498a481d1e97325e6ed16cd7e68c1bbe2a1a600b4fcc42736ef10430f5
     ports:
       - "5014:5014"
     volumes:

@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir \
     flask-sock \
     psycopg2-binary \
     PyJWT \
-    requests
+    requests \
+    ecdsa
 
 EXPOSE 5012 5013

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from hashlib import sha256
+import json
 
+from blockchain_client import BlockchainError, refund_from_escrow, release_from_escrow
 import p2p_repository as repo
 from p2p_common import is_admin_user, parse_dt, require_non_empty, require_order_participant
 from .ordenes import add_escrow_event
@@ -41,11 +44,38 @@ def resolve_dispute(order_id: str, admin_id: str, resolution: str, note: str) ->
         raise ValueError("resolution invalida")
 
     dispute = repo.resolve_dispute(order_id, admin_id, resolution, note)
+    order = repo.get_order(order_id)
+    if not order:
+        raise ValueError("Orden no encontrada")
 
     if resolution == "resolved_buyer":
+        refund_metadata = {
+            "source": "p2p_resolve_dispute_refund",
+            "order_id": order_id,
+            "admin_id": admin_id,
+            "seller_id": order["seller_id"],
+            "amount": float(order["amount"]),
+        }
+        refund_tx_id = sha256(json.dumps(refund_metadata, sort_keys=True).encode()).hexdigest()
+        try:
+            refund_from_escrow(order["seller_wallet"], float(order["amount"]), tx_id=refund_tx_id, metadata=refund_metadata)
+        except BlockchainError as exc:
+            raise ValueError(f"No se pudo reembolsar fondos en blockchain: {exc}") from exc
         repo.update_order_status(order_id, "refunded")
         add_escrow_event(order_id, "refund", admin_id, {"source": "dispute"})
     elif resolution == "resolved_seller":
+        release_metadata = {
+            "source": "p2p_resolve_dispute_release",
+            "order_id": order_id,
+            "admin_id": admin_id,
+            "buyer_id": order["buyer_id"],
+            "amount": float(order["amount"]),
+        }
+        release_tx_id = sha256(json.dumps(release_metadata, sort_keys=True).encode()).hexdigest()
+        try:
+            release_from_escrow(order["buyer_wallet"], float(order["amount"]), tx_id=release_tx_id, metadata=release_metadata)
+        except BlockchainError as exc:
+            raise ValueError(f"No se pudo liberar fondos en blockchain: {exc}") from exc
         repo.update_order_status(order_id, "released")
         add_escrow_event(order_id, "release", admin_id, {"source": "dispute"})
 

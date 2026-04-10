@@ -77,7 +77,7 @@ def release_order(order_id: str, seller_id: str) -> dict[str, Any]:
     release_tx_id = sha256(json.dumps(release_metadata, sort_keys=True).encode()).hexdigest()
     try:
         release_from_escrow(
-            to_wallet=order["buyer_id"],
+            to_wallet=order["buyer_wallet"],
             amount=float(order["amount"]),
             tx_id=release_tx_id,
             metadata=release_metadata,
@@ -111,7 +111,7 @@ def refund_order(order_id: str, actor_user_id: str) -> dict[str, Any]:
     refund_tx_id = sha256(json.dumps(refund_metadata, sort_keys=True).encode()).hexdigest()
     try:
         refund_from_escrow(
-            to_wallet=order["seller_id"],
+            to_wallet=order["seller_wallet"],
             amount=float(order["amount"]),
             tx_id=refund_tx_id,
             metadata=refund_metadata,

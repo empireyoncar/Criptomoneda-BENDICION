@@ -70,7 +70,9 @@ CREATE TABLE IF NOT EXISTS p2p_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   offer_id UUID NOT NULL REFERENCES p2p_offers(id),
   buyer_id TEXT NOT NULL,
+  buyer_wallet TEXT NOT NULL DEFAULT '',
   seller_id TEXT NOT NULL,
+  seller_wallet TEXT NOT NULL DEFAULT '',
   amount NUMERIC(20,8) NOT NULL CHECK (amount > 0),
   unit_price NUMERIC(20,8) NOT NULL CHECK (unit_price > 0),
   total_fiat NUMERIC(20,8) NOT NULL CHECK (total_fiat > 0),
@@ -85,6 +87,18 @@ CREATE INDEX IF NOT EXISTS idx_p2p_orders_offer_id ON p2p_orders(offer_id);
 CREATE INDEX IF NOT EXISTS idx_p2p_orders_buyer_id ON p2p_orders(buyer_id);
 CREATE INDEX IF NOT EXISTS idx_p2p_orders_seller_id ON p2p_orders(seller_id);
 CREATE INDEX IF NOT EXISTS idx_p2p_orders_status ON p2p_orders(status);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+           WHERE TABLE_NAME='p2p_orders' AND COLUMN_NAME='buyer_wallet') THEN
+    ALTER TABLE p2p_orders ADD COLUMN buyer_wallet TEXT NOT NULL DEFAULT '';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS
+           WHERE TABLE_NAME='p2p_orders' AND COLUMN_NAME='seller_wallet') THEN
+    ALTER TABLE p2p_orders ADD COLUMN seller_wallet TEXT NOT NULL DEFAULT '';
+  END IF;
+END$$;
 
 CREATE TABLE IF NOT EXISTS p2p_escrow_events (
   id BIGSERIAL PRIMARY KEY,

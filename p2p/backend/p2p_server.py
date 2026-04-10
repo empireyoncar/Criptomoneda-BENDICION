@@ -107,6 +107,7 @@ def api_take_offer():
             offer_id=payload.get("offer_id", ""),
             taker_user_id=payload.get("taker_user_id", ""),
             amount=payload.get("amount"),
+            current_wallet=payload.get("wallet_address", ""),
             signer_payload=signer_payload,
         )
         return _ok({"success": True, "order": order}, 201)

@@ -141,6 +141,7 @@
 
   const API = "/CriptoBendicion/p2p_api";
   const API_BLOCKCHAIN = "/CriptoBendicion/blockchain";
+  const ESCROW_WALLET = "df9f6e498a481d1e97325e6ed16cd7e68c1bbe2a1a600b4fcc42736ef10430f5";
 
   function sortDeep(value) {
     if (Array.isArray(value)) return value.map(sortDeep);
@@ -222,8 +223,7 @@
       from: walletAddress,
       metadata: metadata || {},
       nonce,
-      public_key: publicKeyHex,
-      to: "P2P_ESCROW",
+      to: ESCROW_WALLET,
     };
 
     return {
@@ -362,6 +362,11 @@
       terms: document.getElementById("terms").value.trim()
     };
 
+    if (!Number.isInteger(payload.amount_total) || payload.amount_total <= 0) {
+      alert("La cantidad BEN debe ser un entero positivo en satichis.");
+      return;
+    }
+
     if (payload.side === "sell") {
       try {
         const signed = await buildSignedEscrowPayload(
@@ -400,26 +405,36 @@
   async function takeOffer(offer) {
     const amountRaw = prompt("Cantidad a tomar:");
     if (!amountRaw) return;
+    const amountValue = parseFloat(amountRaw);
+    if (!Number.isInteger(amountValue) || amountValue <= 0) {
+      alert("La cantidad a tomar debe ser un entero positivo en satichis.");
+      return;
+    }
 
     const offerId = offer.id;
-    const payload = {offer_id: offerId, taker_user_id: userId, amount: parseFloat(amountRaw)};
+    const walletAddress = localStorage.getItem("address") || "";
+    const payload = {
+      offer_id: offerId,
+      taker_user_id: userId,
+      amount: amountValue,
+      wallet_address: walletAddress,
+    };
+
+    if (!walletAddress) {
+      alert("Debes tener wallet activa para operar en P2P.");
+      return;
+    }
 
     if (offer.side === "buy") {
-      const walletAddress = localStorage.getItem("address") || "";
-      if (!walletAddress) {
-        alert("Debes tener wallet activa para vender en una oferta de compra.");
-        return;
-      }
-
       try {
         const signed = await buildSignedEscrowPayload(
           walletAddress,
-          parseFloat(amountRaw),
+          amountValue,
           {
             source: "p2p_take_offer_buy",
             offer_id: offerId,
             taker_user_id: userId,
-            amount: Number(parseFloat(amountRaw)),
+            amount: Number(amountValue),
             asset: "BEN",
           }
         );

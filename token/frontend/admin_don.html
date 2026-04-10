@@ -229,7 +229,14 @@
 
 <!-- 🔥 SCRIPTS -->
 <script>
-  const DON_API_BASE = "/CriptoBendicion/don_api";
+  function resolveDonApiBase() {
+    if (window.location.port === "5009") {
+      return `${window.location.protocol}//${window.location.hostname}:5008`;
+    }
+    return "/CriptoBendicion/don_api";
+  }
+
+  const DON_API_BASE = resolveDonApiBase();
 
   const adminUserId = localStorage.getItem("user_id");
   if (!adminUserId) {

@@ -10,7 +10,7 @@ app = Flask(__name__)
 def api_create_staking():
     data = request.json
 
-    required = ["user_id", "wallet", "amount", "days"]
+    required = ["user_id", "wallet", "amount", "days", "transfer_tx_id"]
     if not all(k in data for k in required):
         return jsonify({"error": "Faltan parámetros"}), 400
 
@@ -19,7 +19,8 @@ def api_create_staking():
             user_id=data["user_id"],
             wallet_address=data["wallet"],
             amount=float(data["amount"]),
-            days=int(data["days"])
+            days=int(data["days"]),
+            transfer_tx_id=data["transfer_tx_id"]
         )
         return jsonify(result)
 

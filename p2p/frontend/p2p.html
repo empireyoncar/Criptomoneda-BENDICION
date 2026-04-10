@@ -206,6 +206,10 @@
     return toFixedHex(sig.r, 64) + toFixedHex(sig.s, 64);
   }
 
+  function buildEscrowTxId(metadata) {
+    return CryptoJS.SHA256(canonicalJson(metadata)).toString();
+  }
+
   async function buildSignedEscrowPayload(walletAddress, escrowAmount, metadata) {
     const privateKey = getPrivateKeyForSigning(walletAddress);
     if (!privateKey) {
@@ -218,18 +222,22 @@
     }
 
     const nonce = await getWalletNonce(walletAddress);
+    const txId = buildEscrowTxId(metadata || {});
     const txToSign = {
       amount: Number(escrowAmount),
       from: walletAddress,
       metadata: metadata || {},
       nonce,
       to: ESCROW_WALLET,
+      tx_id: txId,
     };
 
     return {
       public_key: publicKeyHex,
       signature: signTxPayload(privateKey, txToSign),
       nonce,
+      tx_id: txId,
+      metadata: metadata || {},
       wallet_address: walletAddress,
     };
   }
@@ -369,19 +377,22 @@
 
     if (payload.side === "sell") {
       try {
+        const escrowMetadata = {
+          source: "p2p_create_offer_sell",
+          offer_creator_id: userId,
+          amount: Number(payload.amount_total),
+          asset: "BEN",
+        };
         const signed = await buildSignedEscrowPayload(
           walletAddress,
           payload.amount_total,
-          {
-            source: "p2p_create_offer_sell",
-            user_id: userId,
-            amount: Number(payload.amount_total),
-            asset: "BEN",
-          }
+          escrowMetadata
         );
         payload.public_key = signed.public_key;
         payload.signature = signed.signature;
         payload.nonce = signed.nonce;
+        payload.tx_id = signed.tx_id;
+        payload.metadata = signed.metadata;
       } catch (err) {
         alert(err.message || err);
         return;
@@ -427,21 +438,25 @@
 
     if (offer.side === "buy") {
       try {
+        const escrowMetadata = {
+          source: "p2p_take_offer_buy",
+          offer_id: offerId,
+          seller_id: userId,
+          taker_user_id: userId,
+          amount: Number(amountValue),
+          asset: "BEN",
+        };
         const signed = await buildSignedEscrowPayload(
           walletAddress,
           amountValue,
-          {
-            source: "p2p_take_offer_buy",
-            offer_id: offerId,
-            taker_user_id: userId,
-            amount: Number(amountValue),
-            asset: "BEN",
-          }
+          escrowMetadata
         );
         payload.seller_wallet = signed.wallet_address;
         payload.public_key = signed.public_key;
         payload.signature = signed.signature;
         payload.nonce = signed.nonce;
+        payload.tx_id = signed.tx_id;
+        payload.metadata = signed.metadata;
       } catch (err) {
         alert(err.message || err);
         return;

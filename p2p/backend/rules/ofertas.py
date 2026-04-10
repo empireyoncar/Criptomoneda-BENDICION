@@ -20,6 +20,12 @@ def require_positive_integer_amount(value: Any, field_name: str) -> int:
     return int(amount)
 
 
+def _ensure_dict(value: Any, field_name: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError(f"{field_name} debe ser un objeto JSON")
+    return value
+
+
 def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
     user_id = require_non_empty(payload.get("user_id", ""), "user_id")
     side = require_non_empty(payload.get("side", ""), "side").lower()
@@ -64,13 +70,17 @@ def create_offer(payload: dict[str, Any]) -> dict[str, Any]:
 
     # En ofertas de venta, bloqueamos el saldo en escrow desde el inicio.
     if side == "sell":
-        hold_metadata = {
-            "source": "p2p_create_offer_sell",
-            "offer_creator_id": user_id,
-            "amount": float(amount_total),
-            "asset": ASSET_CODE,
-        }
-        hold_tx_id = sha256(json.dumps(hold_metadata, sort_keys=True).encode()).hexdigest()
+        hold_metadata = _ensure_dict(payload.get("metadata"), "metadata")
+        hold_tx_id = require_non_empty(payload.get("tx_id", ""), "tx_id")
+
+        if hold_metadata.get("source") != "p2p_create_offer_sell":
+            raise ValueError("metadata.source invalido para crear oferta de venta")
+        if str(hold_metadata.get("offer_creator_id", "")) != user_id:
+            raise ValueError("metadata.offer_creator_id no coincide con user_id")
+        if str(hold_metadata.get("asset", "")).upper() != ASSET_CODE:
+            raise ValueError("metadata.asset invalido")
+        if require_positive_integer_amount(hold_metadata.get("amount"), "metadata.amount") != amount_total:
+            raise ValueError("metadata.amount no coincide con amount_total")
 
         signer_public_key = require_non_empty(payload.get("public_key", ""), "public_key")
         signer_signature = require_non_empty(payload.get("signature", ""), "signature")
@@ -148,24 +158,30 @@ def take_offer(offer_id: str, taker_user_id: str, amount: float, current_wallet:
         signer_public_key = signer_payload.get("public_key")
         signer_signature = signer_payload.get("signature")
         signer_nonce = signer_payload.get("nonce")
-        if not signer_public_key or not signer_signature or signer_nonce is None:
-            raise ValueError("Faltan public_key, signature o nonce para bloquear saldo")
+        hold_tx_id = signer_payload.get("tx_id")
+        hold_metadata = signer_payload.get("metadata")
+        if not signer_public_key or not signer_signature or signer_nonce is None or not hold_tx_id:
+            raise ValueError("Faltan public_key, signature, nonce o tx_id para bloquear saldo")
 
-        hold_metadata = {
-            "source": "p2p_take_offer_buy",
-            "offer_id": offer_id,
-            "seller_id": seller_id,
-            "taker_user_id": taker_user_id,
-            "amount": float(amount),
-            "asset": ASSET_CODE,
-        }
-        hold_tx_id = sha256(json.dumps(hold_metadata, sort_keys=True).encode()).hexdigest()
+        hold_metadata = _ensure_dict(hold_metadata, "metadata")
+        if hold_metadata.get("source") != "p2p_take_offer_buy":
+            raise ValueError("metadata.source invalido para tomar oferta de compra")
+        if str(hold_metadata.get("offer_id", "")) != offer_id:
+            raise ValueError("metadata.offer_id no coincide")
+        if str(hold_metadata.get("seller_id", "")) != seller_id:
+            raise ValueError("metadata.seller_id no coincide")
+        if str(hold_metadata.get("taker_user_id", "")) != taker_user_id:
+            raise ValueError("metadata.taker_user_id no coincide")
+        if str(hold_metadata.get("asset", "")).upper() != ASSET_CODE:
+            raise ValueError("metadata.asset invalido")
+        if require_positive_integer_amount(hold_metadata.get("amount"), "metadata.amount") != amount:
+            raise ValueError("metadata.amount no coincide con amount")
 
         try:
             hold_in_escrow(
                 from_wallet=str(seller_wallet),
                 amount=amount,
-                tx_id=hold_tx_id,
+                tx_id=str(hold_tx_id),
                 metadata=hold_metadata,
                 public_key=str(signer_public_key),
                 signature=str(signer_signature),

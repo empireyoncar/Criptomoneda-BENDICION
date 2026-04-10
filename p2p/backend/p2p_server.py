@@ -101,6 +101,8 @@ def api_take_offer():
             "public_key": payload.get("public_key"),
             "signature": payload.get("signature"),
             "nonce": payload.get("nonce"),
+            "tx_id": payload.get("tx_id"),
+            "metadata": payload.get("metadata"),
         }
 
         order = p2p.take_offer(

@@ -280,6 +280,55 @@
         alertBox.style.display = "block";
     }
 
+    function canonicalJson(obj) {
+        const ordered = Object.keys(obj).sort().reduce((acc, key) => {
+            acc[key] = obj[key];
+            return acc;
+        }, {});
+        return JSON.stringify(ordered);
+    }
+
+    function toFixedHex(value, length) {
+        return value.toString(16).padStart(length, "0");
+    }
+
+    function signTxPayload(privateKeyHex, payload) {
+        const ec = new elliptic.ec("secp256k1");
+        const key = ec.keyFromPrivate(privateKeyHex, "hex");
+        const hashHex = CryptoJS.SHA256(canonicalJson(payload)).toString();
+        const sig = key.sign(hashHex, { canonical: true });
+        return toFixedHex(sig.r, 64) + toFixedHex(sig.s, 64);
+    }
+
+    async function getCurrentNonce(senderAddress) {
+        const nonceRes = await fetch(`${API}/wallet/${senderAddress}/nonce`);
+        if (!nonceRes.ok) {
+            throw new Error(`No se pudo obtener nonce (${nonceRes.status})`);
+        }
+        const nonceData = await nonceRes.json();
+        return Number(nonceData.nonce);
+    }
+
+    function getPrivateKeyForSigning() {
+        const key = sessionStorage.getItem("tx_private_key");
+        if (key) {
+            return key;
+        }
+
+        const entered = prompt("Introduce tu clave privada HEX para firmar la transacción:");
+        if (!entered) {
+            return null;
+        }
+
+        const normalized = entered.trim().toLowerCase();
+        if (!/^[0-9a-f]{64}$/.test(normalized)) {
+            throw new Error("La clave privada debe tener 64 caracteres hex.");
+        }
+
+        sessionStorage.setItem("tx_private_key", normalized);
+        return normalized;
+    }
+
     // Seguridad: exigir login y wallet
     let userId = localStorage.getItem("user_id");
     if (!userId) {
@@ -288,7 +337,7 @@
     } else {
         document.getElementById("userId").textContent = userId;
     }
-    
+
     const address = localStorage.getItem("address");
     const publicKey = localStorage.getItem("public_key");
 
@@ -313,20 +362,39 @@
     };
 
   // ============================================================
-//  ENVIAR TRANSACCIÓN SIN FIRMA (MODO SIMPLE)
+//  ENVIAR TRANSACCIÓN FIRMADA (SECP256K1)
 // ============================================================
 document.getElementById("btnSend").onclick = async () => {
     const toAddress = document.getElementById("toAddress").value.trim();
-    const amount = parseFloat(document.getElementById("amount").value);
+    const amount = Number(document.getElementById("amount").value);
 
-    if (!toAddress || !amount || amount <= 0) {
-        showAlert("Completa los campos con un monto válido.", "error");
+    if (!toAddress || !Number.isFinite(amount) || amount <= 0 || !Number.isInteger(amount)) {
+        showAlert("El monto debe ser un entero positivo (en satichis).", "error");
         return;
     }
 
-    const tx = { from: address, to: toAddress, amount };
-
     try {
+        const privateKeyHex = getPrivateKeyForSigning();
+        if (!privateKeyHex) {
+            showAlert("Firma cancelada por el usuario.", "error");
+            return;
+        }
+
+        const nonce = await getCurrentNonce(address);
+        const txPayload = {
+            from: address,
+            to: toAddress,
+            amount: amount,
+            nonce: nonce,
+        };
+
+        const signature = signTxPayload(privateKeyHex, txPayload);
+        const tx = {
+            ...txPayload,
+            public_key: publicKey,
+            signature: signature,
+        };
+
         const res = await fetch(`${API}/send_tx`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -337,14 +405,14 @@ document.getElementById("btnSend").onclick = async () => {
         document.getElementById("sendResult").textContent = JSON.stringify(data, null, 2);
 
         if (!data.error) {
-            showAlert("Transacción enviada con éxito.", "success");
+            showAlert("Transacción firmada y enviada con éxito.", "success");
         } else {
             showAlert(data.error, "error");
         }
 
     } catch (err) {
         console.error(err);
-        showAlert("Error al enviar la transacción.", "error");
+        showAlert("Error al enviar la transacción: " + (err.message || err), "error");
     }
 };
 

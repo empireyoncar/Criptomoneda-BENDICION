@@ -8,7 +8,7 @@ import threading
 import time
 from typing import Any
 
-from ecdsa import BadSignatureError, SigningKey, VerifyingKey
+from ecdsa import BadSignatureError, SECP256k1, SigningKey, VerifyingKey
 
 _NONCE_TTL_SECONDS = 600
 _nonce_store: dict[str, float] = {}
@@ -28,7 +28,11 @@ def firmar_transaccion(tx_data: dict[str, Any], private_key: str) -> str:
         raise ValueError("private_key must be a non-empty PEM string")
 
     try:
-        sk = SigningKey.from_pem(private_key)
+        try:
+            sk = SigningKey.from_pem(private_key)
+        except Exception:
+            # Backward compatibility: wallet module stores raw secp256k1 hex keys.
+            sk = SigningKey.from_string(bytes.fromhex(private_key), curve=SECP256k1)
         signature = sk.sign(_canonical_json(tx_data))
         return signature.hex()
     except Exception as exc:  # pragma: no cover
@@ -43,7 +47,11 @@ def verificar_firma(tx_data: dict[str, Any], firma: str, public_key: str) -> boo
         return False
 
     try:
-        vk = VerifyingKey.from_pem(public_key)
+        try:
+            vk = VerifyingKey.from_pem(public_key)
+        except Exception:
+            # Backward compatibility: wallet module stores raw secp256k1 hex keys.
+            vk = VerifyingKey.from_string(bytes.fromhex(public_key), curve=SECP256k1)
         return vk.verify(bytes.fromhex(firma), _canonical_json(tx_data))
     except (BadSignatureError, ValueError):
         return False

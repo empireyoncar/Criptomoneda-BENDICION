@@ -160,7 +160,8 @@
 
     <section class="card">
         <h2>Navegación</h2>
-        <p>ir panel principal</p>
+        <p>Ir al panel principal o al dashboard de staking</p>
+        <button id="btnGoDashboardStaking" class="btn btn-primary">Ir a Dashboard Staking</button>
         <button id="btnGohome" class="btn btn-primary">Volver a Home</button>
     </section>
 
@@ -455,6 +456,10 @@ document.getElementById("btnStake").onclick = async () => {
 // -------------------------
 document.getElementById("btnGohome").onclick = () => {
     window.location.href = "/CriptoBendicion/home";
+};
+
+document.getElementById("btnGoDashboardStaking").onclick = () => {
+    window.location.href = "/CriptoBendicion/staking/dashboard";
 };
 </script>
 

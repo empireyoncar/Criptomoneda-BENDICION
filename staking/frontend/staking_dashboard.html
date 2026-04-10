@@ -167,23 +167,38 @@
         .page-links {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-            margin: 18px 0 20px;
+            gap: 14px;
+            margin: 18px 0 22px;
         }
 
         .page-link {
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid var(--line);
-            background: rgba(255, 255, 255, 0.03);
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(240, 185, 11, 0.35);
+            background: linear-gradient(135deg, rgba(240, 185, 11, 0.14), rgba(240, 185, 11, 0.03));
             text-decoration: none;
             color: var(--text);
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
         }
 
         .page-link strong {
             display: block;
             color: var(--gold);
             margin-bottom: 6px;
+            font-size: 15px;
+            letter-spacing: 0.02em;
+        }
+
+        .page-link span {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .page-link:hover {
+            transform: translateY(-2px);
+            border-color: var(--gold);
+            box-shadow: 0 8px 26px rgba(240, 185, 11, 0.2);
         }
 
         #toast {
@@ -271,20 +286,20 @@
 
     <section class="page-links">
         <a class="page-link" href="/CriptoBendicion/staking/stake_activos">
-            <strong>stake_activos.html</strong>
-            Vista centrada en stakes abiertos, progreso y capital bloqueado.
+            <strong>Stakes Activos</strong>
+            <span>Vista centrada en stakes abiertos, progreso y capital bloqueado.</span>
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/historial">
-            <strong>historial.html</strong>
-            Cierres, cancelaciones y recompensas historicas.
+            <strong>Historial</strong>
+            <span>Cierres, cancelaciones y recompensas historicas.</span>
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/radar_rapido">
-            <strong>radar_rapido.html</strong>
-            Lectura ejecutiva del estado general del usuario.
+            <strong>Radar Rapido</strong>
+            <span>Lectura ejecutiva del estado general del usuario.</span>
         </a>
         <a class="page-link" href="/CriptoBendicion/staking/calendario_salida">
-            <strong>calendario_salida.html</strong>
-            Orden temporal de liberacion para planificar liquidez.
+            <strong>Calendario de Salida</strong>
+            <span>Orden temporal de liberacion para planificar liquidez.</span>
         </a>
     </section>
 </div>

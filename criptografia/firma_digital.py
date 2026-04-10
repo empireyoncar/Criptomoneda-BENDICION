@@ -10,6 +10,7 @@ from typing import Any
 from hashlib import sha256
 
 from ecdsa import BadSignatureError, SECP256k1, SigningKey, VerifyingKey
+from ecdsa.util import sigdecode_der
 
 _NONCE_TTL_SECONDS = 600
 _nonce_store: dict[str, float] = {}
@@ -55,15 +56,36 @@ def verificar_firma(tx_data: dict[str, Any], firma: str, public_key: str) -> boo
             vk = VerifyingKey.from_string(bytes.fromhex(public_key), curve=SECP256k1)
         signature_bytes = bytes.fromhex(firma)
         payload_bytes = _canonical_json(tx_data)
-
-        # Preferred path: frontend signs SHA256(payload) digest.
         digest = sha256(payload_bytes).digest()
-        if vk.verify_digest(signature_bytes, digest):
-            return True
 
-        # Legacy compatibility: old code signs raw canonical payload bytes.
-        return vk.verify(signature_bytes, payload_bytes)
-    except (BadSignatureError, ValueError):
+        # 1) Current frontend: signs SHA256(payload), raw r||s.
+        try:
+            if vk.verify_digest(signature_bytes, digest):
+                return True
+        except (BadSignatureError, ValueError):
+            pass
+
+        # 2) Variant: signs SHA256(payload), DER encoded signature.
+        try:
+            if vk.verify_digest(signature_bytes, digest, sigdecode=sigdecode_der):
+                return True
+        except (BadSignatureError, ValueError):
+            pass
+
+        # 3) Legacy: signs raw canonical payload, raw r||s.
+        try:
+            if vk.verify(signature_bytes, payload_bytes):
+                return True
+        except (BadSignatureError, ValueError):
+            pass
+
+        # 4) Legacy variant: signs raw canonical payload, DER signature.
+        try:
+            if vk.verify(signature_bytes, payload_bytes, sigdecode=sigdecode_der):
+                return True
+        except (BadSignatureError, ValueError):
+            pass
+
         return False
     except Exception:
         return False

@@ -368,7 +368,7 @@ document.getElementById("btnCreateWallet").onclick = async () => {
         const wallet = await res.json();
 
         if (wallet.error) {
-            showAlert("Error al crear wallet.");
+            showAlert("Error al crear wallet: " + wallet.error);
             return;
         }
 
@@ -380,7 +380,7 @@ document.getElementById("btnCreateWallet").onclick = async () => {
 
     } catch (err) {
         console.error(err);
-        showAlert("Error al crear wallet.");
+        showAlert("Error al crear wallet: " + (err.message || err));
     }
 };
 

@@ -47,6 +47,10 @@ def api_generate_wallet():
         wallet = create_wallet_for_user(user_id)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 409
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).exception("Error inesperado al crear wallet para %s", user_id)
+        return jsonify({"error": f"Error interno del servidor: {exc}"}), 500
 
     return jsonify({
         "address": wallet["address"],

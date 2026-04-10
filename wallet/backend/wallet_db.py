@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import os
+import time
+import logging
 from contextlib import contextmanager
 from typing import Any, Iterator
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+logger = logging.getLogger(__name__)
 
 
 def _env(name: str, default: str | None = None) -> str:
@@ -59,15 +63,23 @@ def run_execute(query: str, params: tuple[Any, ...] = ()) -> int:
 
 
 def ensure_schema() -> None:
-    """Create wallet tables when they do not exist yet."""
-    run_execute(
-        """
-        CREATE TABLE IF NOT EXISTS wallets (
-            id SERIAL PRIMARY KEY,
-            user_id VARCHAR(255) NOT NULL UNIQUE,
-            address VARCHAR(255) NOT NULL UNIQUE,
-            public_key TEXT NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )
-        """
-    )
+    """Create wallet tables when they do not exist yet. Retries on startup."""
+    for attempt in range(1, 11):
+        try:
+            run_execute(
+                """
+                CREATE TABLE IF NOT EXISTS wallets (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL UNIQUE,
+                    address VARCHAR(255) NOT NULL UNIQUE,
+                    public_key TEXT NOT NULL,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            return
+        except Exception as exc:
+            logger.warning("ensure_schema attempt %d/10 failed: %s", attempt, exc)
+            if attempt == 10:
+                raise
+            time.sleep(3)

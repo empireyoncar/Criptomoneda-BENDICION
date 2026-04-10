@@ -273,9 +273,19 @@
     /* 🟦 ESTADO GENERAL */
     document.getElementById("btnStatus").onclick = async () => {
         try {
-            const chain = await (await fetch(`${API}/chain`)).json();
-            const pending = await (await fetch(`${API}/pending`)).json();
-            const valid = await (await fetch(`${API}/validate`)).json();
+            const [chainRes, pendingRes, validRes] = await Promise.all([
+                fetch(`${API}/chain`),
+                fetch(`${API}/pending`),
+                fetch(`${API}/validate`)
+            ]);
+
+            if (!chainRes.ok) throw new Error(`/chain respondió ${chainRes.status}`);
+            if (!pendingRes.ok) throw new Error(`/pending respondió ${pendingRes.status}`);
+            if (!validRes.ok) throw new Error(`/validate respondió ${validRes.status}`);
+
+            const chain = await chainRes.json();
+            const pending = await pendingRes.json();
+            const valid = await validRes.json();
 
             const totalTx = chain.reduce((acc, b) => acc + b.transactions.length, 0);
 
@@ -287,7 +297,7 @@
             }, null, 2);
 
         } catch (err) {
-            showAlert("Error al obtener el estado general.");
+            showAlert("Error al obtener el estado general: " + err.message);
         }
     };
 

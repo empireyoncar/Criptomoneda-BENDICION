@@ -1,11 +1,15 @@
 import json
 import os
+import time
+import logging
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from wallet import generate_wallet
 from wallet_db import ensure_schema, run_execute, run_query
+
+logger = logging.getLogger(__name__)
 
 LEGACY_USERS_FILE = os.path.join("/app/database.json")
 LEGACY_WALLETS_FILE = os.path.join("/app/wallets.json")
@@ -18,14 +22,21 @@ def _users_db_config(name, default):
 
 
 def _get_users_connection():
-    return psycopg2.connect(
-        host=_users_db_config("USERS_DB_HOST", "localhost"),
-        port=int(_users_db_config("USERS_DB_PORT", "5546")),
-        dbname=_users_db_config("USERS_DB_NAME", "users_db"),
-        user=_users_db_config("USERS_DB_USER", "users_user"),
-        password=_users_db_config("USERS_DB_PASSWORD", "users_password"),
-        cursor_factory=RealDictCursor,
-    )
+    for attempt in range(1, 11):
+        try:
+            return psycopg2.connect(
+                host=_users_db_config("USERS_DB_HOST", "localhost"),
+                port=int(_users_db_config("USERS_DB_PORT", "5546")),
+                dbname=_users_db_config("USERS_DB_NAME", "users_db"),
+                user=_users_db_config("USERS_DB_USER", "users_user"),
+                password=_users_db_config("USERS_DB_PASSWORD", "users_password"),
+                cursor_factory=RealDictCursor,
+            )
+        except Exception as exc:
+            logger.warning("users_db connection attempt %d/10 failed: %s", attempt, exc)
+            if attempt == 10:
+                raise
+            time.sleep(3)
 
 
 def _migrate_legacy_users_if_needed():
@@ -196,7 +207,7 @@ def create_wallet_for_user(user_id):
         (str(user_id), wallet["address"], wallet["public_key_hex"]),
     )
 
-    # Guardar address en database.json
+    # Guardar address en users_db
     db = load_db()
     for u in db["users"]:
         if str(u["id"]) == str(user_id):
@@ -209,4 +220,7 @@ def create_wallet_for_user(user_id):
     return wallet
 
 
-migrate_legacy_wallets()
+try:
+    migrate_legacy_wallets()
+except Exception as exc:
+    logger.warning("migrate_legacy_wallets at startup failed (non-fatal): %s", exc)

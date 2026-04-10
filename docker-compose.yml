@@ -115,6 +115,7 @@ services:
     volumes:
       - ./wallet/backend:/app
       - ./usuarios/backend/database.json:/app/database.json
+      - ./wallet/backend/wallets.json:/app/wallets.json
     restart: always
     networks:
       - bendicion_net

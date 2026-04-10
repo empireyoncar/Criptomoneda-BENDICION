@@ -43,6 +43,8 @@ services:
     volumes:
       - ./backend:/app
     restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - p2p_net
     depends_on:
@@ -70,6 +72,8 @@ services:
       - ./backend:/app
       - ./frontend:/app/p2p/frontend
     restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - p2p_net
     depends_on:
@@ -98,6 +102,8 @@ services:
     volumes:
       - ./backend:/app
     restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - p2p_net
     depends_on:

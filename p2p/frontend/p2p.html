@@ -478,14 +478,16 @@
   }
 
   async function loadMyOffers() {
-    const res = await fetch(`${API}/orders/online?user_id=${encodeURIComponent(userId)}&role=seller&limit=50`);
+    const res = await fetch(`${API}/offers?asset=BEN&limit=200`);
     const data = await res.json();
     if (!res.ok) return;
 
     const body = document.getElementById("myOffersBody");
     body.innerHTML = "";
 
-    const offers = (data.offers || []).filter((o) => o.status === "active").slice(0, 10);
+    const offers = (data.offers || [])
+      .filter((o) => o && o.user_id === userId && o.status === "active")
+      .slice(0, 20);
     offers.forEach((o) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `

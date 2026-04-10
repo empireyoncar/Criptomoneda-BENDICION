@@ -167,6 +167,20 @@
           const orderId = btn.getAttribute("data-release");
           await post(`/orders/${orderId}/release`, {seller_id: userId});
           alert("Criptos liberados correctamente.");
+          
+          // Wait a moment for backend to update, then check if order is released
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          const res = await fetch(`${API}/orders/${orderId}`);
+          const data = await res.json();
+          if (res.ok && data.order) {
+            const order = data.order;
+            const isParticipant = order && (order.buyer_id === userId || order.seller_id === userId);
+            if (isParticipant && (order.status === "released" || order.status === "refunded" || order.status === "completed")) {
+              window.location.href = `/CriptoBendicion/p2p/calificacion/${orderId}`;
+              return;
+            }
+          }
+          
           await loadOrders();
         } catch (e) {
           alert(e.message);

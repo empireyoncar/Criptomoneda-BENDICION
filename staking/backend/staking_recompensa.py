@@ -1,41 +1,15 @@
-import json
-import os
 import time
 
 import staking_data
 import staking_payout  # ← Import directo, sin subprocess
-
-RECOMPENSAS_PATH = "/app/backend/staking_recompensa.json"
-
-if not os.path.exists(RECOMPENSAS_PATH):
-    with open(RECOMPENSAS_PATH, "w") as f:
-        json.dump([], f)
-
-
-def load_recompensas():
-    if not os.path.exists(RECOMPENSAS_PATH):
-        return []
-
-    with open(RECOMPENSAS_PATH, "r") as f:
-        content = f.read().strip()
-        if not content:
-            return []
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError:
-            return []
-
-
-def save_recompensas(data):
-    with open(RECOMPENSAS_PATH, "w") as f:
-        json.dump(data, f, indent=4)
+from staking_db import create_reward, list_rewards
 
 
 def procesar_recompensas():
     ahora = int(time.time())
 
     activos = staking_data.list_activos()
-    recompensas = load_recompensas()
+    recompensas = list_rewards()
     recompensas_existentes = {
         r.get("stake_id") for r in recompensas if r.get("stake_id")
     }
@@ -70,13 +44,11 @@ def procesar_recompensas():
             "status": "pending"
         }
 
-        recompensas.append(recompensa)
+        create_reward(recompensa)
         recompensas_existentes.add(stake_id)
         nuevos_registros += 1
         print(f"[OK] Staking finalizado: {stake_id} -> recompensa generada")
 
-    if nuevos_registros > 0:
-        save_recompensas(recompensas)
     print("Proceso de recompensas completado.")
 
     # 🔥 EJECUTAR payout de forma segura

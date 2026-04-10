@@ -88,6 +88,18 @@
             background: #3a414c;
         }
 
+        .top-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 14px;
+        }
+
+        .top-actions .btn {
+            width: auto;
+            margin-top: 0;
+            padding: 10px 16px;
+        }
+
         .result {
             margin-top: 20px;
             padding: 15px;
@@ -102,6 +114,9 @@
 <body>
 
 <div class="container">
+    <div class="top-actions">
+        <button class="btn btn-secondary" onclick="volverAdmin()">Volver al Admin central</button>
+    </div>
     <h1>Mint de Criptomonedas</h1>
     <p>Como administrador puedes crear nuevas monedas y asignarlas a cualquier wallet.</p>
     <p><strong>Admin ID:</strong> <span id="adminUserId"></span></p>
@@ -134,6 +149,10 @@
     }
 
     const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
+
+    function volverAdmin() {
+        window.location.href = "/CriptoBendicion/admin/";
+    }
 
     /* 🟩 CREAR TRANSACCIÓN DE MINT DIRECTO AL BLOCKCHAIN */
     async function mint() {

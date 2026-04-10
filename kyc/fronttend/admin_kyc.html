@@ -18,16 +18,21 @@
     .rejected { background:#b91c1c; }
     .step { border:1px solid #2b3139; border-radius:8px; padding:10px; margin-bottom:10px; }
     .actions { display:flex; gap:8px; margin-top:10px; }
+    .topbar { max-width:1220px; margin:0 auto 14px auto; display:flex; justify-content:space-between; align-items:center; }
     button { border:none; border-radius:8px; padding:9px 12px; font-weight:700; cursor:pointer; }
     .btn-ok { background:#16a34a; color:#fff; }
     .btn-no { background:#dc2626; color:#fff; }
+    .btn-back { background:#2b3139; color:#eaecef; }
     .muted { color:#9aa4af; font-size:12px; }
     textarea { width:100%; min-height:90px; background:#0f1115; color:#eaecef; border:1px solid #2b3139; border-radius:8px; padding:8px; }
     a.file { color:#f0b90b; text-decoration:none; }
   </style>
 </head>
 <body>
-  <h1>Panel Admin KYC</h1>
+  <div class="topbar">
+    <h1>Panel Admin KYC</h1>
+    <button class="btn-back" onclick="goCentralAdmin()">Volver al Admin central</button>
+  </div>
   <div class="wrap">
     <div class="panel">
       <h2>Solicitudes</h2>
@@ -63,6 +68,14 @@
   const API = "/CriptoBendicion/kyc_api";
   const adminId = localStorage.getItem("user_id") || "admin-local";
   let selectedUserId = "";
+
+  function goCentralAdmin() {
+    if (window.location.port === "5016") {
+      window.location.href = `${window.location.protocol}//${window.location.hostname}:5011/CriptoBendicion/admin/`;
+      return;
+    }
+    window.location.href = "/CriptoBendicion/admin/";
+  }
 
   function badge(status) {
     return `<span class="badge ${status || 'pending'}">${status || 'pending'}</span>`;

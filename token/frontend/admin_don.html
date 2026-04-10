@@ -128,9 +128,12 @@
 
 <nav style="background:#181a20; padding:10px 20px; border-bottom:1px solid #2b3139; display:flex; justify-content:space-between; align-items:center;">
   <span style="color:#9ea7b3; font-size:14px;">ID de usuario: <span id="user_id"></span></span>
-  <a href="/don/admin/history" style="text-decoration:none;">
-    <button style="width:auto; padding:10px 24px; font-size:14px;">📋 Ver Historial de Transacciones</button>
-  </a>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button id="btnBackAdmin" style="width:auto; padding:10px 24px; font-size:14px;">Volver al Admin central</button>
+    <a href="/don/admin/history" style="text-decoration:none;">
+      <button style="width:auto; padding:10px 24px; font-size:14px;">📋 Ver Historial de Transacciones</button>
+    </a>
+  </div>
 </nav>
 <div class="container">
 
@@ -238,6 +241,13 @@
 
   const DON_API_BASE = resolveDonApiBase();
 
+  function resolveCentralAdminUrl() {
+    if (window.location.port === "5009") {
+      return `${window.location.protocol}//${window.location.hostname}:5011/CriptoBendicion/admin/`;
+    }
+    return "/CriptoBendicion/admin/";
+  }
+
   const adminUserId = localStorage.getItem("user_id");
   if (!adminUserId) {
     alert("Debes iniciar sesión como administrador.");
@@ -245,6 +255,10 @@
   } else {
     document.getElementById("user_id").textContent = adminUserId;
   }
+
+  document.getElementById("btnBackAdmin").onclick = () => {
+    window.location.href = resolveCentralAdminUrl();
+  };
 
   // Cargar balance del usuario
     async function loadBalance() {

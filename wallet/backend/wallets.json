@@ -1,14 +1,3 @@
 {
-    "wallets": [
-        {
-            "user_id": "03a4061b-86a3-456b-b7f8-0d20632da61f",
-            "public_key": "7d11eaeb23127f56147bad34e5183a6701374f2a7e67c7617436186d3693e9fa644a0c32f4757f26fe005a5f747c2b6107bbeac8046a3ddd316b257c3a069e1e",
-            "address": "9bd470b918c77022a00892449d4b9345647620cab5a008ac86618585be6e0edf"
-        },
-        {
-            "user_id": "001",
-            "public_key": "a0d0bdb44a36826b982f7ff19d85fe4266f17c0a670d7108358ed5c5ade6ce3a2183a62529150fe52fc1db81e631fcb3c20620c0d8f3712d4e070f9a1508d98b",
-            "address": "bc1caf7ddb9d0f14e32e5806582efc561fa554661e5ac96235c52634b3b48c80"
-        }
-    ]
+    "wallets": []
 }

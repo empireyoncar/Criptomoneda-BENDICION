@@ -10,9 +10,7 @@
             "email": "admin@bendicion.com",
             "password": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
             "role": "admin",
-            "wallets": [
-                "bc1caf7ddb9d0f14e32e5806582efc561fa554661e5ac96235c52634b3b48c80"
-            ],
+            "wallets": [],
             "kyc": {
                 "id_document": {
                     "file": null,
@@ -42,9 +40,7 @@
             "email": "empireyoncar@gmail.com",
             "password": "536381998074f7cde72f9f0301366886e888324974c122744806486402eff28c",
             "role": "user",
-            "wallets": [
-                "9bd470b918c77022a00892449d4b9345647620cab5a008ac86618585be6e0edf"
-            ],
+            "wallets": [],
             "kyc": {
                 "id_document": {
                     "file": null,

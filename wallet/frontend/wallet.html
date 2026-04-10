@@ -401,7 +401,9 @@ document.getElementById("btnCreateWallet").onclick = async () => {
             const sha256 = (msg) => CryptoJS.SHA256(msg).toString();
 
             const key = ec.keyFromPrivate(priv.trim(), "hex");
-            const publicKey = key.getPublic("hex");
+            // Raw 64-byte format (x+y without "04" prefix) to match server's vk.to_string().hex()
+            const pub = key.getPublic();
+            const publicKey = pub.getX().toString(16).padStart(64, "0") + pub.getY().toString(16).padStart(64, "0");
             const address = sha256(publicKey);
 
             activePrivateKey = priv.trim();

@@ -248,6 +248,7 @@
         <section class="card">
             <h2>Navegación</h2>
              <button id="btnGohome" class="btn btn-secondary">Volver a Home</button>
+             <button id="btnClearKey" class="btn btn-warning" style="margin-top:8px">Borrar clave de firma guardada</button>
         </section>
 
     </div>
@@ -431,6 +432,12 @@ document.getElementById("btnSend").onclick = async () => {
     // Navegación
     document.getElementById("btnGohome").onclick = () => {
         window.location.href = "/CriptoBendicion/home";
+    };
+
+    // Borrar clave de firma de sessionStorage
+    document.getElementById("btnClearKey").onclick = () => {
+        sessionStorage.removeItem("tx_private_key");
+        showAlert("Clave de firma borrada. La próxima transacción te pedirá la clave de nuevo.", "success");
     };
 </script>
 

@@ -7,6 +7,15 @@ from don_value import get_don_value, set_don_value
 app = Flask(__name__)
 CORS(app)
 
+
+def _json_payload():
+    data = request.get_json(silent=True)
+    return data if isinstance(data, dict) else {}
+
+
+def _missing_fields(data, required):
+    return [field for field in required if field not in data]
+
 # ============================
 #   ENDPOINTS TOKEN DON
 # ============================
@@ -36,23 +45,41 @@ def history():
 
 @app.route("/don/add", methods=["POST"])
 def add():
-    data = request.json
+    data = _json_payload()
+    missing = _missing_fields(data, ["user_id", "amount"])
+    if missing:
+        return jsonify({"error": f"Faltan campos: {', '.join(missing)}"}), 400
+
     tx_id = don.add(data["user_id"], data["amount"], metadata=data.get("metadata"))
+    if not tx_id:
+        return jsonify({"error": "No se pudo emitir DON. Verifica el monto."}), 400
     return jsonify({"status": "ok", "tx_id": tx_id})
 
 
 @app.route("/don/transfer", methods=["POST"])
 def transfer():
-    data = request.json
+    data = _json_payload()
+    missing = _missing_fields(data, ["from_user", "to_user", "amount"])
+    if missing:
+        return jsonify({"error": f"Faltan campos: {', '.join(missing)}"}), 400
+
     ok, tx_id = don.transfer(data["from_user"], data["to_user"], data["amount"], metadata=data.get("metadata"))
-    return jsonify({"success": ok, "tx_id": tx_id})
+    if not ok:
+        return jsonify({"success": False, "tx_id": None, "error": "Saldo insuficiente o monto inválido"}), 400
+    return jsonify({"success": True, "tx_id": tx_id})
 
 
 @app.route("/don/burn", methods=["POST"])
 def burn():
-    data = request.json
+    data = _json_payload()
+    missing = _missing_fields(data, ["user_id", "amount"])
+    if missing:
+        return jsonify({"error": f"Faltan campos: {', '.join(missing)}"}), 400
+
     ok, tx_id = don.burn(data["user_id"], data["amount"], metadata=data.get("metadata"))
-    return jsonify({"success": ok, "tx_id": tx_id})
+    if not ok:
+        return jsonify({"success": False, "tx_id": None, "error": "Saldo insuficiente o monto inválido"}), 400
+    return jsonify({"success": True, "tx_id": tx_id})
 
 @app.route("/price", methods=["GET"])
 def price():
@@ -60,8 +87,11 @@ def price():
 
 @app.route("/price/update", methods=["POST"])
 def update_price():
-    data = request.json
-    new_value = float(data.get("don_value", 0))
+    data = _json_payload()
+    try:
+        new_value = float(data.get("don_value", 0))
+    except (TypeError, ValueError):
+        return jsonify({"error": "Valor inválido"}), 400
 
     if new_value <= 0:
         return jsonify({"error": "Valor inválido"}), 400

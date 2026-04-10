@@ -4,7 +4,8 @@ FROM python:3.10-slim
 WORKDIR /app
 
 # Dependencias Python del servicio
-RUN pip install --no-cache-dir Flask flask-cors jinja2 waitress
+COPY requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Exponer puertos
 EXPOSE 5008

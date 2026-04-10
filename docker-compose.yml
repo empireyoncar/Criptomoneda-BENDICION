@@ -78,6 +78,31 @@ services:
       retries: 10
 
   # ============================================================
+  # BASE DE DATOS DE DON (POSTGRESQL)
+  # Puerto: 5548
+  # ============================================================
+  don_db:
+    image: postgres:16
+    command: postgres -p 5548
+    environment:
+      POSTGRES_DB: don_db
+      POSTGRES_USER: don_user
+      POSTGRES_PASSWORD: don_password
+    ports:
+      - "5548:5548"
+    volumes:
+      - don_postgres_data:/var/lib/postgresql/data
+      - ./token/backend/don_schema.sql:/docker-entrypoint-initdb.d/01_don_schema.sql:ro
+    restart: always
+    networks:
+      - bendicion_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U don_user -d don_db -p 5548"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ============================================================
   # BACKEND DE USUARIOS (API)
   # Puerto: 5001
   # ============================================================
@@ -248,6 +273,12 @@ services:
   don_api:
     build: ./token/backend
     command: python don_server.py
+    environment:
+      DON_DB_HOST: don_db
+      DON_DB_PORT: 5548
+      DON_DB_NAME: don_db
+      DON_DB_USER: don_user
+      DON_DB_PASSWORD: don_password
     ports:
       - "5008:5008"
     volumes:
@@ -255,6 +286,9 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      don_db:
+        condition: service_healthy
 
   # ============================================================
   # DON (WEB)
@@ -374,3 +408,4 @@ volumes:
   wallet_postgres_data:
   users_postgres_data:
   staking_postgres_data:
+  don_postgres_data:

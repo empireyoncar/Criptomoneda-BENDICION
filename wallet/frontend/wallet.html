@@ -243,11 +243,42 @@
 <!-- SCRIPT CONECTADO AL BACKEND -->
 <script>
     
-const API = "https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api"; // Cambia si usas dominio
+function resolveWalletApiBase() {
+    const host = window.location.hostname;
+    const port = window.location.port;
+
+    // Accessing wallet web directly on 5003 -> wallet API lives on 5002.
+    if (port === "5003") {
+        return `${window.location.protocol}//${host}:5002`;
+    }
+
+    // Behind reverse proxy / public domain.
+    return "/CriptoBendicion/wallet_api";
+}
+
+const API = resolveWalletApiBase();
 let activePrivateKey = null;
 
 function showAlert(msg) {
     alert(msg);
+}
+
+async function parseJsonResponse(response, fallbackMessage) {
+    const rawText = await response.text();
+
+    if (!rawText) {
+        if (!response.ok) {
+            throw new Error(fallbackMessage);
+        }
+        return {};
+    }
+
+    try {
+        return JSON.parse(rawText);
+    } catch {
+        const preview = rawText.slice(0, 120).replace(/\s+/g, " ").trim();
+        throw new Error(`${fallbackMessage}. Respuesta no JSON: ${preview}`);
+    }
 }
 
 function renderWallet(wallet) {
@@ -317,7 +348,7 @@ if (!userId) {
 document.getElementById("btnLoadWallet").onclick = async () => {
     try {
         const res = await fetch(`${API}/user_wallet/${userId}`);
-        const data = await res.json();
+        const data = await parseJsonResponse(res, "No se pudo consultar wallet del usuario");
 
         if (!data.wallet) {
             showAlert("No tienes wallet asociada. Crea una nueva.");
@@ -327,7 +358,7 @@ document.getElementById("btnLoadWallet").onclick = async () => {
         const address = data.wallet;
 
         const res2 = await fetch(`${API}/wallet_info/${address}`);
-        const wallet = await res2.json();
+        const wallet = await parseJsonResponse(res2, "No se pudo cargar la informacion de la wallet");
 
         if (wallet.error) {
             showAlert("No se encontró la wallet en el servidor.");
@@ -352,7 +383,7 @@ document.getElementById("btnLoadWallet").onclick = async () => {
 document.getElementById("btnCreateWallet").onclick = async () => {
     try {
         const resCheck = await fetch(`${API}/user_wallet/${userId}`);
-        const check = await resCheck.json();
+        const check = await parseJsonResponse(resCheck, "No se pudo validar si ya tienes wallet");
 
         if (check.wallet) {
             showAlert("Ya tienes una wallet asociada.");
@@ -365,7 +396,7 @@ document.getElementById("btnCreateWallet").onclick = async () => {
             body: JSON.stringify({ user_id: userId })
         });
 
-        const wallet = await res.json();
+        const wallet = await parseJsonResponse(res, "Error al crear wallet");
 
         if (wallet.error) {
             showAlert("Error al crear wallet: " + wallet.error);

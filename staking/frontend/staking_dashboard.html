@@ -5,331 +5,721 @@
     <title>Dashboard de Staking - Bendición</title>
 
     <style>
-        body {
-            background: #0b0e11;
-            color: #eaecef;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+        :root {
+            --bg: #0a0d10;
+            --panel: rgba(19, 24, 30, 0.9);
+            --text: #eef2f6;
+            --muted: #95a1ad;
+            --line: rgba(255, 255, 255, 0.08);
+            --gold: #f0b90b;
+            --green: #63d471;
+            --red: #ff6b6b;
+            --shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
         }
 
-        .header {
-            background: #181a20;
-            padding: 20px;
-            border-bottom: 2px solid #f0b90b;
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top right, rgba(240, 185, 11, 0.18), transparent 28%),
+                radial-gradient(circle at left center, rgba(90, 120, 255, 0.12), transparent 30%),
+                linear-gradient(180deg, #0a0d10 0%, #10151b 100%);
+            min-height: 100vh;
+        }
+
+        .shell {
+            width: min(1240px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 28px 0 40px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+
+        .hero-main {
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-main::after {
+            content: "";
+            position: absolute;
+            inset: auto -60px -80px auto;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(240, 185, 11, 0.28), transparent 65%);
+            pointer-events: none;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(240, 185, 11, 0.12);
+            color: var(--gold);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            margin: 16px 0 10px;
+            font-size: clamp(30px, 4vw, 44px);
+            line-height: 1.05;
+        }
+
+        .hero p {
+            margin: 0;
+            max-width: 640px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 22px;
+        }
+
+        .btn, .ghost-btn {
+            border: none;
+            border-radius: 14px;
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.2s ease, background 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--gold), #ffd86b);
+            color: #111;
+        }
+
+        .ghost-btn {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            border: 1px solid var(--line);
+        }
+
+        .btn:hover, .ghost-btn:hover { transform: translateY(-1px); }
+
+        .hero-side {
+            padding: 22px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .wallet-line {
+            display: grid;
+            gap: 6px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .wallet-line:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .label {
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .mono {
+            font-family: "Consolas", "Courier New", monospace;
+            word-break: break-all;
+        }
+
+        .value-strong {
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card { padding: 18px; }
+        .stat-card .value { margin-top: 10px; font-size: 30px; font-weight: 800; }
+        .stat-card .hint { margin-top: 8px; color: var(--muted); font-size: 13px; }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 0.9fr;
+            gap: 18px;
+        }
+
+        .section-card, .helper-card { padding: 22px; }
+
+        .section-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .section-head h2 { margin: 0; color: var(--gold); font-size: 22px; }
+        .section-subtitle { color: var(--muted); font-size: 14px; }
+
+        .empty-state {
+            padding: 24px;
+            border: 1px dashed var(--line);
+            border-radius: 18px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .stake-list { display: grid; gap: 14px; }
+
+        .stake-item {
+            padding: 18px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            border: 1px solid var(--line);
+        }
+
+        .stake-top {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            gap: 12px;
+            align-items: flex-start;
+            margin-bottom: 14px;
         }
 
-        .header h1 {
-            margin: 0;
-            color: #f0b90b;
+        .stake-title { font-size: 18px; font-weight: 800; }
+
+        .pill {
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
         }
 
-        .wallet-info {
-            text-align: right;
-            font-size: 14px;
+        .pill.active { background: rgba(99, 212, 113, 0.14); color: var(--green); }
+        .pill.finished { background: rgba(240, 185, 11, 0.14); color: var(--gold); }
+        .pill.cancelled { background: rgba(255, 107, 107, 0.14); color: var(--red); }
+
+        .mini-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 14px;
         }
 
-        .container {
-            padding: 25px;
-        }
-
-        .card {
-            background: #181a20;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.4);
-        }
-
-        h2 {
-            margin-top: 0;
-            color: #f0b90b;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        th, td {
+        .mini-cell {
             padding: 12px;
-            border-bottom: 1px solid #2b3139;
-            text-align: left;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        th {
-            color: #f0b90b;
-        }
+        .mini-cell .mini-value { font-size: 18px; font-weight: 800; margin-top: 6px; }
+
+        .progress-wrap { display: grid; gap: 8px; }
+        .progress-meta { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
 
         .progress-bar {
             width: 100%;
-            background: #2b3139;
-            border-radius: 6px;
-            height: 10px;
+            height: 12px;
+            border-radius: 999px;
             overflow: hidden;
+            background: rgba(255,255,255,0.07);
         }
 
         .progress {
             height: 100%;
-            background: #f0b90b;
-            width: 0%;
+            width: 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--gold), #ffe289);
+            transition: width 0.8s ease;
         }
 
-        button {
-            padding: 8px 12px;
-            background: #f0b90b;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+        .timeline { display: grid; gap: 12px; }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 10px 1fr;
+            gap: 12px;
+            align-items: start;
         }
 
-        button:hover {
-            background: #d9a20a;
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 6px;
+            background: var(--gold);
+            box-shadow: 0 0 0 6px rgba(240, 185, 11, 0.12);
         }
 
-        .btn-cancel {
-            background: #c0392b;
+        .timeline-body {
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--line);
         }
 
-        .btn-cancel:hover {
-            background: #992d22;
+        .timeline-body:last-child { border-bottom: none; padding-bottom: 0; }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
         }
+
+        .history-table th, .history-table td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--line);
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .history-table th {
+            color: var(--gold);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .helper-tip {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--line);
+        }
+
+        .helper-tip strong { display: block; margin-bottom: 6px; color: var(--gold); }
 
         #toast {
             position: fixed;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 14px 20px;
-            border-radius: 6px;
+            right: 20px;
+            bottom: 20px;
+            max-width: 360px;
+            padding: 14px 16px;
+            border-radius: 14px;
             display: none;
-            font-weight: bold;
+            font-weight: 700;
+            box-shadow: var(--shadow);
         }
 
-        .toast-ok {
-            background: #1f4b2c;
-            color: #a6f3c0;
+        .toast-ok { background: #143522; color: #baf3c3; }
+        .toast-err { background: #451a1a; color: #ffc1c1; }
+
+        @media (max-width: 1080px) {
+            .hero, .content-grid, .stats-grid { grid-template-columns: 1fr; }
+            .mini-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
-        .toast-err {
-            background: #4b1f1f;
-            color: #f3a6a6;
-        }
-
-        .new-stake-btn {
-            background: #f0b90b;
-            padding: 12px 18px;
-            border-radius: 8px;
-            font-size: 16px;
-            display: inline-block;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-
-        .new-stake-btn:hover {
-            background: #d9a20a;
+        @media (max-width: 720px) {
+            .shell { width: min(100% - 20px, 100%); }
+            .hero-main, .hero-side, .section-card, .helper-card, .stat-card { padding: 18px; }
+            .mini-grid { grid-template-columns: 1fr; }
+            .history-table { display: block; overflow-x: auto; }
         }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>Dashboard de Staking</h1>
+<div class="shell">
+    <section class="hero">
+        <div class="panel hero-main">
+            <div class="eyebrow">Panel de Rendimiento</div>
+            <h1>Tu staking, explicado de un vistazo.</h1>
+            <p>Revisa cuántos BEND tienes bloqueados, cuánto DON estimado generas y qué stakes están más cerca de liberarse.</p>
+            <div class="hero-actions">
+                <a href="/CriptoBendicion/staking/panelstaking" class="btn">Crear nuevo staking</a>
+                <button id="btnRefresh" class="ghost-btn">Actualizar panel</button>
+            </div>
+        </div>
 
-    <div class="wallet-info">
-        <div><b>Wallet:</b> <span id="walletAddress"></span></div>
-        <div><b>Saldo:</b> <span id="walletBalance"></span> BEND</div>
-        <div><b>Recompensas:</b> <span id="walletRewards"></span> DON</div>
-    </div>
-</div>
+        <div class="panel hero-side">
+            <div class="wallet-line">
+                <span class="label">Wallet activa</span>
+                <span id="walletAddress" class="mono"></span>
+            </div>
+            <div class="wallet-line">
+                <span class="label">Saldo disponible</span>
+                <span id="walletBalance" class="value-strong">0 BEND</span>
+            </div>
+            <div class="wallet-line">
+                <span class="label">Recompensas DON</span>
+                <span id="walletRewards" class="value-strong">0 DON</span>
+            </div>
+            <div class="wallet-line">
+                <span class="label">Próximo desbloqueo</span>
+                <span id="nextUnlock" class="value-strong">Sin stakes activos</span>
+            </div>
+        </div>
+    </section>
 
-<div class="container">
+    <section class="stats-grid">
+        <div class="panel stat-card">
+            <div class="label">Stakes activos</div>
+            <div id="statActiveCount" class="value">0</div>
+            <div class="hint">Posiciones que siguen generando rendimiento.</div>
+        </div>
+        <div class="panel stat-card">
+            <div class="label">BEND bloqueado</div>
+            <div id="statLockedBend" class="value">0</div>
+            <div class="hint">Capital actualmente comprometido en staking.</div>
+        </div>
+        <div class="panel stat-card">
+            <div class="label">DON estimado</div>
+            <div id="statProjectedDon" class="value">0</div>
+            <div class="hint">Recompensa total proyectada de tus stakes activos.</div>
+        </div>
+        <div class="panel stat-card">
+            <div class="label">DON acumulado</div>
+            <div id="statAccruedDon" class="value">0</div>
+            <div class="hint">Estimación proporcional según el avance actual.</div>
+        </div>
+    </section>
 
-    <a href="/CriptoBendicion/staking/panelstaking" class="new-stake-btn">+ Crear nuevo staking</a>
+    <section class="content-grid">
+        <div class="panel section-card">
+            <div class="section-head">
+                <div>
+                    <h2>Stakes activos</h2>
+                    <div class="section-subtitle">Cada posición muestra progreso, fecha de salida y recompensa esperada.</div>
+                </div>
+            </div>
+            <div id="activeStakes" class="stake-list"></div>
+        </div>
 
-    <!-- STAKES ACTIVOS -->
-    <div class="card">
-        <h2>Stakes Activos</h2>
-        <table id="activeStakesTable">
-            <thead>
-                <tr>
-                    <th>Monto</th>
-                    <th>APR</th>
-                    <th>Progreso</th>
-                    <th>Recompensa Acumulada</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+        <div style="display:grid; gap:18px;">
+            <div class="panel helper-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Radar rápido</h2>
+                        <div class="section-subtitle">Pistas útiles para tomar decisiones.</div>
+                    </div>
+                </div>
+                <div class="helper-tip">
+                    <strong>Próximo vencimiento</strong>
+                    <div id="tipNextMaturity">Aún no tienes stakes activos.</div>
+                </div>
+                <div class="helper-tip">
+                    <strong>Intensidad de bloqueo</strong>
+                    <div id="tipLockingRatio">Sin datos suficientes todavía.</div>
+                </div>
+                <div class="helper-tip">
+                    <strong>Observación operativa</strong>
+                    <div>Los BEND stakeados se transfieren a la wallet administrativa del sistema mientras la posición está activa.</div>
+                </div>
+            </div>
 
-    <!-- HISTORIAL -->
-    <div class="card">
-        <h2>Historial</h2>
-        <table id="historyTable">
-            <thead>
-                <tr>
-                    <th>Monto</th>
-                    <th>APR</th>
-                    <th>Recompensa Total</th>
-                    <th>Estado</th>
-                    <th>Fecha Final</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
+            <div class="panel helper-card">
+                <div class="section-head">
+                    <div>
+                        <h2>Calendario de salida</h2>
+                        <div class="section-subtitle">Qué stake vence antes y cuál después.</div>
+                    </div>
+                </div>
+                <div id="timeline" class="timeline"></div>
+            </div>
+        </div>
+    </section>
 
+    <section class="panel section-card" style="margin-top:20px;">
+        <div class="section-head">
+            <div>
+                <h2>Historial</h2>
+                <div class="section-subtitle">Cierres terminados o cancelados con sus fechas y recompensas.</div>
+            </div>
+        </div>
+        <div id="historyWrap"></div>
+    </section>
 </div>
 
 <div id="toast"></div>
 
 <script>
-/* -------------------------
-   TOAST
--------------------------- */
-function showToast(msg, type="ok") {
+const API_WALLET = "https://empireyoncar.duckdns.org/CriptoBendicion/wallet_api";
+const API_BLOCKCHAIN = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
+const API_STAKING = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api";
+const API_DON = "https://empireyoncar.duckdns.org/CriptoBendicion/don_api";
+
+function showToast(msg, type = "ok") {
     const toast = document.getElementById("toast");
     toast.textContent = msg;
     toast.className = type === "ok" ? "toast-ok" : "toast-err";
     toast.style.display = "block";
-    setTimeout(() => toast.style.display = "none", 3000);
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3200);
 }
 
-/* -------------------------
-   LOGIN + WALLET
--------------------------- */
 function getUserId() {
     return localStorage.getItem("user_id");
 }
 
-async function getUserWallet(userId) {
-    const res = await fetch(`https://empireyoncar.duckdns.org/user_wallet/${userId}`);
-    const data = await res.json();
-    return data.wallet; 
+function formatNumber(value, decimals = 0) {
+    return Number(value || 0).toLocaleString("es-ES", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+    });
+}
+
+function formatDate(isoLike) {
+    if (!isoLike) {
+        return "-";
+    }
+    return new Date(isoLike).toLocaleString("es-ES");
+}
+
+function formatDuration(endTimestamp) {
+    const remaining = Number(endTimestamp) - Math.floor(Date.now() / 1000);
+    if (remaining <= 0) {
+        return "Listo para cerrar";
+    }
+    const days = Math.floor(remaining / 86400);
+    const hours = Math.floor((remaining % 86400) / 3600);
+    if (days > 0) {
+        return `${days}d ${hours}h restantes`;
+    }
+    const minutes = Math.floor((remaining % 3600) / 60);
+    return `${hours}h ${minutes}m restantes`;
+}
+
+async function fetchJson(url, fallbackMessage) {
+    const res = await fetch(url);
+    const raw = await res.text();
+    let data = {};
+
+    if (raw) {
+        try {
+            data = JSON.parse(raw);
+        } catch {
+            throw new Error(`${fallbackMessage}: ${raw}`);
+        }
+    }
+
+    if (!res.ok) {
+        throw new Error(data.error || fallbackMessage);
+    }
+
+    return data;
 }
 
 async function initUser() {
     const userId = getUserId();
-    if (!userId) return null;
+    if (!userId) {
+        window.location.href = "/CriptoBendicion/login";
+        return null;
+    }
 
-    const wallet = await getUserWallet(userId);
-    if (!wallet) return null;
+    const data = await fetchJson(`${API_WALLET}/user_wallet/${userId}`, "No se pudo cargar la wallet del usuario");
+    if (!data.wallet) {
+        window.location.href = "/CriptoBendicion/wallet";
+        return null;
+    }
 
-    document.getElementById("walletAddress").textContent = wallet.address;
-
-    return { userId, address: wallet.address };
+    document.getElementById("walletAddress").textContent = data.wallet;
+    return { userId, address: data.wallet };
 }
 
-/* -------------------------
-   SALDO + RECOMPENSAS
--------------------------- */
 async function loadWalletInfo(address, userId) {
-    const res1 = await fetch(`https://empireyoncar.duckdns.org/wallet_info/${address}`);
-    const w = await res1.json();
-    document.getElementById("walletBalance").textContent = parseFloat(w.balance).toFixed(2);
+    const walletInfo = await fetchJson(`${API_BLOCKCHAIN}/wallet/${address}`, "No se pudo cargar el saldo BEND");
+    const donInfo = await fetchJson(`${API_DON}/don/balance/${userId}`, "No se pudo cargar el saldo DON");
 
-    const res2 = await fetch(`https://empireyoncar.duckdns.org/don/balance/${userId}`);
-    const d = await res2.json();
-    document.getElementById("walletRewards").textContent = parseFloat(d.balance).toFixed(4);
+    document.getElementById("walletBalance").textContent = `${formatNumber(walletInfo.balance, 0)} BEND`;
+    document.getElementById("walletRewards").textContent = `${formatNumber(donInfo.balance, 4)} DON`;
+
+    return { walletInfo, donInfo };
 }
 
-/* -------------------------
-   STAKES ACTIVOS
--------------------------- */
-async function loadActiveStakes(userId) {
-    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/user/${userId}`);
-    const data = await res.json();
+function renderTimeline(activeStakes) {
+    const timeline = document.getElementById("timeline");
+    timeline.innerHTML = "";
 
-    const tbody = document.querySelector("#activeStakesTable tbody");
-    tbody.innerHTML = "";
+    const sorted = [...activeStakes].sort((a, b) => a.end_timestamp - b.end_timestamp).slice(0, 4);
+    if (!sorted.length) {
+        timeline.innerHTML = '<div class="empty-state">Cuando tengas stakes activos aparecerán aquí ordenados por vencimiento.</div>';
+        return;
+    }
 
-    data.stakes.forEach(stake => {
-        const start = new Date(stake.start_date);
-        const end = new Date(stake.end_date);
-        const now = new Date();
-        const progress = Math.min(100, ((now - start) / (end - start)) * 100);
+    sorted.forEach((stake) => {
+        const item = document.createElement("div");
+        item.className = "timeline-item";
+        item.innerHTML = `
+            <div class="timeline-dot"></div>
+            <div class="timeline-body">
+                <div style="font-weight:800; margin-bottom:4px;">${formatNumber(stake.amount, 0)} BEND · ${stake.days} días</div>
+                <div style="color:var(--muted); margin-bottom:6px;">Vence ${formatDate(stake.end_date)}</div>
+                <div style="font-size:13px; color:var(--text);">${formatDuration(stake.end_timestamp)} · DON total ${formatNumber(stake.reward_total, 4)}</div>
+            </div>
+        `;
+        timeline.appendChild(item);
+    });
+}
 
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${stake.amount}</td>
-            <td>${stake.days} días</td>
-            <td>
-                <div class="progress-bar">
-                    <div class="progress" style="width:${progress}%"></div>
+function renderStats(activeStakes, walletBalance) {
+    const activeCount = activeStakes.length;
+    const totalLocked = activeStakes.reduce((sum, stake) => sum + Number(stake.amount || 0), 0);
+    const totalProjected = activeStakes.reduce((sum, stake) => sum + Number(stake.reward_total || 0), 0);
+    const totalAccrued = activeStakes.reduce((sum, stake) => sum + Number(stake.reward_acumulada || 0), 0);
+    const nextStake = [...activeStakes].sort((a, b) => a.end_timestamp - b.end_timestamp)[0] || null;
+
+    document.getElementById("statActiveCount").textContent = formatNumber(activeCount, 0);
+    document.getElementById("statLockedBend").textContent = formatNumber(totalLocked, 0);
+    document.getElementById("statProjectedDon").textContent = formatNumber(totalProjected, 4);
+    document.getElementById("statAccruedDon").textContent = formatNumber(totalAccrued, 4);
+
+    document.getElementById("nextUnlock").textContent = nextStake ? formatDate(nextStake.end_date) : "Sin stakes activos";
+    document.getElementById("tipNextMaturity").textContent = nextStake
+        ? `El stake ${nextStake.stake_id.slice(0, 8)} vence ${formatDuration(nextStake.end_timestamp)}.`
+        : "No hay posiciones abiertas en este momento.";
+
+    const totalWallet = Number(walletBalance || 0) + totalLocked;
+    const ratio = totalWallet > 0 ? (totalLocked / totalWallet) * 100 : 0;
+    document.getElementById("tipLockingRatio").textContent = activeCount > 0
+        ? `${formatNumber(ratio, 2)}% de tu BEND total visible está comprometido en staking.`
+        : "Tu liquidez está completamente libre; aún no hay capital bloqueado.";
+
+    renderTimeline(activeStakes);
+}
+
+function renderActiveStakes(activeStakes) {
+    const container = document.getElementById("activeStakes");
+    container.innerHTML = "";
+
+    if (!activeStakes.length) {
+        container.innerHTML = '<div class="empty-state">Todavía no tienes stakes activos. Crea uno nuevo para empezar a generar DON.</div>';
+        return;
+    }
+
+    activeStakes.forEach((stake, index) => {
+        const card = document.createElement("article");
+        card.className = "stake-item";
+        card.innerHTML = `
+            <div class="stake-top">
+                <div>
+                    <div class="stake-title">Stake ${index + 1}: ${formatNumber(stake.amount, 0)} BEND</div>
+                    <div class="section-subtitle mono">${stake.stake_id}</div>
                 </div>
-            </td>
-            <td>${stake.reward_acumulada.toFixed(4)} DON</td>
-            <td>
-                <button class="btn-cancel" onclick="cancelStake('${stake.stake_id}')">Cancelar</button>
-            </td>
+                <span class="pill active">Activo</span>
+            </div>
+            <div class="mini-grid">
+                <div class="mini-cell">
+                    <div class="label">Duración</div>
+                    <div class="mini-value">${stake.days} días</div>
+                </div>
+                <div class="mini-cell">
+                    <div class="label">DON total</div>
+                    <div class="mini-value">${formatNumber(stake.reward_total, 4)}</div>
+                </div>
+                <div class="mini-cell">
+                    <div class="label">DON acumulado</div>
+                    <div class="mini-value">${formatNumber(stake.reward_acumulada, 4)}</div>
+                </div>
+                <div class="mini-cell">
+                    <div class="label">Salida</div>
+                    <div class="mini-value" style="font-size:15px;">${formatDate(stake.end_date)}</div>
+                </div>
+            </div>
+            <div class="progress-wrap">
+                <div class="progress-meta">
+                    <span>${formatDuration(stake.end_timestamp)}</span>
+                    <span>${formatNumber(stake.progress_percent, 2)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" style="width:${stake.progress_percent}%"></div>
+                </div>
+            </div>
         `;
-        tbody.appendChild(tr);
+        container.appendChild(card);
     });
 }
 
-/* -------------------------
-   HISTORIAL
--------------------------- */
-async function loadHistory(userId) {
-    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/history/${userId}`);
-    const data = await res.json();
+function renderHistory(history) {
+    const wrap = document.getElementById("historyWrap");
+    if (!history.length) {
+        wrap.innerHTML = '<div class="empty-state">Aún no hay stakes cerrados o cancelados para mostrar historial.</div>';
+        return;
+    }
 
-    const tbody = document.querySelector("#historyTable tbody");
-    tbody.innerHTML = "";
+    const rows = history.map((item) => `
+        <tr>
+            <td>${formatNumber(item.amount, 0)} BEND</td>
+            <td>${item.days} días</td>
+            <td>${formatNumber(item.total_reward, 4)} DON</td>
+            <td><span class="pill ${item.status === "finished" ? "finished" : "cancelled"}">${item.status}</span></td>
+            <td>${formatDate(item.final_date || item.end_date)}</td>
+        </tr>
+    `).join("");
 
-    data.history.forEach(h => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${h.amount}</td>
-            <td>${h.days} días</td>
-            <td>${h.total_reward.toFixed(4)} DON</td>
-            <td>${h.status}</td>
-            <td>${new Date(h.end_date).toLocaleDateString()}</td>
-        `;
-        tbody.appendChild(tr);
-    });
+    wrap.innerHTML = `
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Monto</th>
+                    <th>Plazo</th>
+                    <th>DON total</th>
+                    <th>Estado</th>
+                    <th>Cierre</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
 }
 
-/* -------------------------
-   CANCELAR STAKE
--------------------------- */
-async function cancelStake(stakeId) {
-    const userId = getUserId();
+async function initDashboard() {
+    try {
+        const user = await initUser();
+        if (!user) {
+            return;
+        }
 
-    const res = await fetch(`https://empireyoncar.duckdns.org/Staking/cancel/${stakeId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId })
-    });
+        const [{ walletInfo }, activeData, historyData] = await Promise.all([
+            loadWalletInfo(user.address, user.userId),
+            fetchJson(`${API_STAKING}/Staking/user/${user.userId}`, "No se pudieron cargar los stakes activos"),
+            fetchJson(`${API_STAKING}/Staking/history/${user.userId}`, "No se pudo cargar el historial de staking"),
+        ]);
 
-    const data = await res.json();
+        const activeStakes = activeData.stakes || [];
+        const history = historyData.history || [];
 
-    if (data.error) {
-        showToast(data.error, "err");
-    } else {
-        showToast("Stake cancelado correctamente", "ok");
-        initDashboard();
+        renderStats(activeStakes, walletInfo.balance);
+        renderActiveStakes(activeStakes);
+        renderHistory(history);
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || "No se pudo cargar el dashboard", "err");
     }
 }
 
-/* -------------------------
-   INICIALIZAR DASHBOARD
--------------------------- */
-async function initDashboard() {
-    const user = await initUser();
-    if (!user) return;
-
-    await loadWalletInfo(user.address, user.userId);
-    await loadActiveStakes(user.userId);
-    await loadHistory(user.userId);
-}
+document.getElementById("btnRefresh").addEventListener("click", () => {
+    initDashboard();
+    showToast("Panel actualizado", "ok");
+});
 
 initDashboard();
 </script>

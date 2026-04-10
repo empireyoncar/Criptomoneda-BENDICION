@@ -229,3 +229,33 @@ def list_activos():
         """
     )
     return [_stake_row_to_dict(row) for row in rows]
+
+
+def list_user_activos(user_id):
+    rows = run_query(
+        """
+        SELECT stake_id, user_id, wallet, amount_bend, days, reward_don,
+               transfer_tx_id, timestamp, end_timestamp, status,
+               finished_timestamp, cancelled_timestamp
+        FROM stakes
+        WHERE user_id = %s AND status = 'active'
+        ORDER BY timestamp DESC, stake_id ASC
+        """,
+        (str(user_id),),
+    )
+    return [_stake_row_to_dict(row) for row in rows]
+
+
+def list_user_history(user_id):
+    rows = run_query(
+        """
+        SELECT stake_id, user_id, wallet, amount_bend, days, reward_don,
+               transfer_tx_id, timestamp, end_timestamp, status,
+               finished_timestamp, cancelled_timestamp
+        FROM stakes
+        WHERE user_id = %s AND status IN ('finished', 'cancelled')
+        ORDER BY COALESCE(finished_timestamp, cancelled_timestamp, end_timestamp) DESC, stake_id ASC
+        """,
+        (str(user_id),),
+    )
+    return [_stake_row_to_dict(row) for row in rows]

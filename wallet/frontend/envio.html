@@ -284,18 +284,17 @@
     let userId = localStorage.getItem("user_id");
     if (!userId) {
         alert("Debes iniciar sesión primero.");
-        window.location.href = "login";
+        window.location.href = "/CriptoBendicion/login";
     } else {
         document.getElementById("userId").textContent = userId;
     }
     
     const address = localStorage.getItem("address");
-    const privateKey = localStorage.getItem("private_key");
     const publicKey = localStorage.getItem("public_key");
 
-    if (!address || !privateKey || !publicKey) {
+    if (!address || !publicKey) {
         alert("Primero configura tu wallet en la página principal.");
-        window.location.href = "wallet";
+        window.location.href = "/CriptoBendicion/wallet";
     } else {
         document.getElementById("address").textContent = address;
     }

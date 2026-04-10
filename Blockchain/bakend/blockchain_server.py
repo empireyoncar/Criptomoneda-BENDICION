@@ -1,4 +1,5 @@
 import json
+import uuid
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -143,6 +144,10 @@ def send_tx():
 
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
+
+    # Ensure every transaction has a traceable id.
+    if not tx_id:
+        tx_id = uuid.uuid4().hex
 
     # Amount should be in satichis (integers)
     try:

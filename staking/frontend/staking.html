@@ -253,12 +253,24 @@ daysSelect.onchange = calcReward;
 
 const API_STAKING = "https://empireyoncar.duckdns.org/CriptoBendicion/staking_api";
 
+function sortDeep(value) {
+    if (Array.isArray(value)) {
+        return value.map(sortDeep);
+    }
+    if (value && typeof value === "object") {
+        const ordered = {};
+        Object.keys(value)
+            .sort()
+            .forEach((key) => {
+                ordered[key] = sortDeep(value[key]);
+            });
+        return ordered;
+    }
+    return value;
+}
+
 function canonicalJson(obj) {
-    const ordered = Object.keys(obj).sort().reduce((acc, key) => {
-        acc[key] = obj[key];
-        return acc;
-    }, {});
-    return JSON.stringify(ordered);
+    return JSON.stringify(sortDeep(obj));
 }
 
 function toFixedHex(value, length) {

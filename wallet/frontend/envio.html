@@ -297,7 +297,7 @@
         const ec = new elliptic.ec("secp256k1");
         const key = ec.keyFromPrivate(privateKeyHex, "hex");
         const hashHex = CryptoJS.SHA256(canonicalJson(payload)).toString();
-        const sig = key.sign(hashHex, { canonical: true });
+        const sig = key.sign(hashHex, "hex", { canonical: true });
         return toFixedHex(sig.r, 64) + toFixedHex(sig.s, 64);
     }
 

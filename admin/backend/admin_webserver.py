@@ -36,15 +36,20 @@ def login_page():
 
 @app.route("/CriptoBendicion/admin_login", methods=["POST"])
 def admin_login():
-    if request.is_json:
-        data = request.get_json() or {}
-        email = data.get("email")
-        password = data.get("password")
-    else:
-        email = request.form.get("email")
-        password = request.form.get("password")
+    try:
+        if request.is_json:
+            data = request.get_json() or {}
+            email = data.get("email")
+            password = data.get("password")
+        else:
+            email = request.form.get("email")
+            password = request.form.get("password")
 
-    user_id = login_user(email, password)
+        user_id = login_user(email, password)
+    except Exception as exc:
+        if request.is_json:
+            return jsonify({"error": f"Error interno de autenticacion: {exc}"}), 500
+        return "Error interno de autenticacion", 500
 
     if not user_id:
         if request.is_json:

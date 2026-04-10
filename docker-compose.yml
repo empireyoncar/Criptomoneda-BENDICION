@@ -256,6 +256,12 @@ services:
   admin_web:
     build: ./admin/backend
     command: python admin_webserver.py
+    environment:
+      USERS_DB_HOST: users_db
+      USERS_DB_PORT: 5546
+      USERS_DB_NAME: users_db
+      USERS_DB_USER: users_user
+      USERS_DB_PASSWORD: users_password
     ports:
       - "5011:5011"
     volumes:
@@ -265,6 +271,9 @@ services:
     restart: always
     networks:
       - bendicion_net
+    depends_on:
+      users_db:
+        condition: service_healthy
 
   # ============================================================
   # DON (API)

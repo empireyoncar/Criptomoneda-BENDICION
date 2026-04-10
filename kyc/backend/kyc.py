@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
@@ -33,22 +32,11 @@ def _default_kyc_state() -> dict[str, Any]:
 	}
 
 
-def _resolve_default_db_path() -> Path:
-	# In containers it is usually mounted at /app/database.json.
-	docker_path = Path("/app/database.json")
-	if docker_path.exists():
-		return docker_path
-
-	# Local workspace fallback.
-	return Path(__file__).resolve().parents[2] / "usuarios" / "backend" / "database.json"
-
-
 def _resolve_default_docs_root() -> Path:
 	# Keep KYC docs inside KYC backend folder as requested.
 	return Path(__file__).resolve().parent / "kyc_docs"
 
 
-DB_FILE = Path(os.getenv("KYC_DB_FILE", str(_resolve_default_db_path())))
 DOCS_ROOT = Path(os.getenv("KYC_DOCS_ROOT", str(_resolve_default_docs_root())))
 
 
@@ -83,54 +71,11 @@ def _row_to_user(row: dict[str, Any]) -> dict[str, Any]:
 	}
 
 
-def _migrate_legacy_users_if_needed() -> None:
-	if not DB_FILE.exists():
-		return
-
-	with _users_connection() as conn:
-		with conn.cursor() as cur:
-			cur.execute("SELECT COUNT(*) AS total FROM users")
-			total = cur.fetchone()["total"]
-			if total > 0:
-				return
-
-			with DB_FILE.open("r", encoding="utf-8") as f:
-				data = json.load(f)
-
-			for user in data.get("users", []):
-				kyc = user.get("kyc") if isinstance(user.get("kyc"), dict) else _default_kyc_state()
-				cur.execute(
-					"""
-					INSERT INTO users (
-						id, fullname, birthdate, country, address, phone,
-						email, password, role, wallets, kyc
-					)
-					VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-					ON CONFLICT (id) DO NOTHING
-					""",
-					(
-						str(user.get("id", "")),
-						user.get("fullname", ""),
-						user.get("birthdate"),
-						user.get("country"),
-						user.get("address"),
-						user.get("phone"),
-						user.get("email", ""),
-						user.get("password", ""),
-						user.get("role", "user"),
-						Json(user.get("wallets") or []),
-						Json(kyc),
-					),
-				)
-		conn.commit()
-
-
 def ensure_storage() -> None:
 	DOCS_ROOT.mkdir(parents=True, exist_ok=True)
 
 
 def load_db() -> dict[str, Any]:
-	_migrate_legacy_users_if_needed()
 	with _users_connection() as conn:
 		with conn.cursor() as cur:
 			cur.execute(

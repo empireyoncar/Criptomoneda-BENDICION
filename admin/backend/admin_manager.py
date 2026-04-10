@@ -1,12 +1,7 @@
-import json
-import os
 from hashlib import sha256
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
-DB_PATH = "/app/database.json"
-
 
 def _default_kyc_state():
     return {
@@ -49,48 +44,7 @@ def _row_to_user(row):
     }
 
 
-def _migrate_legacy_users_if_needed():
-    if not os.path.exists(DB_PATH):
-        return
-
-    with _get_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT COUNT(*) AS total FROM users")
-            total = cur.fetchone()["total"]
-            if total > 0:
-                return
-
-            with open(DB_PATH, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            for user in data.get("users", []):
-                cur.execute(
-                    """
-                    INSERT INTO users (
-                        id, fullname, birthdate, country, address, phone,
-                        email, password, role, wallets, kyc
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb)
-                    ON CONFLICT (id) DO NOTHING
-                    """,
-                    (
-                        str(user.get("id", "")),
-                        user.get("fullname", ""),
-                        user.get("birthdate"),
-                        user.get("country"),
-                        user.get("address"),
-                        user.get("phone"),
-                        user.get("email", ""),
-                        user.get("password", ""),
-                        user.get("role", "user"),
-                        json.dumps(user.get("wallets") or []),
-                        json.dumps(user.get("kyc") or _default_kyc_state()),
-                    ),
-                )
-        conn.commit()
-
 def load_db():
-    _migrate_legacy_users_if_needed()
     with _get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(

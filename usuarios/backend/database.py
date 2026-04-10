@@ -1,13 +1,9 @@
 import hashlib
-import json
-import os
 import uuid
 
 from psycopg2.extras import Json
 
 from users_db import db_transaction, run_query
-
-DB_FILE = "/app/database.json"
 
 
 def _default_kyc_state():
@@ -38,16 +34,6 @@ def _normalize_user(user):
 
 def _row_to_user(row):
     return _normalize_user(row)
-
-
-def _read_legacy_users():
-    if not os.path.exists(DB_FILE):
-        return []
-
-    with open(DB_FILE, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    return [_normalize_user(user) for user in data.get("users", [])]
 
 
 def _upsert_user(cur, user):
@@ -101,15 +87,6 @@ def _replace_all_users(users):
         for user in normalized_users:
             _upsert_user(cur, user)
 
-
-def _migrate_legacy_users():
-    rows = run_query("SELECT COUNT(*) AS total FROM users")
-    if rows and rows[0]["total"] > 0:
-        return
-
-    legacy_users = _read_legacy_users()
-    if legacy_users:
-        _replace_all_users(legacy_users)
 
 # -----------------------------
 # CARGAR Y GUARDAR BASE DE DATOS
@@ -287,5 +264,3 @@ def is_admin(user_id):
     user = get_user_by_id(user_id)
     return bool(user and user.get("role") == "admin")
 
-
-_migrate_legacy_users()

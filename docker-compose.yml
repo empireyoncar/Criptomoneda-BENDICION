@@ -165,8 +165,6 @@ services:
     volumes:
       - ./wallet/backend:/app
       - ./criptografia:/app/criptografia
-      - ./usuarios/backend/database.json:/app/database.json
-      - ./wallet/backend/wallets.json:/app/wallets.json
     restart: always
     networks:
       - bendicion_net
@@ -241,7 +239,6 @@ services:
       - "5010:5010"
     volumes:
       - ./admin/backend:/app
-      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net
@@ -267,7 +264,6 @@ services:
     volumes:
       - ./admin/backend:/app
       - ./admin/frontend:/app/frontend
-      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net
@@ -332,7 +328,6 @@ services:
       - "5015:5015"
     volumes:
       - ./kyc/backend:/app
-      - ./usuarios/backend/database.json:/app/database.json
     restart: always
     networks:
       - bendicion_net

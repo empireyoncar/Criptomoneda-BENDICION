@@ -340,13 +340,23 @@
     }
 
     const address = localStorage.getItem("address");
-    const publicKey = localStorage.getItem("public_key");
 
-    if (!address || !publicKey) {
+    if (!address) {
         alert("Primero configura tu wallet en la página principal.");
         window.location.href = "/CriptoBendicion/wallet";
     } else {
         document.getElementById("address").textContent = address;
+    }
+
+    function derivePublicKeyAndAddress(privateKeyHex) {
+        const ec = new elliptic.ec("secp256k1");
+        const key = ec.keyFromPrivate(privateKeyHex, "hex");
+        const pub = key.getPublic();
+        const publicKeyHex =
+            pub.getX().toString(16).padStart(64, "0") +
+            pub.getY().toString(16).padStart(64, "0");
+        const derivedAddress = CryptoJS.SHA256(publicKeyHex).toString();
+        return { publicKeyHex, derivedAddress };
     }
 
     // Ver balance
@@ -381,6 +391,15 @@ document.getElementById("btnSend").onclick = async () => {
             return;
         }
 
+        const signer = derivePublicKeyAndAddress(privateKeyHex);
+        if (signer.derivedAddress !== address) {
+            showAlert(
+                `La clave privada no corresponde a tu wallet activa. Wallet activa: ${address}. Wallet de la clave: ${signer.derivedAddress}`,
+                "error"
+            );
+            return;
+        }
+
         const nonce = await getCurrentNonce(address);
         const txPayload = {
             from: address,
@@ -392,7 +411,7 @@ document.getElementById("btnSend").onclick = async () => {
         const signature = signTxPayload(privateKeyHex, txPayload);
         const tx = {
             ...txPayload,
-            public_key: publicKey,
+            public_key: signer.publicKeyHex,
             signature: signature,
         };
 

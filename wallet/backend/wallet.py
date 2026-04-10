@@ -8,14 +8,24 @@ from ecdsa import SigningKey, SECP256k1
 
 
 def _load_hash_sha256():
-    """Load hash_sha256 in local workspace and Docker layouts."""
-    try:
-        return importlib.import_module("criptografia.blockchain_crypto").hash_sha256
-    except ModuleNotFoundError:
-        crypto_dir = Path(__file__).resolve().parents[2] / "criptografia"
+    """Load hash_sha256 without importing criptografia package __init__."""
+    candidate_dirs = [
+        Path("/app/criptografia"),
+        Path(__file__).resolve().parent / "criptografia",
+        Path(__file__).resolve().parents[1] / "criptografia",
+    ]
+
+    for crypto_dir in candidate_dirs:
+        if not crypto_dir.exists():
+            continue
         if str(crypto_dir) not in sys.path:
             sys.path.insert(0, str(crypto_dir))
-        return importlib.import_module("blockchain_crypto").hash_sha256
+        try:
+            return importlib.import_module("blockchain_crypto").hash_sha256
+        except ModuleNotFoundError:
+            continue
+
+    raise ModuleNotFoundError("No se pudo cargar blockchain_crypto desde criptografia")
 
 
 hash_sha256 = _load_hash_sha256()

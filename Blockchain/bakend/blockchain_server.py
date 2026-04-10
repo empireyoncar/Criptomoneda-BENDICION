@@ -145,10 +145,6 @@ def send_tx():
     if not sender or not receiver or amount is None:
         return jsonify({"error": "Transacción inválida"}), 400
 
-    # Ensure every transaction has a traceable id.
-    if not tx_id:
-        tx_id = uuid.uuid4().hex
-
     # Amount should be in satichis (integers)
     try:
         amount = int(amount)
@@ -184,6 +180,10 @@ def send_tx():
                 return jsonify({"error": "Invalid signature"}), 403
         except Exception as e:
             return jsonify({"error": f"Signature verification failed: {str(e)}"}), 403
+
+    # Ensure every transaction has a traceable id.
+    if not tx_id:
+        tx_id = uuid.uuid4().hex
 
     ok = blockchain.add_transaction(sender, receiver, amount, tx_id=tx_id, metadata=metadata, nonce=nonce)
     if not ok:

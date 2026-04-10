@@ -329,6 +329,23 @@ async function getAdminWalletAddress() {
     return data.wallet;
 }
 
+async function parseJsonResponse(response, fallbackMessage) {
+    const rawText = await response.text();
+
+    if (!rawText) {
+        if (!response.ok) {
+            throw new Error(fallbackMessage);
+        }
+        return {};
+    }
+
+    try {
+        return JSON.parse(rawText);
+    } catch {
+        throw new Error(`${fallbackMessage}: ${rawText}`);
+    }
+}
+
 document.getElementById("btnStake").onclick = async () => {
     const amount = Number(document.getElementById("amount").value);
     const days = parseInt(document.getElementById("days").value);
@@ -382,13 +399,13 @@ document.getElementById("btnStake").onclick = async () => {
             })
         });
 
-        const txData = await txRes.json();
+        const txData = await parseJsonResponse(txRes, "Error al transferir Bendición en la blockchain");
         if (!txRes.ok || txData.error) {
             throw new Error(txData.error || "Error al transferir Bendición en la blockchain");
         }
 
         const commitRes = await fetch(`${API_BLOCKCHAIN}/commit`, { method: "POST" });
-        const commitData = await commitRes.json();
+        const commitData = await parseJsonResponse(commitRes, "Error al confirmar la transacción en blockchain");
         if (!commitRes.ok || commitData.error) {
             throw new Error(commitData.error || "Error al confirmar la transacción en blockchain");
         }
@@ -407,16 +424,16 @@ document.getElementById("btnStake").onclick = async () => {
             body: JSON.stringify(payload)
         });
 
-        const data = await res.json();
+        const data = await parseJsonResponse(res, "Error al registrar el staking");
 
-        if (data.error) {
+        if (!res.ok || data.error) {
             alert("Error: " + data.error);
         } else {
             alert("Staking creado. ID: " + data.stake_id);
         }
 
     } catch (err) {
-        alert("Error de conexión con el servidor.");
+        alert("Error: " + (err.message || err));
         console.error(err);
     }
 };

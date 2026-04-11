@@ -138,6 +138,7 @@ services:
     volumes:
       - ./usuarios/backend:/app
       - ./usuarios/frontend:/app/frontend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net
@@ -186,6 +187,7 @@ services:
     volumes:
       - ./wallet/backend:/app
       - ./wallet/frontend:/app/frontend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net
@@ -218,6 +220,7 @@ services:
     volumes:
       - ./Blockchain/bakend:/app
       - ./Blockchain/frontend:/app/frontend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net
@@ -307,6 +310,7 @@ services:
     volumes:
       - ./token/backend:/app
       - ./token/frontend:/app/token/frontend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net
@@ -347,6 +351,7 @@ services:
     volumes:
       - ./kyc/backend:/app
       - ./kyc/fronttend:/app/kyc/fronttend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net
@@ -394,6 +399,7 @@ services:
     volumes:
       - ./staking/backend:/app/backend
       - ./staking/frontend:/app/frontend
+      - ./seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     networks:
       - bendicion_net

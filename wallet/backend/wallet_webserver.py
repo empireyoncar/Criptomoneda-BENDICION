@@ -1,9 +1,11 @@
-from flask import Flask, render_template, send_file
+from flask import Flask, abort, render_template, send_file, send_from_directory
 from flask_cors import CORS
 from jinja2 import FileSystemLoader, ChoiceLoader
 
 app = Flask(__name__)
 CORS(app)
+
+VENDOR_FILES = {"elliptic.min.js", "crypto-js.min.js"}
 
 
 @app.after_request
@@ -42,6 +44,14 @@ def envio_page():
 @app.route("/CriptoBendicion/wallet/seguridad/guard.js")
 def wallet_security_guard_js():
     return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
+
+@app.route("/seguridad/vendor/<path:filename>")
+@app.route("/CriptoBendicion/seguridad/vendor/<path:filename>")
+def wallet_security_vendor_js(filename):
+    if filename not in VENDOR_FILES:
+        abort(404)
+    return send_from_directory("/app/seguridad/frontend/vendor", filename, mimetype="application/javascript")
 
 
 # ============================================================

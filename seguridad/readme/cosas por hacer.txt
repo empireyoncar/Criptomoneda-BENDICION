@@ -1,0 +1,28 @@
+Reglas nginx para seguridad_api (Fase 2 - cookies HttpOnly)
+
+Agregar dentro del bloque server { } en /etc/nginx/sites-available/empireyoncar:
+
+    # SEGURIDAD API (login/me/refresh/logout con cookies HttpOnly) → puerto 5020
+    location /CriptoBendicion/seguridad_api/ {
+        proxy_pass http://127.0.0.1:5020/seguridad/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Preservar cookies al pasar por el proxy
+        proxy_cookie_path / /;
+        proxy_cookie_domain localhost $host;
+    }
+
+Después ejecutar:
+    sudo nginx -t && sudo systemctl reload nginx
+
+NOTA: La variable CRIPTO_JWT_SECRET debe estar en el .env del servidor
+(mínimo 32 caracteres). Ejemplo:
+    CRIPTO_JWT_SECRET=unaClaveSecretaMuyLargaYSegura1234567890
+
+Los endpoints expuestos son:
+    POST  /CriptoBendicion/seguridad_api/login    → autentica y emite cookie
+    GET   /CriptoBendicion/seguridad_api/me       → devuelve usuario autenticado
+    POST  /CriptoBendicion/seguridad_api/refresh  → rota el JWT
+    POST  /CriptoBendicion/seguridad_api/logout   → revoca y borra cookie

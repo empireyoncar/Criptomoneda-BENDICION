@@ -1,7 +1,13 @@
+import os
 from hashlib import sha256
 
+import bcrypt
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+
+MIN_PASSWORD_LENGTH = 20
+ALLOWED_ROLES = {"user", "admin"}
 
 def _default_kyc_state():
     return {
@@ -76,6 +82,15 @@ def get_user_by_id(user_id):
     return None
 
 
+def get_safe_user_by_id(user_id):
+    user = get_user_by_id(user_id)
+    if not user:
+        return None
+    safe_user = dict(user)
+    safe_user.pop("password", None)
+    return safe_user
+
+
 def is_admin(user_identifier):
     user = get_user_by_id(user_identifier)
     if not user:
@@ -88,10 +103,93 @@ def login_user(email, password):
     if not user:
         return None
 
-    # La contraseña en tu JSON está hasheada con SHA256
-    hashed = sha256(password.encode()).hexdigest()
-
-    if user["password"] != hashed:
+    stored_hash = str(user.get("password") or "")
+    if not _verify_password(password, stored_hash):
         return None
 
     return user.get("id")
+
+
+def _verify_password(password, stored_hash):
+    if stored_hash.startswith("$2a$") or stored_hash.startswith("$2b$") or stored_hash.startswith("$2y$"):
+        try:
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+        except Exception:
+            return False
+    return sha256(password.encode()).hexdigest() == stored_hash
+
+
+def _hash_password(password):
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+
+
+def update_user_password(user_id, new_password):
+    if not isinstance(new_password, str) or len(new_password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres")
+
+    with _get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET password = %s WHERE id = %s",
+                (_hash_password(new_password), str(user_id)),
+            )
+            updated = cur.rowcount
+        conn.commit()
+    return updated > 0
+
+
+def update_user_info(user_id, payload):
+    current = get_user_by_id(user_id)
+    if not current:
+        return None
+
+    merged = {
+        "fullname": str(payload.get("fullname", current.get("fullname") or "")).strip(),
+        "birthdate": str(payload.get("birthdate", current.get("birthdate") or "")).strip(),
+        "country": str(payload.get("country", current.get("country") or "")).strip(),
+        "address": str(payload.get("address", current.get("address") or "")).strip(),
+        "phone": str(payload.get("phone", current.get("phone") or "")).strip(),
+        "email": str(payload.get("email", current.get("email") or "")).strip().lower(),
+        "role": str(payload.get("role", current.get("role") or "user")).strip().lower(),
+    }
+
+    if not merged["fullname"] or not merged["birthdate"] or not merged["country"] or not merged["address"] or not merged["email"]:
+        raise ValueError("fullname, birthdate, country, address y email son obligatorios")
+
+    if merged["role"] not in ALLOWED_ROLES:
+        raise ValueError("Rol inválido")
+
+    try:
+        with _get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE users
+                    SET fullname = %s,
+                        birthdate = %s,
+                        country = %s,
+                        address = %s,
+                        phone = %s,
+                        email = %s,
+                        role = %s
+                    WHERE id = %s
+                    """,
+                    (
+                        merged["fullname"],
+                        merged["birthdate"],
+                        merged["country"],
+                        merged["address"],
+                        merged["phone"] or None,
+                        merged["email"],
+                        merged["role"],
+                        str(user_id),
+                    ),
+                )
+                updated = cur.rowcount
+            conn.commit()
+    except psycopg2.IntegrityError as exc:
+        raise ValueError("El email ya está registrado") from exc
+
+    if not updated:
+        return None
+    return get_safe_user_by_id(user_id)

@@ -75,6 +75,7 @@ services:
     volumes:
       - ./backend:/app
       - ./frontend:/app/p2p/frontend
+      - ../seguridad/frontend:/app/seguridad/frontend:ro
     restart: always
     extra_hosts:
       - "host.docker.internal:host-gateway"

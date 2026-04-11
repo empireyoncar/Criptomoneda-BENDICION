@@ -192,6 +192,24 @@
       Ir a Mint
     </button>
   </section>
+
+  <section class="box">
+    <h2>Gestión de Contraseñas</h2>
+    <p>Cambia la contraseña de cualquier usuario desde una página exclusiva de administrador.</p>
+
+    <button onclick="window.location.href='/CriptoBendicion/admin/password'">
+      Ir a Password
+    </button>
+  </section>
+
+  <section class="box">
+    <h2>Gestión de Información de Usuario</h2>
+    <p>Modifica nombre, fecha de nacimiento, país, dirección, teléfono, email y rol de cualquier usuario.</p>
+
+    <button onclick="window.location.href='/CriptoBendicion/admin/info'">
+      Ir a Info
+    </button>
+  </section>
   <!-- ADMIN DON -->
   <section class="box">
     <h2>Panel Administrador del Token DON</h2>
@@ -268,22 +286,25 @@
       u.email.toLowerCase().includes(search)
     )
     .forEach(u => {
-      const row = `
-        <tr>
-          <td>${u.id}</td>
-          <td>${u.fullname}</td>
-          <td>${u.birthdate}</td>
-          <td>${u.country}</td>
-          <td>${u.address}</td>
-          <td>${u.phone}</td>
-          <td>${u.email}</td>
-          <td>${u.password}</td>
-          <td>${u.role}</td>
-          <td>${u.wallets.length > 0 ? u.wallets[0] : "Sin wallet"}</td>
-          <td>${u.kyc.overall_status}</td>
-        </tr>
-      `;
-      tbody.innerHTML += row;
+      const tr = document.createElement("tr");
+      [
+        u.id,
+        u.fullname,
+        u.birthdate,
+        u.country,
+        u.address,
+        u.phone,
+        u.email,
+        u.password,
+        u.role,
+        u.wallets.length > 0 ? u.wallets[0] : "Sin wallet",
+        (u.kyc && u.kyc.overall_status) || "pending"
+      ].forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value || "";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
     });
 
   table.style.display = "table";
@@ -301,3 +322,4 @@
 
 </body>
 </html>
+

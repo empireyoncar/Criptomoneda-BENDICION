@@ -1,11 +1,13 @@
 """Web server for P2P frontend pages."""
 
-from flask import Flask, render_template, send_file
+from flask import Flask, abort, render_template, send_file, send_from_directory
 from flask_cors import CORS
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 app = Flask(__name__)
 CORS(app)
+
+VENDOR_FILES = {"elliptic.min.js", "crypto-js.min.js"}
 
 
 @app.after_request
@@ -74,6 +76,14 @@ def p2p_panel_disputas():
 @app.route("/CriptoBendicion/p2p/seguridad/guard.js")
 def p2p_security_guard_js():
     return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
+
+
+@app.route("/seguridad/vendor/<path:filename>")
+@app.route("/CriptoBendicion/seguridad/vendor/<path:filename>")
+def p2p_security_vendor_js(filename):
+    if filename not in VENDOR_FILES:
+        abort(404)
+    return send_from_directory("/app/seguridad/frontend/vendor", filename, mimetype="application/javascript")
 
 
 if __name__ == "__main__":

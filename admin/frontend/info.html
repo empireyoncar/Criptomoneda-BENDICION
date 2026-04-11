@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Info - BENDICIÓN</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0b0e11; color: #eaecef; margin: 0; }
+    header { background: #181a20; color: #f0b90b; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
+    .container { max-width: 980px; margin: 24px auto; padding: 0 20px; }
+    .box { background: #181a20; border-radius: 10px; padding: 22px; box-shadow: 0 0 12px rgba(240,185,11,0.08); }
+    label { display: block; margin: 14px 0 6px; color: #f0b90b; }
+    input, select { width: 100%; box-sizing: border-box; padding: 12px; border-radius: 6px; border: 1px solid #2b3139; background: #0b0e11; color: #eaecef; }
+    button { background: #f0b90b; color: #181a20; border: none; padding: 12px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 10px; margin-top: 16px; }
+    button:hover { background: #c99700; }
+    .muted { color: #9aa4af; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .message { margin-top: 16px; padding: 12px; border-radius: 6px; display: none; }
+    .message.ok { background: rgba(82,196,26,0.15); color: #8ee28e; border: 1px solid #2f8f2f; }
+    .message.error { background: rgba(255,77,79,0.15); color: #ff8a8d; border: 1px solid #a73b3d; }
+  </style>
+</head>
+<body>
+<header>Edición de Información del Usuario</header>
+<div class="container">
+  <div class="box">
+    <p class="muted">Página exclusiva de administrador para modificar datos del registro del usuario.</p>
+
+    <label for="userId">ID del usuario</label>
+    <input id="userId" placeholder="UUID del usuario">
+
+    <button id="btnLoad">Cargar usuario</button>
+    <button id="btnBack" type="button">Volver al panel</button>
+
+    <div class="grid">
+      <div>
+        <label for="fullname">Nombre completo</label>
+        <input id="fullname">
+      </div>
+      <div>
+        <label for="birthdate">Fecha de nacimiento</label>
+        <input id="birthdate" type="date">
+      </div>
+      <div>
+        <label for="country">País</label>
+        <input id="country">
+      </div>
+      <div>
+        <label for="phone">Teléfono</label>
+        <input id="phone">
+      </div>
+      <div>
+        <label for="address">Dirección</label>
+        <input id="address">
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input id="email" type="email">
+      </div>
+      <div>
+        <label for="role">Rol</label>
+        <select id="role">
+          <option value="user">user</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="btnSave">Guardar cambios</button>
+    <div id="message" class="message"></div>
+  </div>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/admin_api";
+  const messageBox = document.getElementById("message");
+
+  function showMessage(text, type) {
+    messageBox.textContent = text;
+    messageBox.className = `message ${type}`;
+    messageBox.style.display = "block";
+  }
+
+  function fillForm(user) {
+    document.getElementById("fullname").value = user.fullname || "";
+    document.getElementById("birthdate").value = user.birthdate || "";
+    document.getElementById("country").value = user.country || "";
+    document.getElementById("phone").value = user.phone || "";
+    document.getElementById("address").value = user.address || "";
+    document.getElementById("email").value = user.email || "";
+    document.getElementById("role").value = user.role || "user";
+  }
+
+  async function loadUser() {
+    const userId = document.getElementById("userId").value.trim();
+    if (!userId) {
+      showMessage("Debes indicar el ID del usuario.", "error");
+      return;
+    }
+
+    const res = await fetch(`${API}/users/${encodeURIComponent(userId)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo cargar usuario");
+
+    fillForm(data);
+    showMessage("Usuario cargado correctamente.", "ok");
+  }
+
+  async function saveInfo() {
+    const userId = document.getElementById("userId").value.trim();
+    if (!userId) {
+      showMessage("Debes indicar el ID del usuario.", "error");
+      return;
+    }
+
+    const payload = {
+      fullname: document.getElementById("fullname").value.trim(),
+      birthdate: document.getElementById("birthdate").value.trim(),
+      country: document.getElementById("country").value.trim(),
+      phone: document.getElementById("phone").value.trim(),
+      address: document.getElementById("address").value.trim(),
+      email: document.getElementById("email").value.trim(),
+      role: document.getElementById("role").value
+    };
+
+    const res = await fetch(`${API}/users/${encodeURIComponent(userId)}/info`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo actualizar la información");
+
+    fillForm(data.user);
+    showMessage("Información actualizada correctamente.", "ok");
+  }
+
+  document.getElementById("btnLoad").onclick = () => loadUser().catch((error) => showMessage(error.message, "error"));
+  document.getElementById("btnSave").onclick = () => saveInfo().catch((error) => showMessage(error.message, "error"));
+  document.getElementById("btnBack").onclick = () => { window.location.href = "/CriptoBendicion/admin/"; };
+</script>
+</body>
+</html>

@@ -1,6 +1,249 @@
-Reglas nginx para seguridad_api (Fase 2 - cookies HttpOnly)
+# REDIRECCIÓN HTTP → HTTPS
+# Fuerza que todo el tráfico en puerto 80 vaya a HTTPS
+# ============================================================
+server {
+    listen 80;
+    server_name empireyoncar.duckdns.org;
+    return 301 https://$host$request_uri;
+}
 
-Agregar dentro del bloque server { } en /etc/nginx/sites-available/empireyoncar:
+# ============================================================
+# SERVIDOR PRINCIPAL HTTPS
+# Aquí se enruta TODO el tráfico hacia tus servicios internos
+# ============================================================
+server {
+    listen 443 ssl;
+    server_name empireyoncar.duckdns.org;
+
+    # ============================================================
+    # CONFIGURACIÓN SSL (Let's Encrypt)
+    # ============================================================
+    ssl_certificate /etc/letsencrypt/live/empireyoncar.duckdns.org/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/empireyoncar.duckdns.org/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # ============================================================
+    # WEB PRINCIPAL (puerto 3000)
+    # Tu página principal (React, HTML o dashboard)
+    # ============================================================
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # CERTBOT (renovación automática de certificados SSL)
+    # ============================================================
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # ============================================================
+    # FRONTEND USUARIOS (puerto 5000)
+    # Ruta oculta: /CriptoBendicion/
+    # Sirve login.html, register.html, home.html
+    # ============================================================
+    location /CriptoBendicion/ {
+        proxy_pass http://127.0.0.1:5000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # API LOGIN / USUARIOS (puerto 5001)
+    # Mantiene el prefijo /CriptoBendicion/usuarios/
+    # ============================================================
+    location /CriptoBendicion/usuarios/ {
+        proxy_pass http://127.0.0.1:5001/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # FRONTEND WALLET (puerto 5003)
+    # Sirve wallet.html
+    # Ruta: /CriptoBendicion/wallet
+    # ============================================================
+    location /CriptoBendicion/wallet {
+        proxy_pass http://127.0.0.1:5003/wallet;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # API WALLET (puerto 5002)
+    # Ruta: /CriptoBendicion/wallet_api/
+    # ============================================================
+    location /CriptoBendicion/wallet_api/ {
+        proxy_pass http://127.0.0.1:5002/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # API BLOCKCHAIN (puerto 5004)
+    # Ruta: /CriptoBendicion/blockchain/
+    # ============================================================
+    location /CriptoBendicion/blockchain/ {
+        proxy_pass http://127.0.0.1:5004/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # FRONTEND BLOCKCHAIN (puerto 5005)
+    # Sirve blockchain.html
+    # Ruta: /CriptoBendicion/blockchain
+    # ============================================================
+    location /CriptoBendicion/blockchainweb/ {
+        proxy_pass http://127.0.0.1:5005/blockchainweb;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # FRONTEND ADMIN (HTML) – puerto 5011
+    # ============================================================
+
+    location /CriptoBendicion/admin/ {
+        proxy_pass http://127.0.0.1:5011/admin;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # BACKEND ADMIN (API) – puerto 5010
+    # ============================================================
+    location /CriptoBendicion/admin_api/ {
+        proxy_pass http://127.0.0.1:5010/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # ============================================================
+    # FRONTEND DON (HTML) – puerto 5009
+    # ============================================================
+    location /CriptoBendicion/don/ {
+        proxy_pass http://127.0.0.1:5009/don/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # ============================================================
+    # BACKEND DON (API) – puerto 5008
+    # ============================================================
+    location /CriptoBendicion/don_api/ {
+        proxy_pass http://127.0.0.1:5008/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # ============================================================
+    # FRONTEND STAKING (HTML) – puerto 5007
+    # Ruta: /CriptoBendicion/staking/
+    # ============================================================
+    location /CriptoBendicion/staking/ {
+        proxy_pass http://127.0.0.1:5007/staking/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # ============================================================
+    # BACKEND STAKING (API) – puerto 5006
+    # Ruta: /CriptoBendicion/staking_api/
+    # ============================================================
+    location /CriptoBendicion/staking_api/ {
+        proxy_pass http://127.0.0.1:5006/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    # ============================================================
+    # FRONTEND P2P (HTML) – puerto 5013
+    # Ruta: /CriptoBendicion/p2p/
+    # ============================================================
+    location /CriptoBendicion/p2p/ {
+        proxy_pass http://127.0.0.1:5013/p2p/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # BACKEND P2P (API) – puerto 5012
+    # Ruta: /CriptoBendicion/p2p_api/
+    # ============================================================
+    location /CriptoBendicion/p2p_api/ {
+        proxy_pass http://127.0.0.1:5012/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # CHAT P2P (WebSocket) – puerto 5014
+    # Ruta: /CriptoBendicion/p2p_chat/
+    # ============================================================
+    location /CriptoBendicion/p2p_chat/ {
+        proxy_pass http://127.0.0.1:5014/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600;
+    }
+
+    # ============================================================
+    # FRONTEND KYC (HTML) – puerto 5016
+    # Ruta: /CriptoBendicion/kyc/
+    # ============================================================
+    location /CriptoBendicion/kyc/ {
+        proxy_pass http://127.0.0.1:5016/kyc/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ============================================================
+    # BACKEND KYC (API) – puerto 5015
+    # Ruta: /CriptoBendicion/kyc_api/
+    # ============================================================
+    location /CriptoBendicion/kyc_api/ {
+        proxy_pass http://127.0.0.1:5015/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
     # SEGURIDAD API (login/me/refresh/logout con cookies HttpOnly) → puerto 5020
     location /CriptoBendicion/seguridad_api/ {
@@ -13,16 +256,4 @@ Agregar dentro del bloque server { } en /etc/nginx/sites-available/empireyoncar:
         proxy_cookie_path / /;
         proxy_cookie_domain localhost $host;
     }
-
-Después ejecutar:
-    sudo nginx -t && sudo systemctl reload nginx
-
-NOTA: La variable CRIPTO_JWT_SECRET debe estar en el .env del servidor
-(mínimo 32 caracteres). Ejemplo:
-    CRIPTO_JWT_SECRET=unaClaveSecretaMuyLargaYSegura1234567890
-
-Los endpoints expuestos son:
-    POST  /CriptoBendicion/seguridad_api/login    → autentica y emite cookie
-    GET   /CriptoBendicion/seguridad_api/me       → devuelve usuario autenticado
-    POST  /CriptoBendicion/seguridad_api/refresh  → rota el JWT
-    POST  /CriptoBendicion/seguridad_api/logout   → revoca y borra cookie
+}

@@ -110,6 +110,18 @@ def admin_mint_page():
     return render_template("mint.html")
 
 
+@app.route("/CriptoBendicion/admin/password")
+@require_admin
+def admin_password_page():
+    return render_template("password.html")
+
+
+@app.route("/CriptoBendicion/admin/info")
+@require_admin
+def admin_info_page():
+    return render_template("info.html")
+
+
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)
 # ============================================================

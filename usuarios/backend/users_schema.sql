@@ -10,5 +10,9 @@ CREATE TABLE IF NOT EXISTS users (
     role VARCHAR(50) NOT NULL DEFAULT 'user',
     wallets JSONB NOT NULL DEFAULT '[]'::jsonb,
     kyc JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    google_id VARCHAR(255) UNIQUE
 );
+
+-- Migration for existing deployments (safe to run multiple times)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;

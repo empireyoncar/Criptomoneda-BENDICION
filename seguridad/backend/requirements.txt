@@ -3,3 +3,4 @@ flask-cors
 PyJWT
 psycopg2-binary
 bcrypt
+requests

@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import os
+import secrets
 import sys
 import threading
 import time
+from urllib.parse import urlencode
 
 import bcrypt
+import requests as google_requests
 
-from flask import Flask, jsonify, make_response, request
+from flask import Flask, jsonify, make_response, redirect, request
 from flask_cors import CORS
 
 # ── Importar módulo de cryptografía ──────────────────────────────────────────
@@ -38,6 +44,21 @@ ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
     "https://empireyoncar.duckdns.org"
 ).split(",")
+
+
+# ── Google OAuth 2.0 config ─────────────────────────────────────────────────
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.getenv(
+    "GOOGLE_REDIRECT_URI",
+    "https://empireyoncar.duckdns.org/CriptoBendicion/auth/google/callback",
+)
+APP_BASE_URL = os.getenv("APP_BASE_URL", "https://empireyoncar.duckdns.org")
+
+GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
+OAUTH_STATE_COOKIE = "oauth_state"
 
 
 def _get_allowed_admins() -> set[str]:
@@ -321,6 +342,199 @@ def logout():
     resp = make_response(jsonify({"logged_out": True}))
     _clear_session_cookie(resp)
     return resp, 200
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Google OAuth 2.0
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _ensure_google_id_column() -> None:
+    """Runtime migration: add google_id column if it doesn't exist yet."""
+    try:
+        with db_transaction() as cur:
+            cur.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS "
+                "google_id VARCHAR(255) UNIQUE"
+            )
+    except Exception:
+        pass
+
+
+_ensure_google_id_column()
+
+
+def _oauth_hmac(state: str) -> str:
+    secret = os.getenv("CRIPTO_JWT_SECRET", "default_secret_change_me")
+    return hmac.new(secret.encode(), state.encode(), hashlib.sha256).hexdigest()
+
+
+def _get_or_create_google_user(google_id: str, email: str, name: str) -> dict:
+    """Find user by google_id, or by email (and link), or create a new one."""
+    rows = run_query(
+        "SELECT id, fullname, email, role FROM users WHERE google_id = %s LIMIT 1",
+        (google_id,),
+    )
+    if rows:
+        return dict(rows[0])
+
+    # Try to link by e-mail (user already registered with email/password)
+    rows = run_query(
+        "SELECT id, fullname, email, role FROM users WHERE email = %s LIMIT 1",
+        (email,),
+    )
+    if rows:
+        user = dict(rows[0])
+        with db_transaction() as cur:
+            cur.execute(
+                "UPDATE users SET google_id = %s WHERE id = %s",
+                (google_id, str(user["id"])),
+            )
+        return user
+
+    # Create new user (Google-only, no password)
+    import uuid
+    user_id = str(uuid.uuid4())
+    random_password = bcrypt.hashpw(
+        secrets.token_urlsafe(32).encode(), bcrypt.gensalt(rounds=12)
+    ).decode()
+    kyc_default = {
+        "id_document": {"file": None, "status": "pending"},
+        "address_document": {"file": None, "status": "pending"},
+        "selfie": {"file": None, "status": "pending"},
+        "phone_verification": {"status": "pending"},
+        "overall_status": "pending",
+    }
+    with db_transaction() as cur:
+        cur.execute(
+            """
+            INSERT INTO users (
+                id, fullname, birthdate, country, address, phone,
+                email, password, role, wallets, kyc, google_id
+            )
+            VALUES (%s, %s, NULL, NULL, NULL, NULL, %s, %s, 'user',
+                    '[]'::jsonb, %s::jsonb, %s)
+            """,
+            (
+                user_id, name, email, random_password,
+                json.dumps(kyc_default), google_id,
+            ),
+        )
+    return {"id": user_id, "fullname": name, "email": email, "role": "user"}
+
+
+@app.get("/seguridad/auth/google")
+def google_auth():
+    """Redirects the browser to Google's OAuth2 consent screen."""
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return jsonify({"error": "Google OAuth no está configurado en el servidor"}), 503
+
+    state = secrets.token_urlsafe(32)
+    sig = _oauth_hmac(state)
+
+    params = urlencode({
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "prompt": "select_account",
+    })
+
+    resp = make_response("", 302)
+    resp.headers["Location"] = f"{GOOGLE_AUTH_URL}?{params}"
+    resp.set_cookie(
+        OAUTH_STATE_COOKIE,
+        f"{state}.{sig}",
+        httponly=True,
+        secure=SECURE_COOKIE,
+        samesite="Lax",
+        max_age=600,
+        path="/",
+    )
+    return resp
+
+
+@app.get("/seguridad/auth/google/callback")
+def google_callback():
+    """Handles the Google redirect, issues a JWT session cookie."""
+    login_url = f"{APP_BASE_URL}/CriptoBendicion/login"
+    home_url = f"{APP_BASE_URL}/CriptoBendicion/home"
+
+    if request.args.get("error"):
+        return redirect(f"{login_url}?error=google_denied")
+
+    code = request.args.get("code", "")
+    state = request.args.get("state", "")
+
+    # CSRF: verify state against signed cookie
+    state_cookie = request.cookies.get(OAUTH_STATE_COOKIE, "")
+    parts = state_cookie.rsplit(".", 1)
+    if (
+        len(parts) != 2
+        or parts[0] != state
+        or not hmac.compare_digest(_oauth_hmac(state), parts[1])
+    ):
+        return redirect(f"{login_url}?error=state_mismatch")
+
+    if not code:
+        return redirect(f"{login_url}?error=no_code")
+
+    # Exchange authorization code for access token
+    try:
+        token_resp = google_requests.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+            timeout=10,
+        )
+        token_resp.raise_for_status()
+        access_token = token_resp.json().get("access_token", "")
+    except Exception:
+        return redirect(f"{login_url}?error=token_exchange")
+
+    if not access_token:
+        return redirect(f"{login_url}?error=no_access_token")
+
+    # Get user profile from Google
+    try:
+        info_resp = google_requests.get(
+            GOOGLE_USERINFO_URL,
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        info_resp.raise_for_status()
+        info = info_resp.json()
+    except Exception:
+        return redirect(f"{login_url}?error=userinfo_failed")
+
+    google_id = str(info.get("id", ""))
+    email = str(info.get("email", "")).strip().lower()
+    name = str(info.get("name", "")).strip() or email.split("@")[0]
+
+    if not google_id or not email:
+        return redirect(f"{login_url}?error=missing_google_data")
+
+    # Find or create user in DB
+    try:
+        user = _get_or_create_google_user(google_id, email, name)
+    except Exception:
+        return redirect(f"{login_url}?error=db_error")
+
+    # Issue JWT session cookie and redirect home
+    user_id = str(user["id"])
+    token = generar_jwt(user_id=user_id, expires_in=ACCESS_EXPIRY)
+
+    resp = make_response("", 302)
+    resp.headers["Location"] = home_url
+    _make_session_cookie(resp, token)
+    # Clear the short-lived OAuth state cookie
+    resp.set_cookie(OAUTH_STATE_COOKIE, "", max_age=0, expires=0, path="/")
+    return resp
 
 
 # ─────────────────────────────────────────────────────────────────────────────

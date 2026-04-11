@@ -415,6 +415,8 @@ services:
       SECURE_COOKIE: "true"
       ALLOWED_ORIGINS: "https://empireyoncar.duckdns.org"
       ALLOWED_ADMIN_IDS: "001,jonatan salazar"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
     ports:
       - "5020:5020"
     volumes:

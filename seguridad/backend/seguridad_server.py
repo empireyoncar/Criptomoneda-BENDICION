@@ -13,6 +13,7 @@ import time
 from urllib.parse import urlencode
 
 import bcrypt
+import pyotp
 import requests as google_requests
 
 from flask import Flask, jsonify, make_response, redirect, request
@@ -99,11 +100,32 @@ def _is_legacy_sha256(stored_hash: str) -> bool:
 
 def _lookup_user(email: str) -> dict | None:
     rows = run_query(
-        "SELECT id, fullname, email, role, password FROM users "
+        "SELECT id, fullname, email, role, password, twofa_enabled, twofa_secret FROM users "
         "WHERE email = %s LIMIT 1",
         (email,),
     )
     return dict(rows[0]) if rows else None
+
+
+def _lookup_user_by_id(user_id: str) -> dict | None:
+    rows = run_query(
+        "SELECT id, fullname, email, role, twofa_enabled, twofa_secret "
+        "FROM users WHERE id = %s LIMIT 1",
+        (user_id,),
+    )
+    return dict(rows[0]) if rows else None
+
+
+def _verify_totp(secret: str, code: str) -> bool:
+    if not secret or not code:
+        return False
+    # 6-8 dígitos habituales; permite ventana de +-1 paso para tolerar desfase horario.
+    if not code.isdigit() or len(code) < 6 or len(code) > 8:
+        return False
+    try:
+        return bool(pyotp.TOTP(secret).verify(code, valid_window=1))
+    except Exception:
+        return False
 
 
 def _verify_password_and_upgrade_if_needed(user: dict, raw_password: str) -> bool:
@@ -232,11 +254,12 @@ def _require_auth() -> tuple[dict | None, tuple | None]:
 def login():
     """
     Autentica al usuario y emite un JWT en una cookie HttpOnly.
-    Body JSON: { "email": str, "password": str }
+    Body JSON: { "email": str, "password": str, "otp": str opcional }
     """
     body = request.get_json(silent=True) or {}
     email = str(body.get("email", "")).strip().lower()
     password = str(body.get("password", ""))
+    otp = str(body.get("otp", "")).strip()
     key = _attempt_key(email or "unknown", _client_ip())
 
     if not email or not password:
@@ -252,6 +275,15 @@ def login():
         # Mismo tiempo de respuesta independientemente del resultado (timing-safe)
         time.sleep(0.3)
         return jsonify({"error": "Credenciales incorrectas"}), 401
+
+    # Si el usuario tiene 2FA activo, exigir código TOTP antes de emitir sesión.
+    if bool(user.get("twofa_enabled")):
+        if not otp:
+            return jsonify({"error": "Código 2FA requerido", "requires_2fa": True}), 401
+        if not _verify_totp(str(user.get("twofa_secret") or ""), otp):
+            _register_login_failure(key)
+            time.sleep(0.3)
+            return jsonify({"error": "Código 2FA inválido", "requires_2fa": True}), 401
 
     _reset_login_failures(key)
 
@@ -360,7 +392,133 @@ def _ensure_google_id_column() -> None:
         pass
 
 
+def _ensure_2fa_columns() -> None:
+    """Runtime migration: add 2FA columns if they don't exist yet."""
+    try:
+        with db_transaction() as cur:
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_secret TEXT")
+            cur.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_enabled "
+                "BOOLEAN NOT NULL DEFAULT FALSE"
+            )
+    except Exception:
+        pass
+
+
 _ensure_google_id_column()
+_ensure_2fa_columns()
+
+
+@app.get("/seguridad/2fa/status")
+def twofa_status():
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    user_id = str(payload.get("sub", ""))
+    user = _lookup_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    enabled = bool(user.get("twofa_enabled"))
+    has_secret = bool(user.get("twofa_secret"))
+    return jsonify({
+        "enabled": enabled,
+        "has_secret": has_secret,
+    }), 200
+
+
+@app.post("/seguridad/2fa/setup")
+def twofa_setup():
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    user_id = str(payload.get("sub", ""))
+    user = _lookup_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if bool(user.get("twofa_enabled")):
+        return jsonify({"error": "2FA ya está activado"}), 400
+
+    secret = pyotp.random_base32()
+    issuer = os.getenv("APP_ISSUER", "CriptoBendicion")
+    account_name = str(user.get("email") or f"user-{user_id}")
+    otpauth_url = pyotp.TOTP(secret).provisioning_uri(
+        name=account_name,
+        issuer_name=issuer,
+    )
+
+    with db_transaction() as cur:
+        cur.execute(
+            "UPDATE users SET twofa_secret = %s, twofa_enabled = FALSE WHERE id = %s",
+            (secret, user_id),
+        )
+
+    return jsonify({
+        "secret": secret,
+        "otpauth_url": otpauth_url,
+        "issuer": issuer,
+        "account": account_name,
+    }), 200
+
+
+@app.post("/seguridad/2fa/enable")
+def twofa_enable():
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    code = str(body.get("code", "")).strip()
+
+    user_id = str(payload.get("sub", ""))
+    user = _lookup_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    secret = str(user.get("twofa_secret") or "")
+    if not secret:
+        return jsonify({"error": "Primero debes generar la configuración 2FA"}), 400
+
+    if not _verify_totp(secret, code):
+        return jsonify({"error": "Código inválido"}), 400
+
+    with db_transaction() as cur:
+        cur.execute("UPDATE users SET twofa_enabled = TRUE WHERE id = %s", (user_id,))
+
+    return jsonify({"enabled": True}), 200
+
+
+@app.post("/seguridad/2fa/disable")
+def twofa_disable():
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    body = request.get_json(silent=True) or {}
+    code = str(body.get("code", "")).strip()
+
+    user_id = str(payload.get("sub", ""))
+    user = _lookup_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if not bool(user.get("twofa_enabled")):
+        return jsonify({"error": "2FA no está activado"}), 400
+
+    secret = str(user.get("twofa_secret") or "")
+    if not _verify_totp(secret, code):
+        return jsonify({"error": "Código inválido"}), 400
+
+    with db_transaction() as cur:
+        cur.execute(
+            "UPDATE users SET twofa_enabled = FALSE, twofa_secret = NULL WHERE id = %s",
+            (user_id,),
+        )
+
+    return jsonify({"enabled": False}), 200
 
 
 def _oauth_hmac(state: str) -> str:

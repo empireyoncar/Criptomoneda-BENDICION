@@ -41,6 +41,11 @@ def login_page():
 def register_page():
     return render_template("register.html")
 
+
+@app.route("/verificacion")
+def verification_2fa_page():
+    return render_template("verificacion.html")
+
 @app.route("/seguridad/guard.js")
 @app.route("/CriptoBendicion/seguridad/guard.js")
 def usuarios_security_guard_js():

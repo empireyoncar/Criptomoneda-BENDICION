@@ -237,6 +237,9 @@
     <label>Contraseña:</label>
     <input type="password" id="password">
 
+    <label>Código 2FA (Google Authenticator):</label>
+    <input type="text" id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="Solo si tienes 2FA activo">
+
     <button id="btnLogin">Entrar</button>
 
     <p class="center">
@@ -307,6 +310,7 @@
 
     const email = document.getElementById("email");
     const password = document.getElementById("password");
+    const otp = document.getElementById("otp");
     const alertBox = document.getElementById("alertBox");
 
     function showAlert(msg, type="error") {
@@ -318,6 +322,7 @@
     document.getElementById("btnLogin").onclick = async () => {
         const emailVal = email.value.trim();
         const passVal = password.value.trim();
+        const otpVal = otp.value.trim();
 
         if (!emailVal || !passVal) {
             showAlert("Completa todos los campos.");
@@ -325,12 +330,17 @@
         }
 
         try {
-            const data = await window.SEGURIDAD_GUARD.login(emailVal, passVal);
+            const data = await window.SEGURIDAD_GUARD.login(emailVal, passVal, otpVal);
             showAlert("Login correcto", "success");
             setTimeout(() => {
                 window.location.href = "/CriptoBendicion/home";
             }, 800);
         } catch (e) {
+            if (e && e.requires2FA && !otpVal) {
+                showAlert("Tu cuenta tiene 2FA activo. Ingresa el código de Google Authenticator.");
+                otp.focus();
+                return;
+            }
             showAlert(e.message || "No se pudo conectar con el servidor.");
             console.error("Error en login:", e);
         }

@@ -11,8 +11,12 @@ CREATE TABLE IF NOT EXISTS users (
     wallets JSONB NOT NULL DEFAULT '[]'::jsonb,
     kyc JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    google_id VARCHAR(255) UNIQUE
+    google_id VARCHAR(255) UNIQUE,
+    twofa_secret TEXT,
+    twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- Migration for existing deployments (safe to run multiple times)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_secret TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE;

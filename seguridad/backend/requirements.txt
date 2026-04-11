@@ -4,3 +4,4 @@ PyJWT
 psycopg2-binary
 bcrypt
 requests
+pyotp

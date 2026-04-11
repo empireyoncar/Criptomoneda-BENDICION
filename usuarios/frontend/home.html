@@ -124,6 +124,15 @@
             </button>
         </section>
 
+        <section class="card">
+            <h2>Verificación 2FA</h2>
+            <p>Activa o desactiva Google Authenticator para proteger el acceso a tu cuenta.</p>
+
+            <button id="btn2FA" class="btn btn-primary">
+                Verificación 2FA
+            </button>
+        </section>
+
         <!-- Navegación a operaciones -->
         <section class="card">
             <h2>Envios</h2>
@@ -200,9 +209,11 @@
 <script src="/CriptoBendicion/seguridad/vendor/crypto-js.min.js"></script>
 
 <script>
-    // Seguridad: exigir login
-    const userId = window.SEGURIDAD_GUARD.requireLogin();
-    document.getElementById("userId").textContent = userId;
+    // Seguridad: exigir login usando verificación real por cookie HttpOnly
+    window.SEGURIDAD_GUARD.requireLoginAsync().then((userId) => {
+        if (!userId) return;
+        document.getElementById("userId").textContent = userId;
+    });
 
     // 🔥 LOGOUT: revocar cookie y limpiar localStorage
     document.getElementById("logoutBtn").onclick = () => {
@@ -212,6 +223,10 @@
     // Navegacion al modulo KYC
     document.getElementById("btnKYC").onclick = () => {
         window.location.href = "/CriptoBendicion/kyc/";
+    };
+
+    document.getElementById("btn2FA").onclick = () => {
+        window.location.href = "/CriptoBendicion/verificacion";
     };
 
     document.getElementById("btnGoEnvio").onclick = () => {

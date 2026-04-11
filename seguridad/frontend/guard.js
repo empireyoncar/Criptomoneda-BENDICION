@@ -122,16 +122,24 @@
   // ── Login programático (para la página de login) ─────────────────────
   // Llama a seguridad_api/login y luego a usuarios_api/login para
   // mantener compatibilidad con el flujo legado mientras migra.
-  function login(email, password) {
+  function login(email, password, otp) {
     _meCache = null;
     return fetch(SEGURIDAD_API + "/login", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email, password: password }),
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        otp: String(otp || "").trim(),
+      }),
     }).then(function (res) {
       return res.json().then(function (data) {
-        if (!res.ok) throw new Error(data.error || "Error de autenticación");
+        if (!res.ok) {
+          var err = new Error(data.error || "Error de autenticación");
+          if (data && data.requires_2fa) err.requires2FA = true;
+          throw err;
+        }
         // Almacenar en localStorage para compatibilidad con Fase 1
         localStorage.setItem("user_id", data.user_id);
         _meCache = data;

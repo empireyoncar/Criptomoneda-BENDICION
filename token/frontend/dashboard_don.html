@@ -107,6 +107,7 @@
       background: #c99700;
     }
   </style>
+  <script src="/CriptoBendicion/seguridad/guard.js"></script>
 </head>
 
 <body>
@@ -170,6 +171,8 @@
 </div>
 
 <script>
+  window.SEGURIDAD_GUARD.requireLogin();
+
   function resolveDonApiBase() {
     if (window.location.port === "5009") {
       return `${window.location.protocol}//${window.location.hostname}:5008`;

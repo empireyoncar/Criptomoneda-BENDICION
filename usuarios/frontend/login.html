@@ -197,8 +197,11 @@
 </div>
 
 <script>
-    // Al abrir login: revocar sesión previa (cookie + localStorage)
-    window.SEGURIDAD_GUARD.logout().catch(function(){});
+    // Al abrir login: limpiar sesión previa sin redirección para evitar bucles.
+    fetch("/CriptoBendicion/seguridad_api/logout", {
+        method: "POST",
+        credentials: "include",
+    }).catch(function(){});
     localStorage.removeItem("user_id");
     /* ------------------------------
        PARTICULAS

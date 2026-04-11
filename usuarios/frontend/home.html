@@ -85,6 +85,21 @@
             background: #2b3139;
             color: var(--text);
         }
+
+        .activation-banner {
+            background: rgba(240,185,11,.12);
+            border: 1px solid rgba(240,185,11,.35);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .activation-banner h3 { margin: 0 0 8px 0; color: var(--primary); }
+        .activation-banner ul { margin: 6px 0; padding-left: 18px; color: #eaecef; }
+        .activation-banner li { margin: 4px 0; }
+        .done  { color: #0ecb81; }
+        .todo  { color: #f6465d; }
+        .locked-features { opacity: .35; pointer-events: none; }
     </style>
     <script src="/CriptoBendicion/seguridad/guard.js"></script>
 </head>
@@ -104,8 +119,19 @@
     </div>
 
     <div class="grid">
+        <!-- Banner de activación (se muestra sólo si is_activated=false) -->
+        <div id="activationBanner" class="activation-banner" style="display:none; grid-column: 1 / -1;">
+            <h3>⚠️ Activa tu cuenta para acceder a todas las funciones</h3>
+            <p>Completa los siguientes pasos de seguridad:</p>
+            <ul>
+                <li id="stepKYC">KYC — Verificación de identidad</li>
+                <li id="step2FA">2FA — Autenticación de dos factores</li>
+                <li id="stepSSH">SSH — Clave de dispositivo</li>
+            </ul>
+        </div>
+
         <!-- NUEVA SECCIÓN: Token DON -->
-        <section class="card">
+        <section class="card" id="featureDON">
             <h2>Token DON</h2>
             <p>Accede al panel del ecosistema DON: dashboard, balance y operaciones internas.</p>
 
@@ -133,8 +159,17 @@
             </button>
         </section>
 
-        <!-- Navegación a operaciones -->
         <section class="card">
+            <h2>Clave SSH</h2>
+            <p>Genera y gestiona tu clave SSH para verificar nuevos dispositivos.</p>
+
+            <button id="btnSSH" class="btn btn-primary">
+                Gestionar Clave SSH
+            </button>
+        </section>
+
+        <!-- Navegación a operaciones -->
+        <section class="card" id="featureEnvio">
             <h2>Envios</h2>
             <p>Accede al módulo de envío de transacciones.</p>
 
@@ -144,7 +179,7 @@
         </section>
 
         <!-- Navegación al explorador blockchain -->
-        <section class="card">
+        <section class="card" id="featureChain">
             <h2>Blockchain</h2>
             <p>Consulta bloques, transacciones y actividad de la red.</p>
 
@@ -154,7 +189,7 @@
         </section>
 
         <!-- Mercado P2P -->
-        <section class="card">
+        <section class="card" id="featureP2P">
             <h2>Mercado P2P</h2>
             <p>Compra y vende activos directamente con otros usuarios de forma segura.</p>
 
@@ -164,7 +199,7 @@
         </section>
 
         <!-- NUEVA SECCIÓN: Mi Wallet -->
-        <section class="card">
+        <section class="card" id="featureWallet">
             <h2>Mi Wallet</h2>
             <p>Consulta tu dirección, saldo y claves asociadas a tu wallet importada.</p>
 
@@ -174,7 +209,7 @@
         </section>
 
         <!-- NUEVA SECCIÓN: Stake -->
-        <section class="card">
+        <section class="card" id="featureStake">
             <h2>Stake</h2>
             <p>Todo lo que tengo que ver con Staking</p>
 
@@ -213,6 +248,43 @@
     window.SEGURIDAD_GUARD.requireLoginAsync().then((userId) => {
         if (!userId) return;
         document.getElementById("userId").textContent = userId;
+
+        // Fetch full profile info (me already called inside requireLoginAsync)
+        fetch("/CriptoBendicion/seguridad_api/me", { credentials: "include" })
+            .then(r => r.json())
+            .then(data => {
+                // If SSH is configured but device not trusted → redirect to verify
+                if (data.ssh_configured && !data.device_trusted) {
+                    window.location.href = "/CriptoBendicion/ssh?next=/CriptoBendicion/home";
+                    return;
+                }
+                // If not activated → show activation banner and lock features
+                if (!data.is_activated) {
+                    document.getElementById("activationBanner").style.display = "block";
+
+                    // Mark each step
+                    const stepKYC = document.getElementById("stepKYC");
+                    const step2FA = document.getElementById("step2FA");
+                    const stepSSH = document.getElementById("stepSSH");
+
+                    stepKYC.className = data.kyc_approved ? "done" : "todo";
+                    stepKYC.textContent = (data.kyc_approved ? "✅ " : "❌ ") + "KYC — Verificación de identidad";
+
+                    step2FA.className = data.twofa_enabled ? "done" : "todo";
+                    step2FA.textContent = (data.twofa_enabled ? "✅ " : "❌ ") + "2FA — Autenticación de dos factores";
+
+                    stepSSH.className = data.ssh_configured ? "done" : "todo";
+                    stepSSH.textContent = (data.ssh_configured ? "✅ " : "❌ ") + "SSH — Clave de dispositivo";
+
+                    // Lock all features that require full activation
+                    const lockIds = ["featureDON","featureEnvio","featureChain","featureP2P","featureWallet","featureStake"];
+                    lockIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.add("locked-features");
+                    });
+                }
+            })
+            .catch(() => {});
     });
 
     // 🔥 LOGOUT: revocar cookie y limpiar localStorage
@@ -227,6 +299,10 @@
 
     document.getElementById("btn2FA").onclick = () => {
         window.location.href = "/CriptoBendicion/verificacion";
+    };
+
+    document.getElementById("btnSSH").onclick = () => {
+        window.location.href = "/CriptoBendicion/ssh";
     };
 
     document.getElementById("btnGoEnvio").onclick = () => {

@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Seguridad Avanzada – Admin BENDICIÓN</title>
+  <style>
+    :root {
+      --bg: #0b0e11;
+      --bg-box: #181a20;
+      --text: #eaecef;
+      --text-muted: #8b8d90;
+      --primary: #f0b90b;
+      --primary-hover: #c99700;
+      --border: #2b3139;
+      --success: #0ecb81;
+      --danger: #f6465d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      background: var(--bg-box);
+      color: var(--primary);
+      padding: 18px 24px;
+      font-size: 22px;
+      font-weight: bold;
+      border-bottom: 2px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header a {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-left: auto;
+    }
+    header a:hover { color: var(--text); }
+    .container { padding: 24px; max-width: 1100px; margin: auto; }
+    h2 { color: var(--primary); border-left: 4px solid var(--primary); padding-left: 10px; }
+    .box {
+      background: var(--bg-box);
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      box-shadow: 0 0 10px rgba(240,185,11,0.1);
+    }
+    .search-row { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    input[type=text] {
+      padding: 9px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 5px;
+      flex: 1;
+      min-width: 200px;
+    }
+    button {
+      background: var(--primary);
+      color: #181a20;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: .2s;
+    }
+    button:hover { background: var(--primary-hover); }
+    button.btn-danger { background: var(--danger); color: #fff; }
+    button.btn-danger:hover { background: #d63550; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      font-size: 13px;
+    }
+    th { background: var(--bg-box); color: var(--primary); font-weight: bold; }
+    tr:hover td { background: #1e222a; }
+    .badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .badge-ok  { background: rgba(14,203,129,.15); color: var(--success); }
+    .badge-no  { background: rgba(246,70,93,.15);  color: var(--danger); }
+    .badge-pend { background: rgba(240,185,11,.15); color: var(--primary); }
+    .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .actions button { font-size: 12px; padding: 5px 10px; }
+    #globalMsg {
+      margin: 12px 0;
+      font-size: 14px;
+      min-height: 20px;
+    }
+    .ok    { color: var(--success); }
+    .error { color: var(--danger); }
+    .confirm-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .confirm-overlay.show { display: flex; }
+    .confirm-box {
+      background: var(--bg-box);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 30px;
+      max-width: 420px;
+      width: 90%;
+    }
+    .confirm-box h3 { color: var(--danger); margin-top: 0; }
+    .confirm-box p  { color: var(--text-muted); font-size: 14px; }
+    .confirm-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .confirm-actions button { flex: 1; }
+    .btn-cancel { background: #2b3139; color: var(--text); }
+    .btn-cancel:hover { background: #3a424d; }
+  </style>
+</head>
+<body>
+
+<header>
+  🔐 Seguridad Avanzada de Usuarios
+  <a href="/CriptoBendicion/admin/">← Volver al Panel Admin</a>
+</header>
+
+<div class="container">
+
+  <div class="box">
+    <h2>Restablecer Seguridad de Usuarios</h2>
+    <p style="color:var(--text-muted); font-size:14px;">
+      Aquí puedes desactivar la verificación 2FA, la clave SSH y/o el KYC de cualquier usuario
+      para que pueda volver a configurarlos desde cero.
+    </p>
+
+    <div class="search-row">
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o email…">
+      <button id="btnSearch">Buscar</button>
+      <button id="btnLoadAll" style="background:#2b3139; color:var(--text);">Cargar todos</button>
+    </div>
+
+    <div id="globalMsg"></div>
+
+    <table id="usersTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>2FA</th>
+          <th>SSH</th>
+          <th>KYC</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Confirmation modal -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>⚠️ Confirmar Reset</h3>
+    <p id="confirmText"></p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" id="btnCancelConfirm">Cancelar</button>
+      <button class="btn-danger" id="btnConfirmReset">Confirmar Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Verify admin session
+  const sessionAdminId = "{{ session['user_id'] }}";
+  if (!localStorage.getItem("user_id") && sessionAdminId) {
+    localStorage.setItem("user_id", sessionAdminId);
+  }
+  if (!localStorage.getItem("user_id")) {
+    alert("Debes iniciar sesión como administrador.");
+    window.location.href = "/CriptoBendicion/admin/login";
+  }
+
+  const USERS_API    = "https://empireyoncar.duckdns.org/CriptoBendicion/usuarios";
+  const SEGURIDAD_API = "https://empireyoncar.duckdns.org/CriptoBendicion/seguridad_api";
+  const ADMIN_API    = "https://empireyoncar.duckdns.org/CriptoBendicion/admin_api";
+
+  let pendingReset = null; // { userId, fullname, reset_2fa, reset_ssh, reset_kyc }
+
+  // ── Load Users ────────────────────────────────────────────────────────────
+  async function loadUsers(filter) {
+    try {
+      const res = await fetch(USERS_API + "/users");
+      if (!res.ok) throw new Error("Error al cargar usuarios");
+      let users = await res.json();
+
+      if (filter) {
+        const q = filter.toLowerCase();
+        users = users.filter(u =>
+          (u.fullname || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q)
+        );
+      }
+
+      renderTable(users);
+    } catch (e) {
+      showMsg(e.message, "error");
+    }
+  }
+
+  function renderTable(users) {
+    const tbody = document.getElementById("usersBody");
+    tbody.innerHTML = "";
+
+    if (!users.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No se encontraron usuarios.</td></tr>';
+      document.getElementById("usersTable").style.display = "table";
+      return;
+    }
+
+    users.forEach(u => {
+      const kyc = u.kyc || {};
+      const kycStatus = kyc.overall_status || "pending";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="font-size:11px; color:var(--text-muted);">${u.id}</td>
+        <td>${escHtml(u.fullname || "")}</td>
+        <td>${escHtml(u.email || "")}</td>
+        <td><span class="badge ${u.twofa_enabled ? 'badge-ok' : 'badge-no'}">${u.twofa_enabled ? 'Activo' : 'Inactivo'}</span></td>
+        <td><span class="badge ${u.ssh_public_key ? 'badge-ok' : 'badge-no'}">${u.ssh_public_key ? 'Configurada' : 'Sin clave'}</span></td>
+        <td><span class="badge ${kycStatus === 'approved' ? 'badge-ok' : kycStatus === 'pending' ? 'badge-pend' : 'badge-no'}">${kycStatus}</span></td>
+        <td class="actions">
+          ${u.twofa_enabled ? `<button onclick="askReset('${escAttr(u.id)}','${escAttr(u.fullname)}',true,false,false)">Reset 2FA</button>` : ''}
+          ${u.ssh_public_key ? `<button onclick="askReset('${escAttr(u.id)}','${escAttr(u.fullname)}',false,true,false)">Reset SSH</button>` : ''}
+          ${kycStatus !== 'pending' ? `<button onclick="askReset('${escAttr(u.id)}','${escAttr(u.fullname)}',false,false,true)">Reset KYC</button>` : ''}
+          <button class="btn-danger" onclick="askReset('${escAttr(u.id)}','${escAttr(u.fullname)}',true,true,true)">Reset Todo</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("usersTable").style.display = "table";
+  }
+
+  // ── Ask confirmation ──────────────────────────────────────────────────────
+  function askReset(userId, fullname, r2fa, rSSH, rKYC) {
+    pendingReset = { userId, fullname, reset_2fa: r2fa, reset_ssh: rSSH, reset_kyc: rKYC };
+
+    const parts = [];
+    if (r2fa)  parts.push("2FA");
+    if (rSSH)  parts.push("clave SSH");
+    if (rKYC)  parts.push("KYC");
+
+    document.getElementById("confirmText").textContent =
+      `¿Resetear ${parts.join(", ")} del usuario "${fullname}"? Esta acción no se puede deshacer.`;
+
+    document.getElementById("confirmOverlay").classList.add("show");
+  }
+
+  document.getElementById("btnCancelConfirm").onclick = () => {
+    document.getElementById("confirmOverlay").classList.remove("show");
+    pendingReset = null;
+  };
+
+  document.getElementById("btnConfirmReset").onclick = async () => {
+    if (!pendingReset) return;
+    document.getElementById("confirmOverlay").classList.remove("show");
+
+    const { userId, fullname, reset_2fa, reset_ssh, reset_kyc } = pendingReset;
+    pendingReset = null;
+
+    showMsg("Procesando...", "");
+    try {
+      const res = await fetch(`${SEGURIDAD_API}/admin/reset-security/${encodeURIComponent(userId)}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reset_2fa, reset_ssh, reset_kyc }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showMsg("Error: " + (data.error || "Operación fallida"), "error");
+        return;
+      }
+
+      const done = [];
+      if (data.reset_2fa)  done.push("2FA");
+      if (data.reset_ssh)  done.push("SSH");
+      if (data.reset_kyc)  done.push("KYC");
+      showMsg(`✅ Reset completado para "${escHtml(fullname)}": ${done.join(", ")}`, "ok");
+
+      // Refresh the table
+      const filter = document.getElementById("searchInput").value.trim();
+      loadUsers(filter || null);
+    } catch (e) {
+      showMsg("Error de red: " + e.message, "error");
+    }
+  };
+
+  // ── Events ────────────────────────────────────────────────────────────────
+  document.getElementById("btnSearch").onclick = () => {
+    const q = document.getElementById("searchInput").value.trim();
+    loadUsers(q || null);
+  };
+
+  document.getElementById("btnLoadAll").onclick = () => loadUsers(null);
+
+  document.getElementById("searchInput").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("btnSearch").click();
+  });
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function showMsg(text, type) {
+    const el = document.getElementById("globalMsg");
+    el.textContent = text;
+    el.className = type;
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+  function escAttr(str) {
+    return String(str).replace(/'/g,"\\'").replace(/"/g,"&quot;");
+  }
+
+  // Auto-load on open
+  loadUsers(null);
+</script>
+
+</body>
+</html>

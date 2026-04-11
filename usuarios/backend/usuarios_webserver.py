@@ -46,6 +46,10 @@ def register_page():
 def verification_2fa_page():
     return render_template("verificacion.html")
 
+@app.route("/ssh")
+def ssh_page():
+    return render_template("ssh.html")
+
 @app.route("/seguridad/guard.js")
 @app.route("/CriptoBendicion/seguridad/guard.js")
 def usuarios_security_guard_js():

@@ -122,6 +122,12 @@ def admin_info_page():
     return render_template("info.html")
 
 
+@app.route("/CriptoBendicion/admin/secure")
+@require_admin
+def admin_secure_page():
+    return render_template("secure.html")
+
+
 # ============================================================
 #   CARGA DE PLANTILLAS (Docker)
 # ============================================================

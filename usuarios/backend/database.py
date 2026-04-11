@@ -59,6 +59,8 @@ def _normalize_user(user):
         "role": user.get("role", "user"),
         "wallets": list(user.get("wallets") or []),
         "kyc": user.get("kyc") if isinstance(user.get("kyc"), dict) else _default_kyc_state(),
+        "twofa_enabled": bool(user.get("twofa_enabled")),
+        "ssh_public_key": bool(user.get("ssh_public_key")),
     }
 
 
@@ -229,7 +231,8 @@ def load_db():
     rows = run_query(
         """
         SELECT id, fullname, birthdate, country, address, phone,
-               email, password, role, wallets, kyc
+               email, password, role, wallets, kyc,
+               twofa_enabled, ssh_public_key
         FROM users
         ORDER BY created_at ASC, id ASC
         """
@@ -243,7 +246,8 @@ def get_user_by_id(user_id):
     rows = run_query(
         """
         SELECT id, fullname, birthdate, country, address, phone,
-               email, password, role, wallets, kyc
+               email, password, role, wallets, kyc,
+               twofa_enabled, ssh_public_key
         FROM users
         WHERE id = %s
         LIMIT 1

@@ -15,6 +15,9 @@ from urllib.parse import urlencode
 import bcrypt
 import pyotp
 import requests as google_requests
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from flask import Flask, jsonify, make_response, redirect, request
 from flask_cors import CORS
@@ -35,6 +38,8 @@ COOKIE_MAX_AGE = 86400           # 24 h en segundos
 REFRESH_WINDOW = 3600            # renovar si quedan menos de 1 h
 ACCESS_EXPIRY = 86400            # 24 h para el JWT de acceso
 REFRESH_EXPIRY = 7 * 86400      # 7 d para el JWT de refresco
+DEVICE_COOKIE = "device_token"
+DEVICE_TOKEN_MAX_AGE = 365 * 86400  # 1 año
 
 MAX_LOGIN_ATTEMPTS = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
 LOGIN_WINDOW_SECONDS = int(os.getenv("LOGIN_WINDOW_SECONDS", "300"))
@@ -312,18 +317,49 @@ def me():
 
     user_id = str(payload.get("sub", ""))
     rows = run_query(
-        "SELECT id, fullname, email, role FROM users WHERE id = %s LIMIT 1",
+        "SELECT id, fullname, email, role, twofa_enabled, ssh_public_key, "
+        "google_id, birthdate, country, phone, kyc "
+        "FROM users WHERE id = %s LIMIT 1",
         (user_id,),
     )
     if not rows:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
     user = dict(rows[0])
+
+    twofa_enabled = bool(user.get("twofa_enabled"))
+    ssh_configured = bool(user.get("ssh_public_key"))
+    device_trusted = _is_device_trusted(user_id)
+
+    # KYC approval
+    kyc = user.get("kyc") or {}
+    if isinstance(kyc, str):
+        try:
+            kyc = json.loads(kyc)
+        except Exception:
+            kyc = {}
+    kyc_approved = kyc.get("overall_status") == "approved"
+
+    # Account is fully activated when 2FA + SSH + KYC are all done
+    is_activated = twofa_enabled and ssh_configured and kyc_approved
+
+    # Google users who haven't completed their profile
+    is_google_user = bool(user.get("google_id"))
+    needs_profile = is_google_user and not all([
+        user.get("birthdate"), user.get("country"), user.get("phone")
+    ])
+
     resp_data = {
         "user_id": str(user["id"]),
         "fullname": user.get("fullname", ""),
         "email": user.get("email", ""),
         "role": user.get("role", "user"),
+        "twofa_enabled": twofa_enabled,
+        "ssh_configured": ssh_configured,
+        "device_trusted": device_trusted,
+        "kyc_approved": kyc_approved,
+        "is_activated": is_activated,
+        "needs_profile": needs_profile,
     }
 
     resp = make_response(jsonify(resp_data))
@@ -409,7 +445,232 @@ _ensure_google_id_column()
 _ensure_2fa_columns()
 
 
-@app.get("/seguridad/2fa/status")
+# ─────────────────────────────────────────────────────────────────────────────
+# SSH Key – helpers y migración
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _ensure_ssh_tables() -> None:
+    """Runtime migration: add ssh_public_key column and device_tokens table."""
+    try:
+        with db_transaction() as cur:
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ssh_public_key TEXT")
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS device_tokens (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    token VARCHAR(255) NOT NULL UNIQUE,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                    expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '365 days')
+                )
+                """
+            )
+    except Exception:
+        pass
+
+
+_ensure_ssh_tables()
+
+
+def _make_device_cookie(response, token: str) -> None:
+    response.set_cookie(
+        DEVICE_COOKIE,
+        token,
+        httponly=True,
+        secure=SECURE_COOKIE,
+        samesite="Lax",
+        max_age=DEVICE_TOKEN_MAX_AGE,
+        path="/",
+    )
+
+
+def _is_device_trusted(user_id: str) -> bool:
+    token = request.cookies.get(DEVICE_COOKIE, "")
+    if not token:
+        return False
+    rows = run_query(
+        "SELECT id FROM device_tokens WHERE user_id = %s AND token = %s "
+        "AND expires_at > NOW() LIMIT 1",
+        (user_id, token),
+    )
+    return bool(rows)
+
+
+def _extract_public_key_pem(private_key_pem: bytes) -> str | None:
+    """Extract the PEM public key from a PEM private key. Returns None on error."""
+    try:
+        private_key = serialization.load_pem_private_key(
+            private_key_pem, password=None, backend=default_backend()
+        )
+        return private_key.public_key().public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+    except Exception:
+        return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SSH Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/seguridad/ssh/status")
+def ssh_status():
+    payload, err = _require_auth()
+    if err:
+        return err
+    user_id = str(payload.get("sub", ""))
+    rows = run_query(
+        "SELECT ssh_public_key FROM users WHERE id = %s LIMIT 1", (user_id,)
+    )
+    if not rows:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    configured = bool(rows[0]["ssh_public_key"])
+    trusted = _is_device_trusted(user_id)
+    return jsonify({"configured": configured, "device_trusted": trusted}), 200
+
+
+@app.post("/seguridad/ssh/generate")
+def ssh_generate():
+    """Generate a new RSA 2048 key pair. Stores public key in DB, returns private key once."""
+    payload, err = _require_auth()
+    if err:
+        return err
+    user_id = str(payload.get("sub", ""))
+    rows = run_query("SELECT id FROM users WHERE id = %s LIMIT 1", (user_id,))
+    if not rows:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    private_key = rsa.generate_private_key(
+        public_exponent=65537, key_size=2048, backend=default_backend()
+    )
+    private_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.TraditionalOpenSSL,
+        encryption_algorithm=serialization.NoEncryption(),
+    ).decode()
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    ).decode()
+
+    # Store public key, invalidate all existing device tokens for security
+    with db_transaction() as cur:
+        cur.execute("UPDATE users SET ssh_public_key = %s WHERE id = %s", (public_pem, user_id))
+        cur.execute("DELETE FROM device_tokens WHERE user_id = %s", (user_id,))
+
+    return jsonify({"private_key": private_pem}), 200
+
+
+@app.post("/seguridad/ssh/verify")
+def ssh_verify():
+    """
+    Verify uploaded private key against stored public key.
+    On success, issues a long-lived device_token cookie for this device.
+    Accepts: multipart file field 'private_key'  OR  JSON {'private_key': '<PEM>'}
+    """
+    payload, err = _require_auth()
+    if err:
+        return err
+    user_id = str(payload.get("sub", ""))
+
+    # Accept from multipart or JSON
+    if request.files.get("private_key"):
+        private_key_pem = request.files["private_key"].read(64 * 1024)  # max 64 KB
+    elif request.is_json:
+        body = request.get_json(silent=True) or {}
+        raw = str(body.get("private_key", ""))
+        private_key_pem = raw.encode()
+    else:
+        return jsonify({"error": "Clave privada requerida"}), 400
+
+    if not private_key_pem:
+        return jsonify({"error": "Clave privada vacía"}), 400
+
+    rows = run_query(
+        "SELECT ssh_public_key FROM users WHERE id = %s LIMIT 1", (user_id,)
+    )
+    if not rows:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    stored_public_pem = str(rows[0]["ssh_public_key"] or "").strip()
+    if not stored_public_pem:
+        return jsonify({"error": "No tienes clave SSH configurada"}), 400
+
+    derived_public_pem = _extract_public_key_pem(private_key_pem)
+    if not derived_public_pem:
+        return jsonify({"error": "Clave privada inválida o no se pudo leer"}), 400
+
+    if derived_public_pem.strip() != stored_public_pem:
+        return jsonify({"error": "La clave privada no corresponde a tu clave registrada"}), 401
+
+    # Grant device trust
+    device_token = secrets.token_urlsafe(48)
+    with db_transaction() as cur:
+        cur.execute(
+            "INSERT INTO device_tokens (user_id, token) VALUES (%s, %s)",
+            (user_id, device_token),
+        )
+
+    resp = make_response(jsonify({"verified": True}))
+    _make_device_cookie(resp, device_token)
+    return resp, 200
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Admin – reset user security features
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/seguridad/admin/reset-security/<user_id>")
+def admin_reset_security(user_id: str):
+    """
+    Admin-only: reset 2FA, SSH, and/or KYC for a user so they can reconfigure.
+    Requires the calling session to belong to a user with role='admin'.
+    """
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    caller_id = str(payload.get("sub", ""))
+    caller_rows = run_query("SELECT role FROM users WHERE id = %s LIMIT 1", (caller_id,))
+    if not caller_rows or str(caller_rows[0]["role"]) != "admin":
+        return jsonify({"error": "Acceso denegado"}), 403
+
+    body = request.get_json(silent=True) or {}
+    reset_2fa = bool(body.get("reset_2fa"))
+    reset_ssh = bool(body.get("reset_ssh"))
+    reset_kyc = bool(body.get("reset_kyc"))
+
+    if not any([reset_2fa, reset_ssh, reset_kyc]):
+        return jsonify({"error": "Debes indicar qué resetear"}), 400
+
+    target_rows = run_query("SELECT id FROM users WHERE id = %s LIMIT 1", (user_id,))
+    if not target_rows:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    with db_transaction() as cur:
+        if reset_2fa:
+            cur.execute(
+                "UPDATE users SET twofa_enabled = FALSE, twofa_secret = NULL WHERE id = %s",
+                (user_id,),
+            )
+        if reset_ssh:
+            cur.execute("UPDATE users SET ssh_public_key = NULL WHERE id = %s", (user_id,))
+            cur.execute("DELETE FROM device_tokens WHERE user_id = %s", (user_id,))
+        if reset_kyc:
+            kyc_default = json.dumps({
+                "id_document": {"file": None, "status": "pending"},
+                "address_document": {"file": None, "status": "pending"},
+                "selfie": {"file": None, "status": "pending"},
+                "phone_verification": {"status": "pending"},
+                "overall_status": "pending",
+            })
+            cur.execute(
+                "UPDATE users SET kyc = %s::jsonb WHERE id = %s",
+                (kyc_default, user_id),
+            )
+
+    return jsonify({"ok": True, "reset_2fa": reset_2fa, "reset_ssh": reset_ssh, "reset_kyc": reset_kyc}), 200
 def twofa_status():
     payload, err = _require_auth()
     if err:

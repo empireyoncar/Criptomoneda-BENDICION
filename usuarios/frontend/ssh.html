@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Clave SSH – BENDICIÓN</title>
+  <style>
+    :root {
+      --bg: #0b0e11;
+      --bg-box: #181a20;
+      --text: #eaecef;
+      --text-muted: #8b8d90;
+      --primary: #f0b90b;
+      --primary-hover: #c99700;
+      --border: #2b3139;
+      --success: #0ecb81;
+      --danger: #f6465d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 30px 16px;
+    }
+    .wrapper { width: 100%; max-width: 620px; }
+    h1 { color: var(--primary); margin-top: 0; }
+    .card {
+      background: var(--bg-box);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 0 16px rgba(0,0,0,0.4);
+    }
+    .card h2 { color: var(--primary); margin-top: 0; font-size: 18px; }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .badge-ok  { background: rgba(14,203,129,.15); color: var(--success); }
+    .badge-no  { background: rgba(246,70,93,.15);  color: var(--danger); }
+    .badge-warn { background: rgba(240,185,11,.15); color: var(--primary); }
+    p { color: var(--text-muted); line-height: 1.5; margin: 8px 0; }
+    .btn {
+      padding: 11px 20px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      margin-top: 12px;
+      transition: background .2s;
+      width: 100%;
+    }
+    .btn-primary   { background: var(--primary); color: #000; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: #2b3139; color: var(--text); }
+    .btn-secondary:hover { background: #3a424d; }
+    .btn-danger    { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: #d63550; }
+    .btn:disabled  { opacity: .5; cursor: not-allowed; }
+    textarea {
+      width: 100%;
+      background: #0b0e11;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+      margin-top: 10px;
+    }
+    .file-label {
+      display: block;
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      margin-top: 12px;
+      transition: border-color .2s;
+    }
+    .file-label:hover { border-color: var(--primary); color: var(--text); }
+    #fileInput { display: none; }
+    #fileName  { margin-top: 8px; font-size: 13px; color: var(--primary); }
+    .msg { margin-top: 14px; font-size: 14px; }
+    .msg.ok    { color: var(--success); }
+    .msg.error { color: var(--danger); }
+    .back-link {
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .back-link:hover { color: var(--text); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  </style>
+  <script src="/CriptoBendicion/seguridad/guard.js"></script>
+</head>
+<body>
+<div class="wrapper">
+  <h1>🔑 Clave SSH</h1>
+
+  <!-- Estado actual -->
+  <div class="card">
+    <h2>Estado de tu clave SSH</h2>
+    <p>Estado: <span id="statusBadge" class="badge badge-no">Sin configurar</span></p>
+    <p>Dispositivo: <span id="deviceBadge" class="badge badge-no">No confiable</span></p>
+    <p id="statusDesc">Cargando...</p>
+  </div>
+
+  <!-- SECCIÓN A: Generar nueva clave -->
+  <div class="card" id="cardGenerate">
+    <h2>Generar Clave SSH</h2>
+    <p>
+      Al generar una clave, se crea un par RSA-2048. La <strong>clave pública</strong> queda registrada
+      en el servidor y la <strong>clave privada</strong> se descarga una única vez.
+      <br><br>
+      ⚠️ Si ya tienes una clave activa, la nueva la reemplazará y todos los dispositivos
+      de confianza quedarán revocados.
+    </p>
+    <button class="btn btn-primary" id="btnGenerate">Generar Clave SSH</button>
+    <div id="generateResult" style="display:none">
+      <hr class="divider">
+      <p style="color:#0ecb81; font-weight:bold;">✅ Clave generada. Descárgala ahora — no se mostrará de nuevo.</p>
+      <textarea id="privateKeyArea" rows="12" readonly></textarea>
+      <button class="btn btn-secondary" id="btnDownload">⬇ Descargar clave privada (.pem)</button>
+      <p style="color:#f6465d; font-size:13px; margin-top:10px;">
+        Guarda este archivo en un lugar seguro. No lo compartas con nadie.
+      </p>
+    </div>
+    <div id="generateMsg" class="msg"></div>
+  </div>
+
+  <!-- SECCIÓN B: Verificar clave (acceso al dispositivo) -->
+  <div class="card" id="cardVerify">
+    <h2>Verificar Clave SSH</h2>
+    <p>
+      Para acceder desde este dispositivo, selecciona tu archivo de clave privada (.pem).
+      El servidor verificará que corresponde a tu clave registrada y confiará en este dispositivo.
+    </p>
+    <label class="file-label" for="fileInput">
+      📂 Haz clic aquí para seleccionar tu clave privada (.pem)
+    </label>
+    <input type="file" id="fileInput" accept=".pem,.key,.txt">
+    <div id="fileName"></div>
+    <button class="btn btn-primary" id="btnVerify" disabled>Verificar y Acceder</button>
+    <div id="verifyMsg" class="msg"></div>
+  </div>
+
+  <span class="back-link" onclick="window.location.href='/CriptoBendicion/home'">← Volver al Panel</span>
+</div>
+
+<script>
+  const API = "/CriptoBendicion/seguridad_api";
+  let redirectAfterVerify = "/CriptoBendicion/home";
+
+  // Check URL param for redirect target
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("next")) redirectAfterVerify = params.get("next");
+
+  // Require login first
+  window.SEGURIDAD_GUARD.requireLoginAsync().then(userId => {
+    if (!userId) return;
+    loadStatus();
+  });
+
+  async function loadStatus() {
+    try {
+      const res = await fetch(API + "/ssh/status", { credentials: "include" });
+      const data = await res.json();
+
+      const statusBadge  = document.getElementById("statusBadge");
+      const deviceBadge  = document.getElementById("deviceBadge");
+      const statusDesc   = document.getElementById("statusDesc");
+      const cardGenerate = document.getElementById("cardGenerate");
+      const cardVerify   = document.getElementById("cardVerify");
+
+      if (data.configured) {
+        statusBadge.textContent = "Configurada";
+        statusBadge.className = "badge badge-ok";
+      } else {
+        statusBadge.textContent = "Sin configurar";
+        statusBadge.className = "badge badge-no";
+      }
+
+      if (data.device_trusted) {
+        deviceBadge.textContent = "Confiable ✓";
+        deviceBadge.className = "badge badge-ok";
+        statusDesc.textContent = "Este dispositivo ya está verificado. Puedes generar una nueva clave si lo deseas.";
+        cardVerify.style.display = "none";
+      } else if (data.configured) {
+        deviceBadge.textContent = "No confiable";
+        deviceBadge.className = "badge badge-warn";
+        statusDesc.textContent = "Tu clave SSH está configurada. Verifica tu clave privada para confiar en este dispositivo.";
+        // Scroll to verify section
+        document.getElementById("cardVerify").scrollIntoView({ behavior: "smooth" });
+      } else {
+        deviceBadge.textContent = "N/A";
+        deviceBadge.className = "badge badge-no";
+        statusDesc.textContent = "Aún no tienes una clave SSH. Genera una para activar esta capa de seguridad.";
+        cardVerify.style.display = "none";
+      }
+    } catch (e) {
+      document.getElementById("statusDesc").textContent = "Error al cargar estado.";
+    }
+  }
+
+  // ── GENERAR ──────────────────────────────────────────────────────────────
+  document.getElementById("btnGenerate").onclick = async () => {
+    const btn = document.getElementById("btnGenerate");
+    const msgEl = document.getElementById("generateMsg");
+    btn.disabled = true;
+    btn.textContent = "Generando...";
+    msgEl.textContent = "";
+
+    try {
+      const res = await fetch(API + "/ssh/generate", {
+        method: "POST",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msgEl.className = "msg error";
+        msgEl.textContent = data.error || "Error al generar la clave.";
+        btn.disabled = false;
+        btn.textContent = "Generar Clave SSH";
+        return;
+      }
+
+      document.getElementById("privateKeyArea").value = data.private_key;
+      document.getElementById("generateResult").style.display = "block";
+      btn.textContent = "Generar Nueva Clave";
+      btn.disabled = false;
+
+      // Show verify section now that key is configured
+      document.getElementById("cardVerify").style.display = "block";
+      loadStatus();
+    } catch (e) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Error de red.";
+      btn.disabled = false;
+      btn.textContent = "Generar Clave SSH";
+    }
+  };
+
+  // ── DESCARGAR ─────────────────────────────────────────────────────────────
+  document.getElementById("btnDownload").onclick = () => {
+    const pem = document.getElementById("privateKeyArea").value;
+    if (!pem) return;
+    const blob = new Blob([pem], { type: "application/x-pem-file" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "bendicion_private_key.pem";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
+  // ── SELECCIONAR ARCHIVO ───────────────────────────────────────────────────
+  document.getElementById("fileInput").onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    document.getElementById("fileName").textContent = "Archivo: " + file.name;
+    document.getElementById("btnVerify").disabled = false;
+  };
+
+  // ── VERIFICAR ─────────────────────────────────────────────────────────────
+  document.getElementById("btnVerify").onclick = async () => {
+    const fileInput = document.getElementById("fileInput");
+    const msgEl = document.getElementById("verifyMsg");
+    const btn = document.getElementById("btnVerify");
+
+    const file = fileInput.files[0];
+    if (!file) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Selecciona un archivo primero.";
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Verificando...";
+    msgEl.textContent = "";
+
+    const formData = new FormData();
+    formData.append("private_key", file);
+
+    try {
+      const res = await fetch(API + "/ssh/verify", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        msgEl.className = "msg error";
+        msgEl.textContent = data.error || "Clave incorrecta.";
+        btn.disabled = false;
+        btn.textContent = "Verificar y Acceder";
+        return;
+      }
+
+      msgEl.className = "msg ok";
+      msgEl.textContent = "✅ Dispositivo verificado. Redirigiendo...";
+      setTimeout(() => { window.location.href = redirectAfterVerify; }, 1200);
+    } catch (e) {
+      msgEl.className = "msg error";
+      msgEl.textContent = "Error de red.";
+      btn.disabled = false;
+      btn.textContent = "Verificar y Acceder";
+    }
+  };
+</script>
+</body>
+</html>

@@ -148,6 +148,32 @@
     });
   }
 
+  // ── requireActivatedAsync ────────────────────────────────────────────────
+  // Verifica login + redirige a SSH si el dispositivo no está verificado.
+  // También redirige a login si la sesión expiró.
+  // Acepta { sshPath, loginPath } en options.
+  function requireActivatedAsync(options) {
+    var cfg = options || {};
+    var loginPath = cfg.loginPath || "/CriptoBendicion/login";
+    var sshPath   = cfg.sshPath   || "/CriptoBendicion/ssh";
+    // Force a fresh /me (skip cache so device_trusted is up-to-date)
+    _meCache = null;
+    return fetchMe().then(function (data) {
+      if (!data) {
+        localStorage.removeItem("user_id");
+        redirectTo(loginPath);
+        return "";
+      }
+      // SSH configured but this device not yet verified → go to SSH page
+      if (data.ssh_configured && !data.device_trusted) {
+        var currentPath = window.location.pathname + window.location.search;
+        redirectTo(sshPath + "?next=" + encodeURIComponent(currentPath));
+        return "";
+      }
+      return data.user_id;
+    });
+  }
+
   window.SEGURIDAD_GUARD = {
     requireLogin: requireLogin,
     requireLoginAsync: requireLoginAsync,
@@ -156,5 +182,6 @@
     logout: logout,
     login: login,
     me: fetchMe,
+    requireActivatedAsync: requireActivatedAsync,
   };
 })();

@@ -47,6 +47,8 @@ def _row_to_user(row):
         "role": row.get("role", "user"),
         "wallets": list(row.get("wallets") or []),
         "kyc": row.get("kyc") if isinstance(row.get("kyc"), dict) else _default_kyc_state(),
+        "twofa_enabled": bool(row.get("twofa_enabled")),
+        "ssh_public_key": bool(row.get("ssh_public_key")),
     }
 
 
@@ -56,7 +58,8 @@ def load_db():
             cur.execute(
                 """
                 SELECT id, fullname, birthdate, country, address, phone,
-                       email, password, role, wallets, kyc
+                       email, password, role, wallets, kyc,
+                       twofa_enabled, ssh_public_key
                 FROM users
                 ORDER BY created_at ASC, id ASC
                 """
@@ -193,3 +196,33 @@ def update_user_info(user_id, payload):
     if not updated:
         return None
     return get_safe_user_by_id(user_id)
+
+
+def reset_user_security(user_id: str, reset_2fa: bool = False, reset_ssh: bool = False, reset_kyc: bool = False) -> None:
+    """Reset 2FA, SSH key, and/or KYC for a user so they can reconfigure."""
+    import json
+
+    if not any([reset_2fa, reset_ssh, reset_kyc]):
+        raise ValueError("Debes indicar qué resetear")
+
+    with _get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM users WHERE id = %s LIMIT 1", (str(user_id),))
+            if not cur.fetchone():
+                raise ValueError("Usuario no encontrado")
+
+            if reset_2fa:
+                cur.execute(
+                    "UPDATE users SET twofa_enabled = FALSE, twofa_secret = NULL WHERE id = %s",
+                    (str(user_id),),
+                )
+            if reset_ssh:
+                cur.execute("UPDATE users SET ssh_public_key = NULL WHERE id = %s", (str(user_id),))
+                cur.execute("DELETE FROM device_tokens WHERE user_id = %s", (str(user_id),))
+            if reset_kyc:
+                kyc_default = _default_kyc_state()
+                cur.execute(
+                    "UPDATE users SET kyc = %s::jsonb WHERE id = %s",
+                    (json.dumps(kyc_default), str(user_id)),
+                )
+        conn.commit()

@@ -5,6 +5,23 @@ from jinja2 import FileSystemLoader, ChoiceLoader
 app = Flask(__name__)
 CORS(app)
 
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data: https:; "
+        "font-src 'self' data: https:; "
+        "connect-src 'self' https: http: ws: wss:; "
+        "object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
 # ============================================================
 # Cargar plantillas desde token/frontend
 # ============================================================

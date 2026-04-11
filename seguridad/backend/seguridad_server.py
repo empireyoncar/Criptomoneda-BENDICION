@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import hashlib
 import os
 import sys
+import threading
 import time
-import uuid
+
+import bcrypt
 
 from flask import Flask, jsonify, make_response, request
 from flask_cors import CORS
@@ -17,7 +18,7 @@ from tokens import generar_jwt, renovar_jwt, revocar_jwt, verificar_jwt  # noqa:
 
 # ── Importar helpers de base de datos de usuarios ────────────────────────────
 sys.path.insert(0, "/app/usuarios/backend")
-from users_db import run_query  # noqa: E402
+from users_db import db_transaction, run_query  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Configuración
@@ -27,6 +28,10 @@ COOKIE_MAX_AGE = 86400           # 24 h en segundos
 REFRESH_WINDOW = 3600            # renovar si quedan menos de 1 h
 ACCESS_EXPIRY = 86400            # 24 h para el JWT de acceso
 REFRESH_EXPIRY = 7 * 86400      # 7 d para el JWT de refresco
+
+MAX_LOGIN_ATTEMPTS = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
+LOGIN_WINDOW_SECONDS = int(os.getenv("LOGIN_WINDOW_SECONDS", "300"))
+LOGIN_LOCKOUT_SECONDS = int(os.getenv("LOGIN_LOCKOUT_SECONDS", "900"))
 
 SECURE_COOKIE = os.getenv("SECURE_COOKIE", "true").lower() != "false"
 ALLOWED_ORIGINS = os.getenv(
@@ -50,22 +55,99 @@ CORS(
     methods=["GET", "POST", "OPTIONS"],
 )
 
+_login_attempts: dict[str, dict[str, int]] = {}
+_login_attempts_lock = threading.Lock()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers internos
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _hash_password(raw: str) -> str:
-    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+def _client_ip() -> str:
+    forwarded_for = request.headers.get("X-Forwarded-For", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.remote_addr or "unknown"
 
 
-def _lookup_user(email: str, password_hash: str) -> dict | None:
+def _is_legacy_sha256(stored_hash: str) -> bool:
+    if len(stored_hash) != 64:
+        return False
+    return all(char in "0123456789abcdef" for char in stored_hash.lower())
+
+
+def _lookup_user(email: str) -> dict | None:
     rows = run_query(
-        "SELECT id, fullname, email, role FROM users "
-        "WHERE email = %s AND password = %s LIMIT 1",
-        (email, password_hash),
+        "SELECT id, fullname, email, role, password FROM users "
+        "WHERE email = %s LIMIT 1",
+        (email,),
     )
     return dict(rows[0]) if rows else None
+
+
+def _verify_password_and_upgrade_if_needed(user: dict, raw_password: str) -> bool:
+    stored_hash = str(user.get("password") or "")
+    if not stored_hash:
+        return False
+
+    if stored_hash.startswith("$2a$") or stored_hash.startswith("$2b$") or stored_hash.startswith("$2y$"):
+        try:
+            return bcrypt.checkpw(raw_password.encode("utf-8"), stored_hash.encode("utf-8"))
+        except Exception:
+            return False
+
+    if not _is_legacy_sha256(stored_hash):
+        return False
+
+    import hashlib
+
+    sha_match = hashlib.sha256(raw_password.encode("utf-8")).hexdigest() == stored_hash
+    if not sha_match:
+        return False
+
+    # Migración transparente a bcrypt tras login válido.
+    new_hash = bcrypt.hashpw(raw_password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+    with db_transaction() as cur:
+        cur.execute("UPDATE users SET password = %s WHERE id = %s", (new_hash, str(user["id"])))
+    user["password"] = new_hash
+    return True
+
+
+def _attempt_key(email: str, ip: str) -> str:
+    return f"{email.lower()}|{ip}"
+
+
+def _get_lockout_seconds_left(key: str) -> int:
+    now = int(time.time())
+    with _login_attempts_lock:
+        entry = _login_attempts.get(key)
+        if not entry:
+            return 0
+        locked_until = int(entry.get("locked_until", 0))
+        if locked_until <= now:
+            return 0
+        return locked_until - now
+
+
+def _register_login_failure(key: str) -> None:
+    now = int(time.time())
+    with _login_attempts_lock:
+        entry = _login_attempts.get(key)
+        if not entry or now - int(entry.get("first_attempt", now)) > LOGIN_WINDOW_SECONDS:
+            entry = {"first_attempt": now, "attempts": 0, "locked_until": 0}
+            _login_attempts[key] = entry
+
+        entry["attempts"] = int(entry.get("attempts", 0)) + 1
+
+        if entry["attempts"] >= MAX_LOGIN_ATTEMPTS:
+            entry["locked_until"] = now + LOGIN_LOCKOUT_SECONDS
+            entry["attempts"] = 0
+            entry["first_attempt"] = now
+
+
+def _reset_login_failures(key: str) -> None:
+    with _login_attempts_lock:
+        _login_attempts.pop(key, None)
 
 
 def _make_session_cookie(response, token: str) -> None:
@@ -134,15 +216,23 @@ def login():
     body = request.get_json(silent=True) or {}
     email = str(body.get("email", "")).strip().lower()
     password = str(body.get("password", ""))
+    key = _attempt_key(email or "unknown", _client_ip())
 
     if not email or not password:
         return jsonify({"error": "Email y contraseña requeridos"}), 400
 
-    user = _lookup_user(email, _hash_password(password))
-    if not user:
+    seconds_left = _get_lockout_seconds_left(key)
+    if seconds_left > 0:
+        return jsonify({"error": f"Demasiados intentos. Intenta nuevamente en {seconds_left} segundos"}), 429
+
+    user = _lookup_user(email)
+    if not user or not _verify_password_and_upgrade_if_needed(user, password):
+        _register_login_failure(key)
         # Mismo tiempo de respuesta independientemente del resultado (timing-safe)
         time.sleep(0.3)
         return jsonify({"error": "Credenciales incorrectas"}), 401
+
+    _reset_login_failures(key)
 
     user_id = str(user["id"])
     token = generar_jwt(user_id=user_id, expires_in=ACCESS_EXPIRY)

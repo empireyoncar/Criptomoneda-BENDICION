@@ -83,18 +83,35 @@
     const container = document.getElementById("comments");
     container.innerHTML = "";
     if (!comments.length) {
-      container.innerHTML = '<p class="muted">Este usuario aun no tiene comentarios.</p>';
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "Este usuario aun no tiene comentarios.";
+      container.appendChild(empty);
       return;
     }
 
     comments.forEach((comment) => {
       const div = document.createElement("div");
       div.className = "comment";
-      div.innerHTML = `
-        <div><strong>${comment.score} ★</strong> de ${comment.from_user_id}</div>
-        <div style="margin-top:6px;">${comment.comment}</div>
-        <div class="muted" style="margin-top:8px;">${comment.created_at}</div>
-      `;
+
+      const line = document.createElement("div");
+      const score = document.createElement("strong");
+      score.textContent = `${comment.score} ★`;
+      line.appendChild(score);
+      line.appendChild(document.createTextNode(` de ${comment.from_user_id}`));
+
+      const body = document.createElement("div");
+      body.style.marginTop = "6px";
+      body.textContent = comment.comment || "";
+
+      const meta = document.createElement("div");
+      meta.className = "muted";
+      meta.style.marginTop = "8px";
+      meta.textContent = comment.created_at || "";
+
+      div.appendChild(line);
+      div.appendChild(body);
+      div.appendChild(meta);
       container.appendChild(div);
     });
   }

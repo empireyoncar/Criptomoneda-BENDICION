@@ -1,9 +1,39 @@
-import hashlib
 import uuid
+import bcrypt
 
 from psycopg2.extras import Json
 
 from users_db import db_transaction, run_query
+
+
+MIN_PASSWORD_LENGTH = 20
+
+
+def _hash_password_bcrypt(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+
+
+def _is_legacy_sha256(stored_hash: str) -> bool:
+    if len(stored_hash) != 64:
+        return False
+    return all(char in "0123456789abcdef" for char in stored_hash.lower())
+
+
+def _verify_password(password: str, stored_hash: str) -> bool:
+    if not password or not stored_hash:
+        return False
+
+    if stored_hash.startswith("$2a$") or stored_hash.startswith("$2b$") or stored_hash.startswith("$2y$"):
+        try:
+            return bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8"))
+        except Exception:
+            return False
+
+    if _is_legacy_sha256(stored_hash):
+        import hashlib
+        return hashlib.sha256(password.encode()).hexdigest() == stored_hash
+
+    return False
 
 
 def _default_kyc_state():
@@ -99,12 +129,15 @@ def save_db(data):
 # REGISTRO NIVEL 3
 # -----------------------------
 def register_user(fullname, birthdate, country, address, phone, email, password):
+    if not isinstance(password, str) or len(password) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"La contraseña debe tener al menos {MIN_PASSWORD_LENGTH} caracteres")
+
     rows = run_query("SELECT id FROM users WHERE email = %s LIMIT 1", (email,))
     if rows:
         return None
 
     user_id = str(uuid.uuid4())
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    password_hash = _hash_password_bcrypt(password)
 
     new_user = {
         "id": user_id,
@@ -149,16 +182,31 @@ def register_user(fullname, birthdate, country, address, phone, email, password)
 # LOGIN
 # -----------------------------
 def login_user(email, password):
-    password_hash = hashlib.sha256(password.encode()).hexdigest()
-
     rows = run_query(
-        "SELECT id FROM users WHERE email = %s AND password = %s LIMIT 1",
-        (email, password_hash),
+        "SELECT id, password FROM users WHERE email = %s LIMIT 1",
+        (email,),
     )
-    if rows:
-        return rows[0]["id"]
 
-    return None
+    if not rows:
+        return None
+
+    row = rows[0]
+    user_id = row["id"]
+    stored_hash = str(row.get("password") or "")
+
+    if not _verify_password(password, stored_hash):
+        return None
+
+    # Migración transparente: si estaba en SHA-256 se reemplaza por bcrypt.
+    if _is_legacy_sha256(stored_hash):
+        new_hash = _hash_password_bcrypt(password)
+        with db_transaction() as cur:
+            cur.execute(
+                "UPDATE users SET password = %s WHERE id = %s",
+                (new_hash, user_id),
+            )
+
+    return user_id
 
 
 # -----------------------------

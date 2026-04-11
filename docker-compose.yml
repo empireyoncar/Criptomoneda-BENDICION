@@ -13,8 +13,6 @@ services:
       POSTGRES_DB: users_db
       POSTGRES_USER: users_user
       POSTGRES_PASSWORD: users_password
-    ports:
-      - "5546:5546"
     volumes:
       - users_postgres_data:/var/lib/postgresql/data
       - ./usuarios/backend/users_schema.sql:/docker-entrypoint-initdb.d/01_users_schema.sql:ro
@@ -38,8 +36,6 @@ services:
       POSTGRES_DB: wallet_db
       POSTGRES_USER: wallet_user
       POSTGRES_PASSWORD: wallet_password
-    ports:
-      - "5545:5545"
     volumes:
       - wallet_postgres_data:/var/lib/postgresql/data
       - ./wallet/backend/wallet_schema.sql:/docker-entrypoint-initdb.d/01_wallet_schema.sql:ro
@@ -63,8 +59,6 @@ services:
       POSTGRES_DB: staking_db
       POSTGRES_USER: staking_user
       POSTGRES_PASSWORD: staking_password
-    ports:
-      - "5547:5547"
     volumes:
       - staking_postgres_data:/var/lib/postgresql/data
       - ./staking/backend/staking_schema.sql:/docker-entrypoint-initdb.d/01_staking_schema.sql:ro
@@ -88,8 +82,6 @@ services:
       POSTGRES_DB: don_db
       POSTGRES_USER: don_user
       POSTGRES_PASSWORD: don_password
-    ports:
-      - "5548:5548"
     volumes:
       - don_postgres_data:/var/lib/postgresql/data
       - ./token/backend/don_schema.sql:/docker-entrypoint-initdb.d/01_don_schema.sql:ro

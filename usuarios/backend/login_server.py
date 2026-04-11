@@ -15,7 +15,7 @@ CORS(app)
 # -----------------------------
 @app.post("/login")
 def login_api():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     email = data.get("email")
     password = data.get("password")
@@ -46,7 +46,7 @@ def get_users():
 # -----------------------------
 @app.post("/register")
 def register_api():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
     fullname = data.get("fullname")
     birthdate = data.get("birthdate")
@@ -56,7 +56,10 @@ def register_api():
     email = data.get("email")
     password = data.get("password")
 
-    user_id = register_user(fullname, birthdate, country, address, phone, email, password)
+    try:
+        user_id = register_user(fullname, birthdate, country, address, phone, email, password)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
     if user_id is None:
         return jsonify({"error": "El email ya está registrado"}), 400

@@ -102,7 +102,17 @@
       div.className = "msg";
       const who = msg.sender_user_id || msg.user_id || "sistema";
       const text = msg.message || msg.error || "";
-      div.innerHTML = `<strong>${who}:</strong> ${text}<div class="meta">${msg.created_at || new Date().toISOString()}</div>`;
+
+      const strong = document.createElement("strong");
+      strong.textContent = `${who}:`;
+      div.appendChild(strong);
+      div.appendChild(document.createTextNode(` ${text}`));
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = msg.created_at || new Date().toISOString();
+      div.appendChild(meta);
+
       messages.appendChild(div);
     });
     messages.scrollTop = messages.scrollHeight;

@@ -3,3 +3,4 @@ flask-cors
 ecdsa
 werkzeug
 psycopg2-binary
+bcrypt

@@ -252,7 +252,11 @@
     document.getElementById("userId").textContent = adminUserId;
   }
 
-  const ADMIN_API = "/CriptoBendicion/admin_api";
+  const IS_DIRECT_ADMIN_WEB = window.location.port === "5011";
+  const BASE_ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
+  const ADMIN_API = IS_DIRECT_ADMIN_WEB
+    ? `${BASE_ORIGIN}:5010/CriptoBendicion/admin_api`
+    : "/CriptoBendicion/admin_api";
 
   async function apiJson(url, options) {
     const res = await fetch(url, Object.assign({ credentials: "include" }, options || {}));
@@ -288,48 +292,61 @@
   // USUARIOS (versión funcional)
   // -------------------------
   document.getElementById("btnUsers").onclick = async () => {
-    const users = await apiJson(`${ADMIN_API}/users`);
+    try {
+      const users = await apiJson(`${ADMIN_API}/users`);
 
-  const table = document.getElementById("usersTable");
-  const tbody = table.querySelector("tbody");
-  tbody.innerHTML = "";
+      const table = document.getElementById("usersTable");
+      const tbody = table.querySelector("tbody");
+      tbody.innerHTML = "";
 
-  const search = document.getElementById("searchUser").value.toLowerCase();
+      const search = document.getElementById("searchUser").value.toLowerCase();
 
-  users
-    .filter(u =>
-      u.fullname.toLowerCase().includes(search) ||
-      u.email.toLowerCase().includes(search)
-    )
-    .forEach(u => {
-      const tr = document.createElement("tr");
-      [
-        u.id,
-        u.fullname,
-        u.birthdate,
-        u.country,
-        u.address,
-        u.phone,
-        u.email,
-        u.password,
-        u.role,
-        u.wallets.length > 0 ? u.wallets[0] : "Sin wallet",
-        (u.kyc && u.kyc.overall_status) || "pending"
-      ].forEach(value => {
-        const td = document.createElement("td");
-        td.textContent = value || "";
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
-    });
+      users
+        .filter(u =>
+          u.fullname.toLowerCase().includes(search) ||
+          u.email.toLowerCase().includes(search)
+        )
+        .forEach(u => {
+          const tr = document.createElement("tr");
+          [
+            u.id,
+            u.fullname,
+            u.birthdate,
+            u.country,
+            u.address,
+            u.phone,
+            u.email,
+            u.password,
+            u.role,
+            u.wallets.length > 0 ? u.wallets[0] : "Sin wallet",
+            (u.kyc && u.kyc.overall_status) || "pending"
+          ].forEach(value => {
+            const td = document.createElement("td");
+            td.textContent = value || "";
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
 
-  table.style.display = "table";
-};
+      table.style.display = "table";
+    } catch (err) {
+      alert(`Error cargando usuarios: ${err.message}`);
+    }
+  };
+
   document.getElementById("btnGoAdminDON").onclick = () => {
+    if (IS_DIRECT_ADMIN_WEB) {
+      window.location.href = `${BASE_ORIGIN}:5009/don/admin`;
+      return;
+    }
     window.location.href = "/CriptoBendicion/don/admin";
   };
 
   document.getElementById("btnGoAdminKYC").onclick = () => {
+    if (IS_DIRECT_ADMIN_WEB) {
+      window.location.href = `${BASE_ORIGIN}:5016/kyc/admin`;
+      return;
+    }
     window.location.href = "/CriptoBendicion/kyc/admin";
   };
 

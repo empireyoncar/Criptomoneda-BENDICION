@@ -71,7 +71,11 @@
 </div>
 
 <script>
-  const API = "/CriptoBendicion/admin_api";
+  const IS_DIRECT_ADMIN_WEB = window.location.port === "5011";
+  const BASE_ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
+  const API = IS_DIRECT_ADMIN_WEB
+    ? `${BASE_ORIGIN}:5010/CriptoBendicion/admin_api`
+    : "/CriptoBendicion/admin_api";
   const messageBox = document.getElementById("message");
 
   async function apiJson(url, options) {

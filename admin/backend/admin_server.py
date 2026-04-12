@@ -5,6 +5,7 @@ from admin_manager import (
     is_admin,
     load_db,
     login_user,
+    reset_user_security,
     save_db,
     update_user_info,
     update_user_password,
@@ -17,8 +18,8 @@ app = Flask(__name__)
 app.secret_key = "clave-super-secreta-123"
 CORS(app, supports_credentials=True)
 
-# URL de la blockchain real
-BC_API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain"
+# URL interna de blockchain API (contenedor a contenedor)
+BC_API = "http://blockchain_api:5004"
 
 # ============================================================
 #   DECORADOR PARA VERIFICAR ADMIN
@@ -81,14 +82,44 @@ def admin_user_info(user_id):
         return jsonify({"error": "Usuario no encontrado"}), 404
     return jsonify({"ok": True, "user": user})
 
+
+@app.route("/CriptoBendicion/admin_api/users/<user_id>/reset-security", methods=["POST"])
+@require_admin
+def admin_user_reset_security(user_id):
+    payload = request.get_json(silent=True) or {}
+    reset_2fa = bool(payload.get("reset_2fa"))
+    reset_ssh = bool(payload.get("reset_ssh"))
+    reset_kyc = bool(payload.get("reset_kyc"))
+
+    try:
+        reset_user_security(
+            user_id=user_id,
+            reset_2fa=reset_2fa,
+            reset_ssh=reset_ssh,
+            reset_kyc=reset_kyc,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({
+        "ok": True,
+        "reset_2fa": reset_2fa,
+        "reset_ssh": reset_ssh,
+        "reset_kyc": reset_kyc,
+    })
+
 # ============================================================
 #   BLOQUES (desde blockchain real)
 # ============================================================
 @app.route("/CriptoBendicion/admin_api/blocks", methods=["GET"])
 @require_admin
 def admin_blocks():
-    res = requests.get(f"{BC_API}/chain")
-    return jsonify(res.json())
+    try:
+        res = requests.get(f"{BC_API}/chain", timeout=10)
+        res.raise_for_status()
+        return jsonify(res.json())
+    except Exception as exc:
+        return jsonify({"error": f"No se pudo consultar blockchain: {exc}"}), 502
 
 # ============================================================
 #   TRANSACCIONES (desde blockchain real)
@@ -96,9 +127,14 @@ def admin_blocks():
 @app.route("/CriptoBendicion/admin_api/transactions", methods=["GET"])
 @require_admin
 def admin_transactions():
-    chain = requests.get(f"{BC_API}/chain").json()
-    txs = [tx for block in chain for tx in block["transactions"]]
-    return jsonify(txs)
+    try:
+        res = requests.get(f"{BC_API}/chain", timeout=10)
+        res.raise_for_status()
+        chain = res.json()
+        txs = [tx for block in chain for tx in block.get("transactions", [])]
+        return jsonify(txs)
+    except Exception as exc:
+        return jsonify({"error": f"No se pudieron consultar transacciones: {exc}"}), 502
 
 # ============================================================
 #   TRANSACCIONES POR WALLET
@@ -106,8 +142,12 @@ def admin_transactions():
 @app.route("/CriptoBendicion/admin_api/transactions/<address>", methods=["GET"])
 @require_admin
 def admin_transactions_by_address(address):
-    res = requests.get(f"{BC_API}/wallet/{address}/history")
-    return jsonify(res.json())
+    try:
+        res = requests.get(f"{BC_API}/wallet/{address}/history", timeout=10)
+        res.raise_for_status()
+        return jsonify(res.json())
+    except Exception as exc:
+        return jsonify({"error": f"No se pudo consultar historial: {exc}"}), 502
 
 # ============================================================
 #   INICIAR SERVIDOR

@@ -72,6 +72,7 @@ def admin_kyc_page():
 
 @app.route("/kyc/seguridad/guard.js")
 @app.route("/CriptoBendicion/kyc/seguridad/guard.js")
+@app.route("/CriptoBendicion/seguridad/guard.js")
 def kyc_security_guard_js():
     return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
 

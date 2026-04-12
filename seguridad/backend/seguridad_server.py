@@ -10,6 +10,7 @@ import secrets
 import sys
 import threading
 import time
+import uuid
 from urllib.parse import urlencode
 
 import bcrypt
@@ -146,8 +147,6 @@ def _verify_password_and_upgrade_if_needed(user: dict, raw_password: str) -> boo
 
     if not _is_legacy_sha256(stored_hash):
         return False
-
-    import hashlib
 
     sha_match = hashlib.sha256(raw_password.encode("utf-8")).hexdigest() == stored_hash
     if not sha_match:
@@ -811,7 +810,6 @@ def _get_or_create_google_user(google_id: str, email: str, name: str) -> dict:
         return user
 
     # Create new user (Google-only, no password)
-    import uuid
     user_id = str(uuid.uuid4())
     random_password = bcrypt.hashpw(
         secrets.token_urlsafe(32).encode(), bcrypt.gensalt(rounds=12)

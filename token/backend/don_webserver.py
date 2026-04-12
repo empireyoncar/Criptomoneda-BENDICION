@@ -65,6 +65,7 @@ def don_admin_history():
 
 @app.route("/don/seguridad/guard.js")
 @app.route("/CriptoBendicion/don/seguridad/guard.js")
+@app.route("/CriptoBendicion/seguridad/guard.js")
 def don_security_guard_js():
     return send_file("/app/seguridad/frontend/guard.js", mimetype="application/javascript")
 

@@ -252,28 +252,35 @@
     document.getElementById("userId").textContent = adminUserId;
   }
 
-   const API = "https://empireyoncar.duckdns.org/CriptoBendicion/blockchain";
+  const ADMIN_API = "/CriptoBendicion/admin_api";
+
+  async function apiJson(url, options) {
+    const res = await fetch(url, Object.assign({ credentials: "include" }, options || {}));
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("La sesión de admin expiró o la ruta devolvió HTML");
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Error en API");
+    return data;
+  }
 
   // -------------------------
   // DASHBOARD
   // -------------------------
   document.getElementById("btnLoadDashboard").onclick = async () => {
     try {
-      // Usuarios → login server
-       const userCount = await (await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/usuarios/users/count")).json();
-    document.getElementById("statUsers").textContent = userCount.count;
+      const users = await apiJson(`${ADMIN_API}/users`);
+      document.getElementById("statUsers").textContent = users.length;
 
-      // Transacciones → blockchain (usando la fórmula REAL)
-    const chain = await (await fetch(`${API}/chain`)).json();
-    const totalTx = chain.reduce((acc, b) => acc + b.transactions.length, 0);
-    document.getElementById("statTx").textContent = totalTx;
+      const txs = await apiJson(`${ADMIN_API}/transactions`);
+      document.getElementById("statTx").textContent = txs.length;
 
-      // Bloques totales
-    const totalBlocks = chain.length;
-    document.getElementById("statBlocks").textContent = totalBlocks;
+      const blocks = await apiJson(`${ADMIN_API}/blocks`);
+      document.getElementById("statBlocks").textContent = blocks.length;
 
     } catch (err) {
-      alert("Error cargando dashboard.");
+      alert(`Error cargando dashboard: ${err.message}`);
     }
   };
 
@@ -281,8 +288,7 @@
   // USUARIOS (versión funcional)
   // -------------------------
   document.getElementById("btnUsers").onclick = async () => {
-  const res = await fetch("https://empireyoncar.duckdns.org/CriptoBendicion/usuarios/users");
-  const users = await res.json();
+    const users = await apiJson(`${ADMIN_API}/users`);
 
   const table = document.getElementById("usersTable");
   const tbody = table.querySelector("tbody");
@@ -320,11 +326,11 @@
   table.style.display = "table";
 };
   document.getElementById("btnGoAdminDON").onclick = () => {
-    window.location.href = "http://192.168.1.178:5009/don/admin";
+    window.location.href = "/CriptoBendicion/don/admin";
   };
 
   document.getElementById("btnGoAdminKYC").onclick = () => {
-    window.location.href = "http://192.168.1.178/CriptoBendicion/kyc/admin";
+    window.location.href = "/CriptoBendicion/kyc/admin";
   };
 
 

@@ -17,16 +17,6 @@
       --success: #52c41a;
     }
 
-    body.light {
-      --bg: #f4f4f4;
-      --bg-box: white;
-      --text: #222;
-      --text-muted: #555;
-      --primary: #d4a20a;
-      --primary-hover: #b58900;
-      --border: #ccc;
-    }
-
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -163,27 +153,12 @@
       text-decoration: underline;
     }
 
-    #themeToggle {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: var(--primary);
-      color: var(--bg-box);
-      border: none;
-      padding: 10px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-      z-index: 30;
-    }
   </style>
 </head>
 
 <body>
 
 <div id="particles"></div>
-
-<button id="themeToggle">Modo Claro</button>
 
 <div class="box">
 
@@ -241,22 +216,17 @@
 
   setInterval(createParticle, 150);
 
-  /* Modo claro/oscuro */
-  const toggle = document.getElementById("themeToggle");
-
-  toggle.onclick = () => {
-    document.body.classList.toggle("light");
-    toggle.textContent = document.body.classList.contains("light")
-      ? "Modo Oscuro"
-      : "Modo Claro";
-  };
-
   /* Registro */
-  const IS_DIRECT_USUARIOS_WEB = window.location.port === "5000";
-  const BASE_ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
-  const API = IS_DIRECT_USUARIOS_WEB
-    ? `${BASE_ORIGIN}:5001`
-    : "/CriptoBendicion/usuarios";
+  const IS_DIRECT_MODE = ["5000", "5001"].includes(window.location.port);
+  const ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
+  
+  // Rutas a intentar (en orden)
+  const API_ENDPOINTS = [
+    `${ORIGIN}:5001/register`,        // Direct: usuarios_api
+    `${ORIGIN}:5000/register`,        // Direct: usuarios_web  
+    `${ORIGIN}/register`,             // Relative (current port)
+    `/CriptoBendicion/usuarios/register` // Nginx path
+  ];
 
   const alertBox = document.getElementById("alertBox");
 
@@ -266,21 +236,39 @@
     alertBox.style.display = "block";
   }
 
-  async function postJson(url, payload) {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.includes("application/json")) {
-      throw new Error("El servidor devolvió una respuesta inválida. Verifica nginx/usuarios_api.");
+  async function postJson(payload) {
+    let lastError = null;
+    
+    // Intentar cada endpoint en orden
+    for (const url of API_ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          mode: "cors"
+        });
+        
+        const contentType = res.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) {
+          lastError = `[${url}] No es JSON (${res.status})`;
+          continue;
+        }
+        
+        const data = await res.json();
+        if (!res.ok) {
+          lastError = data.error || `Error ${res.status}`;
+          continue;
+        }
+        
+        return data;
+      } catch (err) {
+        lastError = `[${url}] ${err.message}`;
+      }
     }
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "No se pudo completar el registro");
-    return data;
+    
+    // Si llegamos aquí, todos los endpoints fallaron
+    throw new Error(`No se pudo conectar: ${lastError || 'Todos los endpoints fallaron'}`);
   }
 
   document.getElementById("btnRegister").onclick = async () => {
@@ -313,7 +301,7 @@
         return;
       }
 
-      const data = await postJson(`${API}/register`, {
+      const data = await postJson({
         fullname,
         birthdate,
         country,
@@ -326,7 +314,7 @@
       if (data.user_id) {
         showAlert("Registro exitoso. Redirigiendo...", "success");
         setTimeout(() => {
-          window.location.href = IS_DIRECT_USUARIOS_WEB ? "/login" : "/CriptoBendicion/login";
+          window.location.href = "/login";
         }, 800);
       }
     } catch (error) {

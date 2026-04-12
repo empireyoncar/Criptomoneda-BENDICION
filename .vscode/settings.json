@@ -1,0 +1,8 @@
+{
+  "python.defaultInterpreterPath": "C:/Users/empir/AppData/Local/Programs/Python/Python313/python.exe",
+  "python.analysis.extraPaths": [
+    "./criptografia",
+    "./usuarios/backend",
+    "./Blockchain/bakend"
+  ]
+}

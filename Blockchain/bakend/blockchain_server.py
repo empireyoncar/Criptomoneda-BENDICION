@@ -1,12 +1,15 @@
 import json
 import uuid
+from pathlib import Path
+import sys
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from blockchain import Blockchain
-import sys
 
 # Import signature verification
+ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR / "criptografia"))
 sys.path.insert(0, "/app/criptografia")
 from firma_digital import verificar_firma
 from blockchain_crypto import hash_sha256

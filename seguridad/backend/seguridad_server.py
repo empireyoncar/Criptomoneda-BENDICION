@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 import uuid
+from pathlib import Path
 from urllib.parse import urlencode
 
 import bcrypt
@@ -24,10 +25,13 @@ from flask import Flask, jsonify, make_response, redirect, request
 from flask_cors import CORS
 
 # ── Importar módulo de cryptografía ──────────────────────────────────────────
+ROOT_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT_DIR / "criptografia"))
 sys.path.insert(0, "/app/criptografia")
 from tokens import generar_jwt, renovar_jwt, revocar_jwt, verificar_jwt  # noqa: E402
 
 # ── Importar helpers de base de datos de usuarios ────────────────────────────
+sys.path.insert(0, str(ROOT_DIR / "usuarios" / "backend"))
 sys.path.insert(0, "/app/usuarios/backend")
 from users_db import db_transaction, run_query  # noqa: E402
 

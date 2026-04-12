@@ -64,6 +64,8 @@ def _row_to_user(row: dict[str, Any]) -> dict[str, Any]:
 		"address": row.get("address"),
 		"phone": row.get("phone"),
 		"email": str(row.get("email", "")).strip(),
+		"google_id": row.get("google_id"),
+		"local_password_set": bool(row.get("local_password_set")),
 		"password": row.get("password", ""),
 		"role": row.get("role", "user"),
 		"wallets": list(row.get("wallets") or []),
@@ -81,7 +83,7 @@ def load_db() -> dict[str, Any]:
 			cur.execute(
 				"""
 				SELECT id, fullname, birthdate, country, address, phone,
-					   email, password, role, wallets, kyc
+					   email, google_id, local_password_set, password, role, wallets, kyc
 				FROM users
 				ORDER BY created_at ASC, id ASC
 				"""
@@ -246,6 +248,19 @@ def finish_kyc_submission(user_id: str) -> dict[str, Any]:
 
 	if missing_steps:
 		raise ValueError(f"Faltan pasos por completar: {', '.join(missing_steps)}")
+
+	# Extra requirement for Google users: complete core profile fields and set local password.
+	is_google_user = bool(user.get("google_id"))
+	if is_google_user:
+		missing_profile: list[str] = []
+		for field in ("fullname", "birthdate", "country", "address", "phone"):
+			if not str(user.get(field) or "").strip():
+				missing_profile.append(field)
+		if missing_profile or not bool(user.get("local_password_set")):
+			raise ValueError(
+				"Para cuentas Google debes completar el formulario adicional de perfil "
+				"(datos + contraseña de 20+ caracteres) antes de finalizar KYC"
+			)
 
 	for step in KYC_STEPS:
 		if step == "phone_verification":

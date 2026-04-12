@@ -26,6 +26,7 @@
     .bar { height:100%; width:0%; background:#f0b90b; transition:width .3s ease; }
     .actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .warn { color:#f97316; font-size:13px; margin-top:8px; }
+    .hidden { display:none; }
   </style>
   <script src="/CriptoBendicion/seguridad/guard.js"></script>
 </head>
@@ -39,6 +40,27 @@
       </div>
       <div class="progress"><div id="bar" class="bar"></div></div>
       <div class="muted">Progreso: <span id="progressText">0%</span></div>
+
+      <div class="step hidden" id="googleProfileStep">
+        <h2>5. Completar perfil (solo cuentas Google)</h2>
+        <p class="muted">Este paso nivela tu cuenta para que puedas entrar tanto por Google como por login directo.</p>
+        <label for="pf_fullname">Nombre completo</label>
+        <input type="text" id="pf_fullname" />
+        <label for="pf_birthdate">Fecha de nacimiento</label>
+        <input type="date" id="pf_birthdate" />
+        <label for="pf_country">Pais</label>
+        <input type="text" id="pf_country" />
+        <label for="pf_address">Direccion completa</label>
+        <input type="text" id="pf_address" />
+        <label for="pf_phone">Telefono</label>
+        <input type="text" id="pf_phone" />
+        <label for="pf_password">Contraseña (minimo 20 caracteres)</label>
+        <input type="password" id="pf_password" minlength="20" />
+        <label for="pf_password2">Confirmar contraseña</label>
+        <input type="password" id="pf_password2" minlength="20" />
+        <div class="actions"><button class="btn" onclick="completeGoogleProfile()">Guardar perfil y contraseña</button></div>
+        <div id="profileWarn" class="warn"></div>
+      </div>
     </div>
 
     <div class="card grid">
@@ -68,7 +90,7 @@
 
       <div class="step">
         <h2>4. Verificacion por telefono</h2>
-        <p class="muted">Abre WhatsApp, envia tus datos y luego marca este paso como enviado.</p>
+        <p class="muted">Abre WhatsApp, envia: nombre completo, telefono, criptobendicion y luego marca este paso como enviado.</p>
         <div class="actions">
           <button class="btn-sec" onclick="window.location.href='/CriptoBendicion/kyc/telefono'">Abrir WhatsApp</button>
           <button class="btn" onclick="submitPhoneStep()">Ya envie por telefono</button>
@@ -91,7 +113,9 @@
 
 <script>
   const API = "/CriptoBendicion/kyc_api";
+  const SEG_API = "/CriptoBendicion/seguridad_api";
   const userId = window.SEGURIDAD_GUARD.requireLogin();
+  let profileRequired = false;
 
   document.getElementById("userId").textContent = userId;
 
@@ -124,6 +148,74 @@
       return;
     }
     render(data);
+
+    // Load profile completion requirement for Google users.
+    await loadProfileRequirement();
+  }
+
+  async function loadProfileRequirement() {
+    try {
+      const res = await fetch(`${SEG_API}/me`, { credentials: "include" });
+      const data = await res.json();
+      if (!res.ok) return;
+
+      profileRequired = Boolean(data.needs_profile);
+      const step = document.getElementById("googleProfileStep");
+      step.classList.toggle("hidden", !profileRequired);
+
+      if (profileRequired) {
+        document.getElementById("pf_fullname").value = data.fullname || "";
+        document.getElementById("pf_birthdate").value = data.birthdate || "";
+        document.getElementById("pf_country").value = data.country || "";
+        document.getElementById("pf_address").value = data.address || "";
+        document.getElementById("pf_phone").value = data.phone || "";
+      }
+    } catch (_) {
+      // Ignore silent profile check failures; KYC main flow still works.
+    }
+  }
+
+  async function completeGoogleProfile() {
+    const warn = document.getElementById("profileWarn");
+    warn.textContent = "";
+
+    const payload = {
+      fullname: document.getElementById("pf_fullname").value.trim(),
+      birthdate: document.getElementById("pf_birthdate").value.trim(),
+      country: document.getElementById("pf_country").value.trim(),
+      address: document.getElementById("pf_address").value.trim(),
+      phone: document.getElementById("pf_phone").value.trim(),
+      password: document.getElementById("pf_password").value,
+      password2: document.getElementById("pf_password2").value,
+    };
+
+    if (!payload.fullname || !payload.birthdate || !payload.country || !payload.address || !payload.phone) {
+      warn.textContent = "Completa todos los campos del perfil.";
+      return;
+    }
+    if (!payload.password || payload.password.length < 20) {
+      warn.textContent = "La contraseña debe tener al menos 20 caracteres.";
+      return;
+    }
+    if (payload.password !== payload.password2) {
+      warn.textContent = "Las contraseñas no coinciden.";
+      return;
+    }
+
+    const res = await fetch(`${SEG_API}/profile/complete`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      warn.textContent = data.error || "No se pudo guardar el perfil";
+      return;
+    }
+
+    warn.textContent = "Perfil completado. Ya puedes usar login directo con email y contraseña.";
+    await loadProfileRequirement();
   }
 
   async function uploadDoc(step, inputId) {
@@ -169,6 +261,10 @@
   async function finishKYC() {
     const warn = document.getElementById("finishWarn");
     warn.textContent = "";
+    if (profileRequired) {
+      warn.textContent = "Completa primero el paso 5 (perfil + contraseña) para cuentas Google.";
+      return;
+    }
     const res = await fetch(`${API}/finish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

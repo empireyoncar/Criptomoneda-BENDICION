@@ -12,12 +12,15 @@ CREATE TABLE IF NOT EXISTS users (
     kyc JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     google_id VARCHAR(255) UNIQUE,
+    local_password_set BOOLEAN NOT NULL DEFAULT TRUE,
     twofa_secret TEXT,
-    twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE
+    twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ssh_public_key TEXT
 );
 
 -- Migration for existing deployments (safe to run multiple times)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS local_password_set BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_secret TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS twofa_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS ssh_public_key TEXT;

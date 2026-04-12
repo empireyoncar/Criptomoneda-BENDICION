@@ -119,7 +119,8 @@ def _lookup_user(email: str) -> dict | None:
 
 def _lookup_user_by_id(user_id: str) -> dict | None:
     rows = run_query(
-        "SELECT id, fullname, email, role, twofa_enabled, twofa_secret "
+        "SELECT id, fullname, email, role, twofa_enabled, twofa_secret, "
+        "google_id, local_password_set, birthdate, country, address, phone "
         "FROM users WHERE id = %s LIMIT 1",
         (user_id,),
     )
@@ -321,7 +322,7 @@ def me():
     user_id = str(payload.get("sub", ""))
     rows = run_query(
         "SELECT id, fullname, email, role, twofa_enabled, ssh_public_key, "
-        "google_id, birthdate, country, phone, kyc "
+        "google_id, local_password_set, birthdate, country, address, phone, kyc "
         "FROM users WHERE id = %s LIMIT 1",
         (user_id,),
     )
@@ -348,20 +349,30 @@ def me():
 
     # Google users who haven't completed their profile
     is_google_user = bool(user.get("google_id"))
-    needs_profile = is_google_user and not all([
-        user.get("birthdate"), user.get("country"), user.get("phone")
-    ])
+    missing_profile_fields: list[str] = []
+    for field in ("fullname", "birthdate", "country", "address", "phone"):
+        if not str(user.get(field) or "").strip():
+            missing_profile_fields.append(field)
+    local_password_set = bool(user.get("local_password_set"))
+    needs_profile = is_google_user and (bool(missing_profile_fields) or not local_password_set)
 
     resp_data = {
         "user_id": str(user["id"]),
         "fullname": user.get("fullname", ""),
         "email": user.get("email", ""),
         "role": user.get("role", "user"),
+        "birthdate": user.get("birthdate"),
+        "country": user.get("country"),
+        "address": user.get("address"),
+        "phone": user.get("phone"),
         "twofa_enabled": twofa_enabled,
         "ssh_configured": ssh_configured,
         "device_trusted": device_trusted,
         "kyc_approved": kyc_approved,
         "is_activated": is_activated,
+        "is_google_user": is_google_user,
+        "local_password_set": local_password_set,
+        "missing_profile_fields": missing_profile_fields,
         "needs_profile": needs_profile,
     }
 
@@ -378,6 +389,59 @@ def me():
             pass  # silenciar: la cookie vieja aún es válida
 
     return resp, 200
+
+
+@app.post("/seguridad/profile/complete")
+def complete_profile_for_google_user():
+    """Complete missing profile fields and set a local password for Google users."""
+    payload, err = _require_auth()
+    if err:
+        return err
+
+    user_id = str(payload.get("sub", ""))
+    user = _lookup_user_by_id(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if not bool(user.get("google_id")):
+        return jsonify({"error": "Este endpoint aplica solo para cuentas Google"}), 400
+
+    body = request.get_json(silent=True) or {}
+    fullname = str(body.get("fullname", "")).strip()
+    birthdate = str(body.get("birthdate", "")).strip()
+    country = str(body.get("country", "")).strip()
+    address = str(body.get("address", "")).strip()
+    phone = str(body.get("phone", "")).strip()
+    password = str(body.get("password", ""))
+    password2 = str(body.get("password2", ""))
+
+    if not all([fullname, birthdate, country, address, phone, password, password2]):
+        return jsonify({"error": "Completa todos los campos requeridos"}), 400
+
+    if password != password2:
+        return jsonify({"error": "Las contraseñas no coinciden"}), 400
+
+    if len(password) < 20:
+        return jsonify({"error": "La contraseña debe tener al menos 20 caracteres"}), 400
+
+    password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
+    with db_transaction() as cur:
+        cur.execute(
+            """
+            UPDATE users
+            SET fullname = %s,
+                birthdate = %s,
+                country = %s,
+                address = %s,
+                phone = %s,
+                password = %s,
+                local_password_set = TRUE
+            WHERE id = %s
+            """,
+            (fullname, birthdate, country, address, phone, password_hash, user_id),
+        )
+
+    return jsonify({"ok": True, "message": "Perfil completado y acceso por contraseña habilitado"}), 200
 
 
 @app.post("/seguridad/refresh")
@@ -444,8 +508,21 @@ def _ensure_2fa_columns() -> None:
         pass
 
 
+def _ensure_local_password_column() -> None:
+    """Runtime migration: add local_password_set if it doesn't exist yet."""
+    try:
+        with db_transaction() as cur:
+            cur.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS local_password_set "
+                "BOOLEAN NOT NULL DEFAULT TRUE"
+            )
+    except Exception:
+        pass
+
+
 _ensure_google_id_column()
 _ensure_2fa_columns()
+_ensure_local_password_column()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -830,10 +907,10 @@ def _get_or_create_google_user(google_id: str, email: str, name: str) -> dict:
             """
             INSERT INTO users (
                 id, fullname, birthdate, country, address, phone,
-                email, password, role, wallets, kyc, google_id
+                email, password, role, wallets, kyc, google_id, local_password_set
             )
             VALUES (%s, %s, NULL, NULL, NULL, NULL, %s, %s, 'user',
-                    '[]'::jsonb, %s::jsonb, %s)
+                    '[]'::jsonb, %s::jsonb, %s, FALSE)
             """,
             (
                 user_id, name, email, random_password,

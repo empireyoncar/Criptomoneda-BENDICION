@@ -209,11 +209,11 @@
   <label>Email:</label>
   <input type="email" id="email">
 
-  <label>Contraseña:</label>
-  <input type="password" id="password">
+  <label>Contraseña (mínimo 20 caracteres):</label>
+  <input type="password" id="password" minlength="20" placeholder="Mínimo 20 caracteres">
 
   <label>Confirmar contraseña:</label>
-  <input type="password" id="password2">
+  <input type="password" id="password2" minlength="20" placeholder="Repite la contraseña">
 
   <button id="btnRegister">Registrarme</button>
 
@@ -252,7 +252,11 @@
   };
 
   /* Registro */
-  const API = "/CriptoBendicion/usuarios"; // backend correcto
+  const IS_DIRECT_USUARIOS_WEB = window.location.port === "5000";
+  const BASE_ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
+  const API = IS_DIRECT_USUARIOS_WEB
+    ? `${BASE_ORIGIN}:5001`
+    : "/CriptoBendicion/usuarios";
 
   const alertBox = document.getElementById("alertBox");
 
@@ -262,30 +266,54 @@
     alertBox.style.display = "block";
   }
 
-  document.getElementById("btnRegister").onclick = async () => {
-    const fullname = document.getElementById("fullname").value.trim();
-    const birthdate = document.getElementById("birthdate").value.trim();
-    const country = document.getElementById("country").value.trim();
-    const address = document.getElementById("address").value.trim();
-    const phone = document.getElementById("phone").value.trim() || null;
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const password2 = document.getElementById("password2").value.trim();
-
-    if (!fullname || !birthdate || !country || !address || !email || !password) {
-      showAlert("Completa todos los campos obligatorios.");
-      return;
-    }
-
-    if (password !== password2) {
-      showAlert("Las contraseñas no coinciden.");
-      return;
-    }
-
-    const res = await fetch(`${API}/register`, {
+  async function postJson(url, payload) {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+      body: JSON.stringify(payload)
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("El servidor devolvió una respuesta inválida. Verifica nginx/usuarios_api.");
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "No se pudo completar el registro");
+    return data;
+  }
+
+  document.getElementById("btnRegister").onclick = async () => {
+    const button = document.getElementById("btnRegister");
+    button.disabled = true;
+    button.textContent = "Registrando...";
+
+    try {
+      const fullname = document.getElementById("fullname").value.trim();
+      const birthdate = document.getElementById("birthdate").value.trim();
+      const country = document.getElementById("country").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const phone = document.getElementById("phone").value.trim() || null;
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const password2 = document.getElementById("password2").value.trim();
+
+      if (!fullname || !birthdate || !country || !address || !email || !password) {
+        showAlert("Completa todos los campos obligatorios.");
+        return;
+      }
+
+      if (password.length < 20) {
+        showAlert("La contraseña debe tener mínimo 20 caracteres.");
+        return;
+      }
+
+      if (password !== password2) {
+        showAlert("Las contraseñas no coinciden.");
+        return;
+      }
+
+      const data = await postJson(`${API}/register`, {
         fullname,
         birthdate,
         country,
@@ -293,21 +321,19 @@
         phone,
         email,
         password
-      })
-    });
+      });
 
-    const data = await res.json();
-
-    if (data.error) {
-      showAlert(data.error);
-      return;
-    }
-
-    if (data.user_id) {
-      showAlert("Registro exitoso. Redirigiendo...", "success");
-      setTimeout(() => {
-        window.location.href = "login";
-      }, 800);
+      if (data.user_id) {
+        showAlert("Registro exitoso. Redirigiendo...", "success");
+        setTimeout(() => {
+          window.location.href = IS_DIRECT_USUARIOS_WEB ? "/login" : "/CriptoBendicion/login";
+        }, 800);
+      }
+    } catch (error) {
+      showAlert(error.message || "Error inesperado durante el registro.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Registrarme";
     }
   };
 </script>

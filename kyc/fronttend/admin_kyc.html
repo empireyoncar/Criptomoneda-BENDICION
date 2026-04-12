@@ -66,8 +66,31 @@
   </div>
 
 <script>
-  const API = "/CriptoBendicion/kyc_api";
-  const adminId = window.SEGURIDAD_GUARD.requireAdmin({ allowedAdminIds: ["001", "jonatan salazar"] });
+  const ALLOWED_ADMINS = ["001", "jonatan salazar"];
+  const IS_DIRECT_KYC_WEB = window.location.port === "5016";
+  const BASE_ORIGIN = `${window.location.protocol}//${window.location.hostname}`;
+  const API = IS_DIRECT_KYC_WEB
+    ? `${BASE_ORIGIN}:5015`
+    : "/CriptoBendicion/kyc_api";
+
+  function normalizeId(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  let adminId = "";
+  if (IS_DIRECT_KYC_WEB) {
+    const params = new URLSearchParams(window.location.search);
+    const fromQuery = String(params.get("admin_id") || "").trim();
+    const fromPrompt = fromQuery || window.prompt("Ingresa tu Admin ID para acceder a KYC:", "") || "";
+
+    if (!ALLOWED_ADMINS.map(normalizeId).includes(normalizeId(fromPrompt))) {
+      alert("Acceso denegado para este Admin ID.");
+      window.location.href = `${BASE_ORIGIN}:5011/CriptoBendicion/admin/login`;
+    }
+    adminId = fromPrompt;
+  } else {
+    adminId = window.SEGURIDAD_GUARD.requireAdmin({ allowedAdminIds: ALLOWED_ADMINS });
+  }
   let selectedUserId = "";
 
   function goCentralAdmin() {

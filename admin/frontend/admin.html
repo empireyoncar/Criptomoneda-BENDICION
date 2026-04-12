@@ -344,7 +344,7 @@
 
   document.getElementById("btnGoAdminKYC").onclick = () => {
     if (IS_DIRECT_ADMIN_WEB) {
-      window.location.href = `${BASE_ORIGIN}:5016/kyc/admin`;
+      window.location.href = `${BASE_ORIGIN}:5016/kyc/admin?admin_id=${encodeURIComponent(adminUserId)}`;
       return;
     }
     window.location.href = "/CriptoBendicion/kyc/admin";

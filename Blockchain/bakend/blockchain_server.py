@@ -8,8 +8,14 @@ from flask_cors import CORS
 from blockchain import Blockchain
 
 # Import signature verification
-ROOT_DIR = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT_DIR / "criptografia"))
+# In local workspace the file is under Blockchain/bakend, but in container it is /app/blockchain_server.py.
+resolved_path = Path(__file__).resolve()
+if len(resolved_path.parents) >= 3:
+    root_dir = resolved_path.parents[2]
+else:
+    root_dir = resolved_path.parents[-1]
+
+sys.path.insert(0, str(root_dir / "criptografia"))
 sys.path.insert(0, "/app/criptografia")
 from firma_digital import verificar_firma
 from blockchain_crypto import hash_sha256
